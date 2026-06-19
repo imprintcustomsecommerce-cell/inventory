@@ -16,11 +16,17 @@ class ExampleTest extends TestCase
         $response->assertRedirect('/login');
     }
 
-    public function test_authenticated_root_redirects_to_inventory(): void
+    public function test_authenticated_root_redirects_to_dashboard(): void
     {
         $user = User::factory()->create();
         $response = $this->actingAs($user)->get('/');
-        $response->assertRedirect('/inventory');
+        $response->assertRedirect('/dashboard');
+    }
+
+    public function test_authenticated_user_can_access_dashboard(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->get('/dashboard')->assertStatus(200);
     }
 
     public function test_guest_cannot_access_inventory(): void

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BomTemplateController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProjectController;
 
@@ -16,13 +17,15 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-// Redirect root to inventory or login
+// Redirect root to dashboard or login
 Route::get('/', function () {
-    return auth()->check() ? redirect('/inventory') : redirect('/login');
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
-// Inventory Routes (Protected)
+// Protected routes
 Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
     Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
