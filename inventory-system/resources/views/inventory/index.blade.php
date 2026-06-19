@@ -4,182 +4,139 @@
 
 @section('content')
 
-<div class="mb-8">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div>
-            <h2 class="text-4xl font-bold text-gray-900">Inventory Management</h2>
-            <p class="text-gray-600 mt-2">{{ $items->total() }} item/s in inventory</p>
-        </div>
-        <a href="{{ route('inventory.create') }}" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-3 px-6 rounded-lg transition duration-200 transform hover:scale-105 flex items-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
-            </svg>
-            Add New Item
-        </a>
+<!-- Page header -->
+<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Inventory</h1>
+        <p class="mt-1 text-sm text-zinc-500">Track materials, supplies, and stock levels.</p>
     </div>
+    <a href="{{ route('inventory.create') }}" class="btn btn-primary">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        Add Item
+    </a>
+</div>
 
-    <!-- Statistics Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition">
+<!-- Stats -->
+<div class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    @php
+        $cards = [
+            ['label' => 'Total Items', 'value' => $stats['total_items'], 'accent' => 'text-zinc-900', 'ring' => 'bg-zinc-100 text-zinc-600', 'icon' => 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6z'],
+            ['label' => 'Low Stock', 'value' => $stats['low_stock_items'], 'accent' => 'text-amber-600', 'ring' => 'bg-amber-50 text-amber-600', 'icon' => 'M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z'],
+            ['label' => 'Out of Stock', 'value' => $stats['out_of_stock_items'], 'accent' => 'text-red-600', 'ring' => 'bg-red-50 text-red-600', 'icon' => 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636'],
+            ['label' => 'Movements', 'value' => $stats['total_movements'], 'accent' => 'text-emerald-600', 'ring' => 'bg-emerald-50 text-emerald-600', 'icon' => 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75z'],
+        ];
+    @endphp
+    @foreach($cards as $c)
+        <div class="card p-5">
             <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-600 text-sm font-medium">Total Items</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-2">{{ $stats['total_items'] }}</p>
-                </div>
-                <div class="bg-blue-100 p-3 rounded-full">
-                    <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
-                    </svg>
-                </div>
+                <span class="text-sm font-medium text-zinc-500">{{ $c['label'] }}</span>
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg {{ $c['ring'] }}">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $c['icon'] }}"/></svg>
+                </span>
             </div>
+            <p class="mt-3 text-3xl font-bold {{ $c['accent'] }}">{{ $c['value'] }}</p>
         </div>
+    @endforeach
+</div>
 
-        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-600 text-sm font-medium">Low Stock</p>
-                    <p class="text-3xl font-bold text-yellow-600 mt-2">{{ $stats['low_stock_items'] }}</p>
-                </div>
-                <div class="bg-yellow-100 p-3 rounded-full">
-                    <svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-600 text-sm font-medium">Out of Stock</p>
-                    <p class="text-3xl font-bold text-red-600 mt-2">{{ $stats['out_of_stock_items'] }}</p>
-                </div>
-                <div class="bg-red-100 p-3 rounded-full">
-                    <svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 105.5 13m5.5-4.5h2.25A2.25 2.25 0 0110 5.75V3.5m0 9.75h-2.25A2.25 2.25 0 0110 14.25V17m0-9.75A2.25 2.25 0 1010 5.75v8.5z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-600 text-sm font-medium">Stock Movements</p>
-                    <p class="text-3xl font-bold text-green-600 mt-2">{{ $stats['total_movements'] }}</p>
-                </div>
-                <div class="bg-green-100 p-3 rounded-full">
-                    <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M2 4a1 1 0 011-1h6a1 1 0 011 1v12a1 1 0 11-2 0V5H3a1 1 0 01-1-1zm12-2a1 1 0 01.967.25l4 5a1 1 0 11-1.934.5L17.5 5.5 14.967 8.75a1 1 0 01-1.934-.5l4-5a1 1 0 011.934 0z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-    </div>
-
+<!-- Table card -->
+<div class="card overflow-hidden">
     <!-- Filters -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <form method="GET" action="{{ route('inventory.index') }}" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search item, category..."
-                       class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition">
+    <form method="GET" action="{{ route('inventory.index') }}" class="flex flex-col gap-3 border-b border-zinc-200 p-4 sm:flex-row sm:items-center">
+        <div class="relative flex-1">
+            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search items, categories, remarks…" class="input pl-9">
+        </div>
+        <select name="category" class="select sm:w-48">
+            <option value="">All categories</option>
+            @foreach($categories as $cat)
+                <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+            @endforeach
+        </select>
+        <div class="flex gap-2">
+            <button type="submit" class="btn btn-dark">Search</button>
+            @if(request('search') || request('category'))
+                <a href="{{ route('inventory.index') }}" class="btn btn-ghost">Clear</a>
+            @endif
+        </div>
+    </form>
 
-                <select name="category"
-                        class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition">
-                    <option value="">All Categories</option>
-                    @foreach($categories as $cat)
-                        <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                    @endforeach
-                </select>
-
-                <div class="flex gap-2">
-                    <button type="submit" class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-3 rounded-lg transition">Search</button>
-                    <a href="{{ route('inventory.index') }}" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold py-3 rounded-lg text-center transition">Reset</a>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- Items Table -->
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        @if($items->count() > 0)
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-900 text-white">
+    @if($items->count() > 0)
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th>Stock</th>
+                        <th>Minimum</th>
+                        <th>Status</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($items as $item)
                         <tr>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Item Name</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Category</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Current Stock</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Minimum Level</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Status</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Actions</th>
+                            <td>
+                                <div class="font-medium text-zinc-900">{{ $item->name }}</div>
+                                @if($item->remarks)
+                                    <div class="text-xs text-zinc-400">{{ \Illuminate\Support\Str::limit($item->remarks, 48) }}</div>
+                                @endif
+                            </td>
+                            <td>
+                                @if($item->category)
+                                    <span class="badge badge-zinc">{{ $item->category }}</span>
+                                @else
+                                    <span class="text-zinc-300">—</span>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="font-semibold text-zinc-900">{{ $item->current_stock }}</span>
+                                <span class="text-xs text-zinc-400">{{ $item->unit }}</span>
+                            </td>
+                            <td class="text-zinc-500">{{ $item->minimum_stock }} {{ $item->unit }}</td>
+                            <td>
+                                <span class="badge {{ $item->isOutOfStock() ? 'badge-red' : ($item->isLowStock() ? 'badge-amber' : 'badge-green') }}">
+                                    <span class="h-1.5 w-1.5 rounded-full {{ $item->isOutOfStock() ? 'bg-red-500' : ($item->isLowStock() ? 'bg-amber-500' : 'bg-emerald-500') }}"></span>
+                                    {{ $item->getStatusLabel() }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="flex items-center justify-end gap-1">
+                                    @php
+                                        $actions = [
+                                            ['route' => route('inventory.stockInForm', $item->id), 'label' => 'Stock in', 'hover' => 'hover:bg-emerald-50 hover:text-emerald-600', 'icon' => 'M12 4.5v15m7.5-7.5h-15'],
+                                            ['route' => route('inventory.stockOutForm', $item->id), 'label' => 'Stock out', 'hover' => 'hover:bg-red-50 hover:text-red-600', 'icon' => 'M19.5 12h-15'],
+                                            ['route' => route('inventory.adjustForm', $item->id), 'label' => 'Adjust', 'hover' => 'hover:bg-amber-50 hover:text-amber-600', 'icon' => 'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.759 6.759 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.281z'],
+                                            ['route' => route('inventory.movements', $item->id), 'label' => 'History', 'hover' => 'hover:bg-blue-50 hover:text-blue-600', 'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z'],
+                                            ['route' => route('inventory.edit', $item->id), 'label' => 'Edit', 'hover' => 'hover:bg-zinc-100 hover:text-zinc-900', 'icon' => 'M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z'],
+                                        ];
+                                    @endphp
+                                    @foreach($actions as $a)
+                                        <a href="{{ $a['route'] }}" title="{{ $a['label'] }}" class="rounded-lg p-2 text-zinc-400 transition {{ $a['hover'] }}">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $a['icon'] }}"/></svg>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($items as $item)
-                            <tr class="border-b hover:bg-gray-50 transition">
-                                <td class="px-6 py-4">
-                                    <div class="font-semibold text-gray-900">{{ $item->name }}</div>
-                                    @if($item->remarks)
-                                        <p class="text-sm text-gray-600">{{ substr($item->remarks, 0, 50) }}...</p>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 text-gray-600">
-                                    {{ $item->category ?? '-' }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="font-bold text-lg text-gray-900">{{ $item->current_stock }}</span>
-                                    <span class="text-gray-600 text-sm">{{ $item->unit }}</span>
-                                </td>
-                                <td class="px-6 py-4 text-gray-600">
-                                    {{ $item->minimum_stock }} {{ $item->unit }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap {{ $item->getStatusBadgeClass() }}">
-                                        {{ $item->getStatusLabel() }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex gap-2 flex-wrap">
-                                        <a href="{{ route('inventory.stockInForm', $item->id) }}" class="bg-green-100 hover:bg-green-200 text-green-800 font-bold py-1 px-2 rounded text-xs transition" title="Stock In">
-                                            ➕
-                                        </a>
-                                        <a href="{{ route('inventory.stockOutForm', $item->id) }}" class="bg-red-100 hover:bg-red-200 text-red-800 font-bold py-1 px-2 rounded text-xs transition" title="Stock Out">
-                                            ➖
-                                        </a>
-                                        <a href="{{ route('inventory.adjustForm', $item->id) }}" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold py-1 px-2 rounded text-xs transition" title="Adjust">
-                                            ⚙️
-                                        </a>
-                                        <a href="{{ route('inventory.movements', $item->id) }}" class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold py-1 px-2 rounded text-xs transition" title="History">
-                                            📜
-                                        </a>
-                                        <a href="{{ route('inventory.edit', $item->id) }}" class="bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold py-1 px-2 rounded text-xs transition" title="Edit">
-                                            ✏️
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="px-6 py-4 bg-gray-50 border-t">
-                {{ $items->links() }}
-            </div>
-        @else
-            <div class="p-12 text-center">
-                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
-                </svg>
-                <p class="text-gray-600 text-lg mb-4">No inventory items yet.</p>
-                <a href="{{ route('inventory.create') }}" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-lg inline-block transition">
-                    Create First Item
-                </a>
-            </div>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @if($items->hasPages())
+            <div class="border-t border-zinc-200 px-5 py-3">{{ $items->withQueryString()->links() }}</div>
         @endif
-    </div>
+    @else
+        <div class="flex flex-col items-center justify-center px-6 py-16 text-center">
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100">
+                <svg class="h-6 w-6 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m16.5 0a48.667 48.667 0 00-16.5 0"/></svg>
+            </div>
+            <p class="mt-4 text-sm font-medium text-zinc-900">No items found</p>
+            <p class="mt-1 text-sm text-zinc-500">{{ request('search') || request('category') ? 'Try adjusting your filters.' : 'Get started by adding your first inventory item.' }}</p>
+            <a href="{{ route('inventory.create') }}" class="btn btn-primary mt-4">Add Item</a>
+        </div>
+    @endif
 </div>
 
 @endsection

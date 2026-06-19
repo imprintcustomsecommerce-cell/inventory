@@ -4,99 +4,80 @@
 
 @section('content')
 
-<div class="max-w-2xl">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div>
-            <h2 class="text-3xl font-bold text-gray-900">Edit Item</h2>
-            <p class="text-gray-600 mt-2">{{ $item->name }}</p>
+<div class="mx-auto max-w-2xl">
+    <a href="{{ route('inventory.index') }}" class="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zinc-900">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+        Back to inventory
+    </a>
+
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Edit item</h1>
+        <p class="mt-1 text-sm text-zinc-500">{{ $item->name }}</p>
+    </div>
+
+    <form action="{{ route('inventory.update', $item->id) }}" method="POST" class="card divide-y divide-zinc-200">
+        @csrf
+        @method('PUT')
+        <div class="space-y-5 p-6">
+            <div>
+                <label class="label">Item name</label>
+                <input type="text" name="name" value="{{ old('name', $item->name) }}" required class="input @error('name') input-error @enderror">
+                @error('name') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div>
+                    <label class="label">Category</label>
+                    <select name="category" class="select">
+                        <option value="">Select category</option>
+                        @foreach(['Fabric','Zipper','Thread','Collar','Cuffs','Label','Packaging','Other'] as $opt)
+                            <option value="{{ $opt }}" {{ old('category', $item->category) == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="label">Unit</label>
+                    <select name="unit" required class="select @error('unit') input-error @enderror">
+                        @foreach(['pcs','yards','meters','rolls','packs','boxes'] as $opt)
+                            <option value="{{ $opt }}" {{ old('unit', $item->unit) == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div>
+                    <label class="label">Current stock</label>
+                    <input type="number" value="{{ $item->current_stock }}" disabled class="input cursor-not-allowed bg-zinc-100 text-zinc-500">
+                    <p class="mt-1.5 text-xs text-zinc-400">Change via Stock In / Stock Out.</p>
+                </div>
+                <div>
+                    <label class="label">Minimum stock alert</label>
+                    <input type="number" name="minimum_stock" value="{{ old('minimum_stock', $item->minimum_stock) }}" min="0" required class="input @error('minimum_stock') input-error @enderror">
+                    @error('minimum_stock') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+            <div>
+                <label class="label">Remarks <span class="font-normal text-zinc-400">(optional)</span></label>
+                <textarea name="remarks" rows="3" class="textarea">{{ old('remarks', $item->remarks) }}</textarea>
+            </div>
         </div>
-        <a href="{{ route('inventory.index') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition">
-            ← Back
-        </a>
-    </div>
 
-    <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
-        <form action="{{ route('inventory.update', $item->id) }}" method="POST" class="space-y-6">
-            @csrf
-            @method('PUT')
+        <div class="flex items-center justify-end gap-3 bg-zinc-50 px-6 py-4">
+            <a href="{{ route('inventory.index') }}" class="btn btn-ghost">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+    </form>
 
-            <div>
-                <label class="block text-sm font-bold text-gray-900 mb-2">Item Name *</label>
-                <input type="text" name="name" value="{{ old('name', $item->name) }}" required
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 @error('name') border-red-500 @enderror">
-                @error('name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-bold text-gray-900 mb-2">Category</label>
-                    <select name="category" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400">
-                        <option value="">Select Category</option>
-                        <option value="Fabric" {{ old('category', $item->category) == 'Fabric' ? 'selected' : '' }}>Fabric</option>
-                        <option value="Zipper" {{ old('category', $item->category) == 'Zipper' ? 'selected' : '' }}>Zipper</option>
-                        <option value="Thread" {{ old('category', $item->category) == 'Thread' ? 'selected' : '' }}>Thread</option>
-                        <option value="Collar" {{ old('category', $item->category) == 'Collar' ? 'selected' : '' }}>Collar</option>
-                        <option value="Cuffs" {{ old('category', $item->category) == 'Cuffs' ? 'selected' : '' }}>Cuffs</option>
-                        <option value="Label" {{ old('category', $item->category) == 'Label' ? 'selected' : '' }}>Label</option>
-                        <option value="Packaging" {{ old('category', $item->category) == 'Packaging' ? 'selected' : '' }}>Packaging</option>
-                        <option value="Other" {{ old('category', $item->category) == 'Other' ? 'selected' : '' }}>Other</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-gray-900 mb-2">Unit *</label>
-                    <select name="unit" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400">
-                        <option value="pcs" {{ old('unit', $item->unit) == 'pcs' ? 'selected' : '' }}>pcs</option>
-                        <option value="yards" {{ old('unit', $item->unit) == 'yards' ? 'selected' : '' }}>yards</option>
-                        <option value="meters" {{ old('unit', $item->unit) == 'meters' ? 'selected' : '' }}>meters</option>
-                        <option value="rolls" {{ old('unit', $item->unit) == 'rolls' ? 'selected' : '' }}>rolls</option>
-                        <option value="packs" {{ old('unit', $item->unit) == 'packs' ? 'selected' : '' }}>packs</option>
-                        <option value="boxes" {{ old('unit', $item->unit) == 'boxes' ? 'selected' : '' }}>boxes</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-bold text-gray-900 mb-2">Current Stock</label>
-                    <input type="number" value="{{ $item->current_stock }}" disabled
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed">
-                    <p class="text-gray-600 text-xs mt-1">Use Stock In/Out to change</p>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-gray-900 mb-2">Minimum Stock Alert *</label>
-                    <input type="number" name="minimum_stock" value="{{ old('minimum_stock', $item->minimum_stock) }}" min="0" required
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400">
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-sm font-bold text-gray-900 mb-2">Remarks</label>
-                <textarea name="remarks" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400">{{ old('remarks', $item->remarks) }}</textarea>
-            </div>
-
-            <div class="flex gap-4 pt-4 border-t">
-                <button type="submit" class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-3 rounded-lg transition transform hover:scale-105">
-                    Update Item
-                </button>
-                <a href="{{ route('inventory.index') }}" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-3 rounded-lg text-center transition">
-                    Cancel
-                </a>
-            </div>
-        </form>
-    </div>
-
-    <!-- Delete Section -->
-    <div class="bg-red-50 border-l-4 border-red-500 rounded-xl p-8">
-        <h3 class="text-lg font-bold text-red-900 mb-3">⚠️ Danger Zone</h3>
-        <p class="text-red-700 mb-4">This action cannot be undone. All inventory history for this item will be lost.</p>
-        <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Are you absolutely sure?');">
+    <!-- Danger zone -->
+    <div class="mt-6 rounded-xl border border-red-200 bg-red-50 p-6">
+        <h3 class="text-sm font-semibold text-red-900">Delete this item</h3>
+        <p class="mt-1 text-sm text-red-700">Permanently removes the item and its entire movement history. This cannot be undone.</p>
+        <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Delete “{{ $item->name }}” and all its history? This cannot be undone.');" class="mt-4">
             @csrf
             @method('DELETE')
-            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition">
-                🗑️ Delete Item Permanently
-            </button>
+            <button type="submit" class="btn btn-danger btn-sm">Delete item</button>
         </form>
     </div>
 </div>

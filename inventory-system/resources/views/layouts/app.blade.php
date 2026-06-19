@@ -1,106 +1,109 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Inventory System')</title>
+    <title>@yield('title', 'Inventory') · Imprint</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-100 text-gray-900">
-    <div class="min-h-screen flex flex-col">
-        <!-- Navigation -->
-        <nav class="bg-gray-900 text-white shadow-xl border-b-4 border-yellow-400">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-20">
-                    <!-- Logo -->
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-yellow-400 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/>
-                            </svg>
-                        </div>
-                        <h1 class="text-xl font-bold">Imprint Inventory</h1>
-                    </div>
+<body class="h-full">
+<div class="min-h-full lg:flex" x-data="{ open: false }">
 
-                    <!-- Navigation Links -->
-                    <div class="hidden md:flex gap-1">
-                        <a href="{{ route('inventory.index') }}"
-                           class="px-4 py-2 rounded-lg font-semibold transition {{ request()->routeIs('inventory.index') ? 'bg-yellow-400 text-gray-900' : 'hover:bg-gray-800' }}">
-                            📦 Inventory
-                        </a>
-                        <a href="{{ route('inventory.lowStock') }}"
-                           class="px-4 py-2 rounded-lg font-semibold transition {{ request()->routeIs('inventory.lowStock') ? 'bg-yellow-400 text-gray-900' : 'hover:bg-gray-800' }}">
-                            ⚠️ Low Stock
-                        </a>
-                        <a href="{{ route('inventory.allMovements') }}"
-                           class="px-4 py-2 rounded-lg font-semibold transition {{ request()->routeIs('inventory.allMovements') ? 'bg-yellow-400 text-gray-900' : 'hover:bg-gray-800' }}">
-                            📊 Report
-                        </a>
-                    </div>
-
-                    <!-- User Menu -->
-                    <div class="flex items-center gap-4">
-                        <div class="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-lg">
-                            <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                                <span class="text-xs font-bold text-gray-900">{{ substr(auth()->user()->name, 0, 1) }}</span>
-                            </div>
-                            <span class="text-sm font-semibold">{{ auth()->user()->name }}</span>
-                        </div>
-
-                        <form method="POST" action="{{ route('logout') }}" class="inline">
-                            @csrf
-                            <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-lg transition duration-200 transform hover:scale-105">
-                                Logout
-                            </button>
-                        </form>
-                    </div>
-                </div>
+    <!-- Sidebar -->
+    <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-zinc-900 px-4 py-6 flex flex-col
+                  transition-transform lg:translate-x-0 lg:static lg:z-auto"
+           :class="open ? 'translate-x-0' : '-translate-x-full'">
+        <!-- Brand -->
+        <div class="flex items-center gap-3 px-2 mb-8">
+            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-400">
+                <svg class="h-5 w-5 text-zinc-900" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+                </svg>
             </div>
+            <div class="leading-tight">
+                <p class="text-sm font-semibold text-white">Imprint</p>
+                <p class="text-xs text-zinc-500">Inventory</p>
+            </div>
+        </div>
+
+        <!-- Nav -->
+        <nav class="flex-1 space-y-1">
+            <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-zinc-600">Manage</p>
+
+            <a href="{{ route('inventory.index') }}" class="nav-link {{ request()->routeIs('inventory.index') || request()->routeIs('inventory.create') || request()->routeIs('inventory.edit') ? 'nav-link-active' : '' }}">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+                <span>Inventory</span>
+            </a>
+
+            <a href="{{ route('inventory.lowStock') }}" class="nav-link {{ request()->routeIs('inventory.lowStock') ? 'nav-link-active' : '' }}">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                <span>Low Stock</span>
+            </a>
+
+            <a href="{{ route('inventory.allMovements') }}" class="nav-link {{ request()->routeIs('inventory.allMovements') ? 'nav-link-active' : '' }}">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+                <span>Movement Report</span>
+            </a>
         </nav>
 
-        <!-- Main Content -->
-        <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        <!-- User card -->
+        <div class="mt-auto border-t border-zinc-800 pt-4">
+            <div class="flex items-center gap-3 px-2">
+                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-400 text-sm font-bold text-zinc-900">
+                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                </div>
+                <div class="min-w-0 flex-1 leading-tight">
+                    <p class="truncate text-sm font-medium text-white">{{ auth()->user()->name }}</p>
+                    <p class="truncate text-xs text-zinc-500">{{ auth()->user()->email }}</p>
+                </div>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" title="Sign out" class="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-white transition">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile backdrop -->
+    <div x-show="open" @click="open = false" x-cloak class="fixed inset-0 z-30 bg-zinc-900/50 lg:hidden"></div>
+
+    <!-- Main -->
+    <div class="flex-1 min-w-0">
+        <!-- Topbar (mobile) -->
+        <header class="sticky top-0 z-20 flex items-center gap-3 border-b border-zinc-200 bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
+            <button @click="open = true" class="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+            </button>
+            <span class="font-semibold text-zinc-900">Imprint Inventory</span>
+        </header>
+
+        <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-10">
             @if (session('success'))
-                <div class="mb-6 p-4 bg-green-100 border-l-4 border-green-500 text-green-700 rounded-lg flex items-center gap-3">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
+                <div class="mb-6 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                    <svg class="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
                     {{ session('success') }}
                 </div>
             @endif
-
             @if (session('error'))
-                <div class="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg flex items-center gap-3">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                    </svg>
+                <div class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+                    <svg class="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
                     {{ session('error') }}
                 </div>
             @endif
-
             @if ($errors->any())
-                <div class="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg">
-                    <h3 class="font-semibold mb-2 flex items-center gap-2">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                        </svg>
-                        Please fix the following errors:
-                    </h3>
-                    <ul class="list-disc list-inside space-y-1">
-                        @foreach ($errors->all() as $error)
-                            <li class="text-sm">{{ $error }}</li>
-                        @endforeach
+                <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    <p class="font-semibold mb-1">Please fix the following:</p>
+                    <ul class="list-disc list-inside space-y-0.5">
+                        @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
                     </ul>
                 </div>
             @endif
 
             @yield('content')
         </main>
-
-        <!-- Footer -->
-        <footer class="bg-gray-900 text-gray-400 text-center py-6 mt-12 border-t border-gray-700">
-            <p>&copy; 2026 Imprint Customs Inventory System. All rights reserved.</p>
-        </footer>
     </div>
+</div>
 </body>
 </html>

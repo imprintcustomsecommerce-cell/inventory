@@ -1,108 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Imprint Inventory</title>
+    <title>Create account · Imprint Inventory</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-900 text-white">
-    <div class="min-h-screen flex items-center justify-center px-4 py-12">
-        <div class="w-full max-w-md">
-            <!-- Logo/Header -->
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-yellow-400 rounded-lg mb-4">
-                    <svg class="w-8 h-8 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/>
-                    </svg>
+<body class="h-full">
+<div class="flex min-h-full">
+
+    <!-- Brand panel -->
+    <div class="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-zinc-900 p-12 lg:flex">
+        <div class="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand-400/10 blur-3xl"></div>
+        <div class="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-brand-400/5 blur-3xl"></div>
+
+        <div class="relative flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-400">
+                <svg class="h-6 w-6 text-zinc-900" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+            </div>
+            <span class="text-lg font-semibold text-white">Imprint Inventory</span>
+        </div>
+
+        <div class="relative">
+            <h2 class="text-3xl font-bold leading-tight text-white">Get started in<br><span class="text-brand-400">under a minute.</span></h2>
+            <p class="mt-4 max-w-sm text-zinc-400">Create your account and start managing inventory with clarity and control.</p>
+        </div>
+
+        <p class="relative text-xs text-zinc-600">© 2026 Imprint Customs. All rights reserved.</p>
+    </div>
+
+    <!-- Form panel -->
+    <div class="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-20">
+        <div class="mx-auto w-full max-w-sm">
+            <div class="mb-8 flex items-center gap-3 lg:hidden">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-400">
+                    <svg class="h-6 w-6 text-zinc-900" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
                 </div>
-                <h1 class="text-3xl font-bold text-white">Imprint Inventory</h1>
-                <p class="text-gray-400 mt-2">Create Your Account</p>
+                <span class="text-lg font-semibold text-zinc-900">Imprint Inventory</span>
             </div>
 
-            <!-- Register Form -->
-            <div class="bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-700">
-                <h2 class="text-2xl font-bold text-white mb-6">Get Started</h2>
+            <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Create your account</h1>
+            <p class="mt-2 text-sm text-zinc-500">Start managing your inventory today.</p>
 
-                @if ($errors->any())
-                    <div class="mb-6 p-4 bg-red-900 border border-red-700 rounded-lg">
-                        <p class="text-red-200 text-sm font-semibold">Please fix these errors:</p>
-                        <ul class="text-red-200 text-sm mt-2 list-disc list-inside">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <form method="POST" action="{{ route('register') }}" class="space-y-4">
-                    @csrf
-
-                    <!-- Name Input -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-300 mb-2">Full Name</label>
-                        <input type="text" name="name" value="{{ old('name') }}" required autofocus
-                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-20 transition @error('name') border-red-500 @enderror">
-                        @error('name')
-                            <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Email Input -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-300 mb-2">Email Address</label>
-                        <input type="email" name="email" value="{{ old('email') }}" required
-                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-20 transition @error('email') border-red-500 @enderror">
-                        @error('email')
-                            <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Password Input -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-300 mb-2">Password</label>
-                        <input type="password" name="password" required
-                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-20 transition @error('password') border-red-500 @enderror">
-                        <p class="text-gray-400 text-xs mt-1">At least 8 characters</p>
-                        @error('password')
-                            <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Password Confirmation -->
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-300 mb-2">Confirm Password</label>
-                        <input type="password" name="password_confirmation" required
-                               class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-20 transition">
-                    </div>
-
-                    <!-- Register Button -->
-                    <button type="submit" class="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-3 rounded-lg transition duration-200 transform hover:scale-105">
-                        Create Account
-                    </button>
-                </form>
-
-                <!-- Divider -->
-                <div class="my-6 flex items-center">
-                    <div class="flex-1 border-t border-gray-600"></div>
-                    <span class="px-3 text-gray-400 text-sm">OR</span>
-                    <div class="flex-1 border-t border-gray-600"></div>
+            @if ($errors->any())
+                <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <ul class="list-disc list-inside space-y-0.5">
+                        @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+                    </ul>
                 </div>
+            @endif
 
-                <!-- Login Link -->
-                <p class="text-center text-gray-400">
-                    Already have an account?
-                    <a href="{{ route('login') }}" class="text-yellow-400 hover:text-yellow-300 font-semibold transition">
-                        Sign in here
-                    </a>
-                </p>
-            </div>
+            <form method="POST" action="{{ route('register') }}" class="mt-8 space-y-5">
+                @csrf
+                <div>
+                    <label class="label">Full name</label>
+                    <input type="text" name="name" value="{{ old('name') }}" required autofocus placeholder="Jane Dela Cruz" class="input @error('name') input-error @enderror">
+                </div>
+                <div>
+                    <label class="label">Email address</label>
+                    <input type="email" name="email" value="{{ old('email') }}" required placeholder="you@company.com" class="input @error('email') input-error @enderror">
+                </div>
+                <div>
+                    <label class="label">Password</label>
+                    <input type="password" name="password" required placeholder="At least 8 characters" class="input @error('password') input-error @enderror">
+                </div>
+                <div>
+                    <label class="label">Confirm password</label>
+                    <input type="password" name="password_confirmation" required placeholder="Re-enter password" class="input">
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Create account</button>
+            </form>
 
-            <!-- Footer -->
-            <p class="text-center text-gray-500 text-sm mt-8">
-                © 2026 Imprint Customs. All rights reserved.
+            <p class="mt-8 text-center text-sm text-zinc-500">
+                Already have an account?
+                <a href="{{ route('login') }}" class="font-semibold text-zinc-900 hover:text-brand-600">Sign in</a>
             </p>
         </div>
     </div>
+</div>
 </body>
 </html>

@@ -1,79 +1,81 @@
 @extends('layouts.app')
 
-@section('title', 'Low Stock Alert')
+@section('title', 'Low Stock')
 
 @section('content')
 
-<div>
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div>
-            <h2 class="text-3xl font-bold text-gray-900">⚠️ Low Stock Alert</h2>
-            <p class="text-gray-600 mt-2">{{ $items->total() }} item/s need attention</p>
+<div class="mb-6">
+    <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Low stock</h1>
+    <p class="mt-1 text-sm text-zinc-500">{{ $items->total() }} item{{ $items->total() === 1 ? '' : 's' }} at or below the minimum level.</p>
+</div>
+
+<div class="card overflow-hidden">
+    <form method="GET" action="{{ route('inventory.lowStock') }}" class="flex flex-col gap-3 border-b border-zinc-200 p-4 sm:flex-row sm:items-center">
+        <div class="relative flex-1">
+            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search items…" class="input pl-9">
         </div>
-        <a href="{{ route('inventory.index') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">← Back</a>
-    </div>
+        <select name="status" class="select sm:w-48">
+            <option value="">All low stock</option>
+            <option value="low_stock" {{ request('status') == 'low_stock' ? 'selected' : '' }}>Low stock only</option>
+            <option value="out_of_stock" {{ request('status') == 'out_of_stock' ? 'selected' : '' }}>Out of stock only</option>
+        </select>
+        <div class="flex gap-2">
+            <button type="submit" class="btn btn-dark">Filter</button>
+            @if(request('search') || request('status'))
+                <a href="{{ route('inventory.lowStock') }}" class="btn btn-ghost">Clear</a>
+            @endif
+        </div>
+    </form>
 
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <form method="GET" action="{{ route('inventory.lowStock') }}" class="flex gap-3 flex-wrap">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search..."
-                   class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400">
-
-            <select name="status" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400">
-                <option value="">All Low Stock</option>
-                <option value="low_stock" {{ request('status') == 'low_stock' ? 'selected' : '' }}>Low Stock Only</option>
-                <option value="out_of_stock" {{ request('status') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock Only</option>
-            </select>
-
-            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Filter</button>
-            <a href="{{ route('inventory.lowStock') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-2 px-4 rounded-lg">Reset</a>
-        </form>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        @if($items->count() > 0)
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-900 text-white">
+    @if($items->count() > 0)
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th>Stock</th>
+                        <th>Minimum</th>
+                        <th>Status</th>
+                        <th class="text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($items as $item)
                         <tr>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Item</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Category</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Current</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Minimum</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Status</th>
-                            <th class="px-6 py-4 text-left text-sm font-bold">Action</th>
+                            <td class="font-medium text-zinc-900">{{ $item->name }}</td>
+                            <td>
+                                @if($item->category)<span class="badge badge-zinc">{{ $item->category }}</span>@else <span class="text-zinc-300">—</span> @endif
+                            </td>
+                            <td class="font-semibold text-zinc-900">{{ $item->current_stock }} <span class="text-xs font-normal text-zinc-400">{{ $item->unit }}</span></td>
+                            <td class="text-zinc-500">{{ $item->minimum_stock }} {{ $item->unit }}</td>
+                            <td>
+                                <span class="badge {{ $item->isOutOfStock() ? 'badge-red' : 'badge-amber' }}">
+                                    <span class="h-1.5 w-1.5 rounded-full {{ $item->isOutOfStock() ? 'bg-red-500' : 'bg-amber-500' }}"></span>
+                                    {{ $item->getStatusLabel() }}
+                                </span>
+                            </td>
+                            <td class="text-right">
+                                <a href="{{ route('inventory.stockInForm', $item->id) }}" class="btn btn-primary btn-sm">Restock</a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($items as $item)
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="px-6 py-4 font-bold text-gray-900">{{ $item->name }}</td>
-                                <td class="px-6 py-4 text-gray-600">{{ $item->category ?? '-' }}</td>
-                                <td class="px-6 py-4 font-bold text-gray-900">{{ $item->current_stock }} {{ $item->unit }}</td>
-                                <td class="px-6 py-4 text-gray-600">{{ $item->minimum_stock }} {{ $item->unit }}</td>
-                                <td class="px-6 py-4">
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold {{ $item->getStatusBadgeClass() }}">
-                                        {{ $item->getStatusLabel() }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <a href="{{ route('inventory.stockInForm', $item->id) }}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-sm">
-                                        Restock
-                                    </a>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="px-6 py-4 bg-gray-50 border-t">
-                {{ $items->links() }}
-            </div>
-        @else
-            <div class="p-12 text-center text-gray-600">
-                ✓ No low stock items. Inventory looks great!
-            </div>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @if($items->hasPages())
+            <div class="border-t border-zinc-200 px-5 py-3">{{ $items->withQueryString()->links() }}</div>
         @endif
-    </div>
+    @else
+        <div class="flex flex-col items-center justify-center px-6 py-16 text-center">
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
+                <svg class="h-6 w-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <p class="mt-4 text-sm font-medium text-zinc-900">All stocked up</p>
+            <p class="mt-1 text-sm text-zinc-500">No items are below their minimum level.</p>
+        </div>
+    @endif
 </div>
 
 @endsection
