@@ -52,5 +52,36 @@ class InventorySeeder extends Seeder
                 ],
             ]);
         }
+
+        // Sample project with a bill of materials (not yet in production).
+        $navyId = DB::table('inventory_items')->where('name', 'Aircool Fabric (Navy)')->value('id');
+        $threadId = DB::table('inventory_items')->where('name', 'Polyester Thread (White)')->value('id');
+        $labelId = DB::table('inventory_items')->where('name', 'Woven Label')->value('id');
+
+        $projectId = DB::table('projects')->insertGetId([
+            'project_name' => 'ABC Riders Jersey Order',
+            'customer_name' => 'ABC Riders Club',
+            'product_type' => 'Jersey',
+            'quantity' => 30,
+            'status' => 'For Production',
+            'due_date' => $now->copy()->addDays(10)->toDateString(),
+            'remarks' => 'Full sublimation, navy base.',
+            'materials_deducted' => false,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        foreach ([[$navyId, 45], [$threadId, 6], [$labelId, 30]] as [$itemId, $qty]) {
+            if ($itemId) {
+                DB::table('project_materials')->insert([
+                    'project_id' => $projectId,
+                    'inventory_item_id' => $itemId,
+                    'quantity_needed' => $qty,
+                    'quantity_used' => 0,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+        }
     }
 }
