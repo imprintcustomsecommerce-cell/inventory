@@ -2,346 +2,191 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AdjustStockRequest;
+use App\Http\Requests\StockInRequest;
+use App\Http\Requests\StockOutRequest;
+use App\Http\Requests\StoreInventoryItemRequest;
+use App\Http\Requests\UpdateInventoryItemRequest;
+use App\Models\InventoryItem;
+use App\Models\InventoryMovement;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class InventoryController extends Controller
 {
+    private InventoryService $inventoryService;
+
+    public function __construct(InventoryService $inventoryService)
+    {
+        $this->inventoryService = $inventoryService;
+    }
+
     public function index(Request $request)
-{
-    $query = DB::table('inventory_items');
+    {
+        $query = InventoryItem::query();
 
-    if ($request->filled('search')) {
-        $query->where(function ($q) use ($request) {
-            $q->where('name', 'like', '%' . $request->search . '%')
-              ->orWhere('category', 'like', '%' . $request->search . '%')
-              ->orWhere('remarks', 'like', '%' . $request->search . '%');
-        });
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('category', 'like', '%' . $search . '%')
+                    ->orWhere('remarks', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->input('category'));
+        }
+
+        $items = $query->orderBy('name')->paginate(50);
+        $categories = InventoryItem::whereNotNull('category')->distinct()->pluck('category')->sort();
+        $stats = $this->inventoryService->getStatistics();
+
+        return view('inventory.index', compact('items', 'categories', 'stats'));
     }
-
-    if ($request->filled('category')) {
-        $query->where('category', $request->category);
-    }
-
-    $items = $query->orderBy('name')->get();
-
-    $totalItems = DB::table('inventory_items')->count();
-
-    $lowStockItems = DB::table('inventory_items')
-        ->whereColumn('current_stock', '<=', 'minimum_stock')
-        ->where('current_stock', '>', 0)
-        ->count();
-
-    $outOfStockItems = DB::table('inventory_items')
-        ->where('current_stock', '<=', 0)
-        ->count();
-
-    $totalMovements = DB::table('inventory_movements')->count();
-
-    $categories = DB::table('inventory_items')
-        ->whereNotNull('category')
-        ->select('category')
-        ->distinct()
-        ->orderBy('category')
-        ->pluck('category');
-
-    return view('inventory.index', compact(
-        'items',
-        'totalItems',
-        'lowStockItems',
-        'outOfStockItems',
-        'totalMovements',
-        'categories'
-    ));
-}
 
     public function create()
     {
         return view('inventory.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreInventoryItemRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'nullable|string|max:255',
-            'unit' => 'required|string|max:50',
-            'current_stock' => 'required|integer|min:0',
-            'minimum_stock' => 'required|integer|min:0',
-            'remarks' => 'nullable|string',
-        ]);
-
-        DB::table('inventory_items')->insert([
-            'name' => $request->name,
-            'category' => $request->category,
-            'unit' => $request->unit,
-            'current_stock' => $request->current_stock,
-            'minimum_stock' => $request->minimum_stock,
-            'status' => 'active',
-            'remarks' => $request->remarks,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return redirect('/inventory')->with('success', 'Inventory item added successfully.');
+        InventoryItem::create($request->validated());
+        return redirect()->route('inventory.index')->with('success', 'Item created successfully.');
     }
 
-    public function edit($id)
+    public function edit(InventoryItem $inventoryItem)
     {
-        $item = DB::table('inventory_items')->where('id', $id)->first();
-
-        if (!$item) {
-            abort(404);
-        }
-
-        return view('inventory.edit', compact('item'));
+        return view('inventory.edit', ['item' => $inventoryItem]);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateInventoryItemRequest $request, InventoryItem $inventoryItem)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'nullable|string|max:255',
-            'unit' => 'required|string|max:50',
-            'minimum_stock' => 'required|integer|min:0',
-            'remarks' => 'nullable|string',
-        ]);
-
-        DB::table('inventory_items')->where('id', $id)->update([
-            'name' => $request->name,
-            'category' => $request->category,
-            'unit' => $request->unit,
-            'minimum_stock' => $request->minimum_stock,
-            'remarks' => $request->remarks,
-            'updated_at' => now(),
-        ]);
-
-        return redirect('/inventory')->with('success', 'Inventory item updated successfully.');
+        $inventoryItem->update($request->validated());
+        return redirect()->route('inventory.index')->with('success', 'Item updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy(InventoryItem $inventoryItem)
     {
-        DB::table('inventory_items')->where('id', $id)->delete();
-
-        return redirect('/inventory')->with('success', 'Inventory item deleted successfully.');
+        $inventoryItem->delete();
+        return redirect()->route('inventory.index')->with('success', 'Item deleted successfully.');
     }
 
-    public function stockIn(Request $request, $id)
+    public function stockInForm(InventoryItem $inventoryItem)
     {
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
-            'reference' => 'nullable|string|max:255',
-            'remarks' => 'nullable|string',
-        ]);
-
-        $item = DB::table('inventory_items')->where('id', $id)->first();
-
-        if (!$item) {
-            abort(404);
-        }
-
-        DB::table('inventory_movements')->insert([
-            'inventory_item_id' => $id,
-            'type' => 'stock_in',
-            'quantity' => $request->quantity,
-            'reference' => $request->reference,
-            'remarks' => $request->remarks,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('inventory_items')->where('id', $id)->update([
-            'current_stock' => $item->current_stock + $request->quantity,
-            'updated_at' => now(),
-        ]);
-
-        return redirect('/inventory')->with('success', 'Stock added successfully.');
+        return view('inventory.stock-in', ['item' => $inventoryItem]);
     }
 
-    public function stockOut(Request $request, $id)
+    public function stockIn(StockInRequest $request, InventoryItem $inventoryItem)
     {
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
-            'reference' => 'nullable|string|max:255',
-            'remarks' => 'nullable|string',
-        ]);
-
-        $item = DB::table('inventory_items')->where('id', $id)->first();
-
-        if (!$item) {
-            abort(404);
-        }
-
-        if ($request->quantity > $item->current_stock) {
-            return redirect('/inventory')->with('error', 'Not enough stock available.');
-        }
-
-        DB::table('inventory_movements')->insert([
-            'inventory_item_id' => $id,
-            'type' => 'stock_out',
-            'quantity' => $request->quantity,
-            'reference' => $request->reference,
-            'remarks' => $request->remarks,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('inventory_items')->where('id', $id)->update([
-            'current_stock' => $item->current_stock - $request->quantity,
-            'updated_at' => now(),
-        ]);
-
-        return redirect('/inventory')->with('success', 'Stock deducted successfully.');
-    }
-
-    public function movements($id)
-    {
-        $item = DB::table('inventory_items')->where('id', $id)->first();
-
-        if (!$item) {
-            abort(404);
-        }
-
-        $movements = DB::table('inventory_movements')
-            ->where('inventory_item_id', $id)
-            ->orderByDesc('created_at')
-            ->get();
-
-        return view('inventory.movements', compact('item', 'movements'));
-    }
-
-    public function stockInForm($id)
-{
-    $item = DB::table('inventory_items')->where('id', $id)->first();
-
-    if (!$item) {
-        abort(404);
-    }
-
-    return view('inventory.stock-in', compact('item'));
-}
-
-public function stockOutForm($id)
-{
-    $item = DB::table('inventory_items')->where('id', $id)->first();
-
-    if (!$item) {
-        abort(404);
-    }
-
-    return view('inventory.stock-out', compact('item'));
-}
-
-public function allMovements(Request $request)
-{
-    $query = DB::table('inventory_movements')
-        ->join('inventory_items', 'inventory_movements.inventory_item_id', '=', 'inventory_items.id')
-        ->select(
-            'inventory_movements.*',
-            'inventory_items.name as item_name',
-            'inventory_items.unit as item_unit',
-            'inventory_items.category as item_category'
+        $this->inventoryService->stockIn(
+            $inventoryItem,
+            $request->input('quantity'),
+            $request->input('reference'),
+            $request->input('remarks')
         );
 
-    if ($request->filled('search')) {
-        $query->where(function ($q) use ($request) {
-            $q->where('inventory_items.name', 'like', '%' . $request->search . '%')
-              ->orWhere('inventory_items.category', 'like', '%' . $request->search . '%')
-              ->orWhere('inventory_movements.reference', 'like', '%' . $request->search . '%')
-              ->orWhere('inventory_movements.remarks', 'like', '%' . $request->search . '%');
-        });
+        return redirect()->route('inventory.index')->with('success', 'Stock added successfully.');
     }
 
-    if ($request->filled('type')) {
-        $query->where('inventory_movements.type', $request->type);
+    public function stockOutForm(InventoryItem $inventoryItem)
+    {
+        return view('inventory.stock-out', ['item' => $inventoryItem]);
     }
 
-    if ($request->filled('date_from')) {
-        $query->whereDate('inventory_movements.created_at', '>=', $request->date_from);
-    }
+    public function stockOut(StockOutRequest $request, InventoryItem $inventoryItem)
+    {
+        $result = $this->inventoryService->stockOut(
+            $inventoryItem,
+            $request->input('quantity'),
+            $request->input('reference'),
+            $request->input('remarks')
+        );
 
-    if ($request->filled('date_to')) {
-        $query->whereDate('inventory_movements.created_at', '<=', $request->date_to);
-    }
-
-    $movements = $query
-        ->orderByDesc('inventory_movements.created_at')
-        ->get();
-
-    return view('inventory.all-movements', compact('movements'));
-}
-
-public function lowStock(Request $request)
-{
-    $query = DB::table('inventory_items')
-        ->whereColumn('current_stock', '<=', 'minimum_stock');
-
-    if ($request->filled('search')) {
-        $query->where(function ($q) use ($request) {
-            $q->where('name', 'like', '%' . $request->search . '%')
-              ->orWhere('category', 'like', '%' . $request->search . '%')
-              ->orWhere('remarks', 'like', '%' . $request->search . '%');
-        });
-    }
-
-    if ($request->filled('status')) {
-        if ($request->status === 'out_of_stock') {
-            $query->where('current_stock', '<=', 0);
+        if (!$result) {
+            return back()->with('error', 'Not enough stock available.');
         }
 
-        if ($request->status === 'low_stock') {
-            $query->where('current_stock', '>', 0)
-                  ->whereColumn('current_stock', '<=', 'minimum_stock');
+        return redirect()->route('inventory.index')->with('success', 'Stock deducted successfully.');
+    }
+
+    public function adjustForm(InventoryItem $inventoryItem)
+    {
+        return view('inventory.adjust', ['item' => $inventoryItem]);
+    }
+
+    public function adjustStock(AdjustStockRequest $request, InventoryItem $inventoryItem)
+    {
+        $this->inventoryService->adjustStock(
+            $inventoryItem,
+            $request->input('actual_stock'),
+            $request->input('reference'),
+            $request->input('remarks')
+        );
+
+        return redirect()->route('inventory.index')->with('success', 'Stock adjusted successfully.');
+    }
+
+    public function movements(InventoryItem $inventoryItem)
+    {
+        $movements = $inventoryItem->movements()->latest()->paginate(50);
+        return view('inventory.movements', ['item' => $inventoryItem, 'movements' => $movements]);
+    }
+
+    public function allMovements(Request $request)
+    {
+        $query = InventoryMovement::with('item')->latest();
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->whereHas('item', function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('category', 'like', '%' . $search . '%');
+            })->orWhere('reference', 'like', '%' . $search . '%')
+                ->orWhere('remarks', 'like', '%' . $search . '%');
         }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        }
+
+        $movements = $query->paginate(100);
+
+        return view('inventory.all-movements', compact('movements'));
     }
 
-    $items = $query->orderBy('current_stock')->get();
+    public function lowStock(Request $request)
+    {
+        $query = InventoryItem::whereColumn('current_stock', '<=', 'minimum_stock');
 
-    return view('inventory.low-stock', compact('items'));
-}
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('category', 'like', '%' . $search . '%')
+                    ->orWhere('remarks', 'like', '%' . $search . '%');
+            });
+        }
 
-public function adjustForm($id)
-{
-    $item = DB::table('inventory_items')->where('id', $id)->first();
+        if ($request->filled('status')) {
+            if ($request->input('status') === 'out_of_stock') {
+                $query->where('current_stock', '<=', 0);
+            } elseif ($request->input('status') === 'low_stock') {
+                $query->where('current_stock', '>', 0);
+            }
+        }
 
-    if (!$item) {
-        abort(404);
+        $items = $query->orderBy('current_stock')->paginate(50);
+
+        return view('inventory.low-stock', compact('items'));
     }
-
-    return view('inventory.adjust', compact('item'));
-}
-
-public function adjustStock(Request $request, $id)
-{
-    $request->validate([
-        'actual_stock' => 'required|integer|min:0',
-        'reference' => 'nullable|string|max:255',
-        'remarks' => 'nullable|string',
-    ]);
-
-    $item = DB::table('inventory_items')->where('id', $id)->first();
-
-    if (!$item) {
-        abort(404);
-    }
-
-    DB::table('inventory_movements')->insert([
-        'inventory_item_id' => $id,
-        'type' => 'adjustment',
-        'quantity' => $request->actual_stock,
-        'reference' => $request->reference,
-        'remarks' => 'Adjusted from ' . $item->current_stock . ' to ' . $request->actual_stock . '. ' . $request->remarks,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
-    DB::table('inventory_items')->where('id', $id)->update([
-        'current_stock' => $request->actual_stock,
-        'updated_at' => now(),
-    ]);
-
-    return redirect('/inventory')->with('success', 'Stock adjusted successfully.');
-}
-
-
 }

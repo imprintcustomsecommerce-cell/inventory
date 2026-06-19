@@ -13,19 +13,19 @@ Route::post('/inventory', [InventoryController::class, 'store'])->name('inventor
 
 Route::get('/inventory-low-stock', [InventoryController::class, 'lowStock'])->name('inventory.lowStock');
 
-Route::get('/inventory/{id}/adjust', [InventoryController::class, 'adjustForm'])->name('inventory.adjustForm');
-Route::post('/inventory/{id}/adjust', [InventoryController::class, 'adjustStock'])->name('inventory.adjustStock');
+Route::get('/inventory/{inventoryItem}/adjust', [InventoryController::class, 'adjustForm'])->name('inventory.adjustForm');
+Route::post('/inventory/{inventoryItem}/adjust', [InventoryController::class, 'adjustStock'])->name('inventory.adjustStock');
 
-Route::get('/inventory/{id}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
-Route::put('/inventory/{id}', [InventoryController::class, 'update'])->name('inventory.update');
-Route::delete('/inventory/{id}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
+Route::get('/inventory/{inventoryItem}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
+Route::put('/inventory/{inventoryItem}', [InventoryController::class, 'update'])->name('inventory.update');
+Route::delete('/inventory/{inventoryItem}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
 
 Route::get('/inventory-movements', [InventoryController::class, 'allMovements'])->name('inventory.allMovements');
 
-Route::get('/inventory/{id}/stock-in', [InventoryController::class, 'stockInForm'])->name('inventory.stockInForm');
-Route::get('/inventory/{id}/stock-out', [InventoryController::class, 'stockOutForm'])->name('inventory.stockOutForm');
+Route::get('/inventory/{inventoryItem}/stock-in', [InventoryController::class, 'stockInForm'])->name('inventory.stockInForm');
+Route::get('/inventory/{inventoryItem}/stock-out', [InventoryController::class, 'stockOutForm'])->name('inventory.stockOutForm');
 
-Route::post('/inventory/{id}/stock-in', [InventoryController::class, 'stockIn'])->name('inventory.stockIn');
-Route::post('/inventory/{id}/stock-out', [InventoryController::class, 'stockOut'])->name('inventory.stockOut');
+Route::post('/inventory/{inventoryItem}/stock-in', [InventoryController::class, 'stockIn'])->name('inventory.stockIn');
+Route::post('/inventory/{inventoryItem}/stock-out', [InventoryController::class, 'stockOut'])->name('inventory.stockOut');
 
-Route::get('/inventory/{id}/movements', [InventoryController::class, 'movements'])->name('inventory.movements');
+Route::get('/inventory/{inventoryItem}/movements', [InventoryController::class, 'movements'])->name('inventory.movements');

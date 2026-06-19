@@ -1,154 +1,130 @@
 @extends('layouts.app')
 
 @section('title', 'Inventory')
-@section('subtitle', 'Manage materials, supplies, and stock levels')
 
 @section('content')
 
-<div class="page-actions">
-    <div>
-        <h2>Inventory</h2>
-        <p>{{ $items->count() }} item/s found</p>
+<div class="mb-8">
+    <div class="flex justify-between items-start mb-6">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900">Inventory Management</h2>
+            <p class="text-gray-600 mt-2">Manage your materials and stock levels</p>
+        </div>
+        <a href="{{ route('inventory.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+            + Add New Item
+        </a>
     </div>
 
-    <div style="display:flex; gap:10px;">
-    <a href="{{ route('inventory.lowStock') }}" class="btn btn-danger">Low Stock</a>
-    <a href="{{ route('inventory.allMovements') }}" class="btn btn-warning">Stock Report</a>
-    <a href="{{ route('inventory.create') }}" class="btn btn-primary">+ Add Item</a>
+    <!-- Statistics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+            <p class="text-gray-600 text-sm font-medium">Total Items</p>
+            <p class="text-3xl font-bold text-gray-900 mt-2">{{ $stats['total_items'] }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+            <p class="text-gray-600 text-sm font-medium">Low Stock</p>
+            <p class="text-3xl font-bold text-yellow-600 mt-2">{{ $stats['low_stock_items'] }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+            <p class="text-gray-600 text-sm font-medium">Out of Stock</p>
+            <p class="text-3xl font-bold text-red-600 mt-2">{{ $stats['out_of_stock_items'] }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+            <p class="text-gray-600 text-sm font-medium">Movements</p>
+            <p class="text-3xl font-bold text-green-600 mt-2">{{ $stats['total_movements'] }}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <form method="GET" action="{{ route('inventory.index') }}" class="flex gap-3 flex-wrap">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search item, category..."
+                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+
+            <select name="category" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">All Categories</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                @endforeach
+            </select>
+
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Search</button>
+            <a href="{{ route('inventory.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Reset</a>
+        </form>
+    </div>
+
+    <!-- Items Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        @if($items->count() > 0)
+            <table class="w-full">
+                <thead class="bg-gray-100 border-b">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-sm font-bold text-gray-700">Item Name</th>
+                        <th class="px-6 py-3 text-left text-sm font-bold text-gray-700">Category</th>
+                        <th class="px-6 py-3 text-left text-sm font-bold text-gray-700">Current Stock</th>
+                        <th class="px-6 py-3 text-left text-sm font-bold text-gray-700">Minimum Level</th>
+                        <th class="px-6 py-3 text-left text-sm font-bold text-gray-700">Status</th>
+                        <th class="px-6 py-3 text-left text-sm font-bold text-gray-700">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($items as $item)
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="font-semibold text-gray-900">{{ $item->name }}</div>
+                                @if($item->remarks)
+                                    <p class="text-sm text-gray-600">{{ $item->remarks }}</p>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-gray-600">{{ $item->category ?? '-' }}</td>
+                            <td class="px-6 py-4 font-semibold text-gray-900">
+                                {{ $item->current_stock }} {{ $item->unit }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-600">
+                                {{ $item->minimum_stock }} {{ $item->unit }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $item->getStatusBadgeClass() }}">
+                                    {{ $item->getStatusLabel() }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex gap-2 flex-wrap">
+                                    <a href="{{ route('inventory.stockInForm', $item->id) }}" class="text-xs bg-green-100 hover:bg-green-200 text-green-800 font-bold py-1 px-2 rounded">
+                                        Stock In
+                                    </a>
+                                    <a href="{{ route('inventory.stockOutForm', $item->id) }}" class="text-xs bg-red-100 hover:bg-red-200 text-red-800 font-bold py-1 px-2 rounded">
+                                        Stock Out
+                                    </a>
+                                    <a href="{{ route('inventory.adjustForm', $item->id) }}" class="text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold py-1 px-2 rounded">
+                                        Adjust
+                                    </a>
+                                    <a href="{{ route('inventory.movements', $item->id) }}" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold py-1 px-2 rounded">
+                                        History
+                                    </a>
+                                    <a href="{{ route('inventory.edit', $item->id) }}" class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold py-1 px-2 rounded">
+                                        Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div class="px-6 py-4 bg-gray-50 border-t">
+                {{ $items->links() }}
+            </div>
+        @else
+            <div class="p-12 text-center">
+                <p class="text-gray-600 text-lg mb-4">No inventory items yet.</p>
+                <a href="{{ route('inventory.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                    Add First Item
+                </a>
+            </div>
+        @endif
+    </div>
 </div>
-</div>
-
-<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
-    <div style="background:#f9fafb; padding:18px; border-radius:12px;">
-        <p style="margin:0; color:#6b7280;">Total Items</p>
-        <h2 style="margin:8px 0 0;">{{ $totalItems }}</h2>
-    </div>
-
-    <div style="background:#fff7ed; padding:18px; border-radius:12px;">
-        <p style="margin:0; color:#9a3412;">Low Stock</p>
-        <h2 style="margin:8px 0 0;">{{ $lowStockItems }}</h2>
-    </div>
-
-    <div style="background:#fee2e2; padding:18px; border-radius:12px;">
-        <p style="margin:0; color:#991b1b;">Out of Stock</p>
-        <h2 style="margin:8px 0 0;">{{ $outOfStockItems }}</h2>
-    </div>
-
-    <div style="background:#ecfdf5; padding:18px; border-radius:12px;">
-        <p style="margin:0; color:#166534;">Stock Movements</p>
-        <h2 style="margin:8px 0 0;">{{ $totalMovements }}</h2>
-    </div>
-</div>
-
-<form method="GET" action="{{ route('inventory.index') }}" style="display:flex; gap:10px; margin-bottom:20px;">
-    <input 
-        type="text" 
-        name="search" 
-        value="{{ request('search') }}" 
-        placeholder="Search item, category, remarks..."
-        style="flex:1;"
-    >
-
-    <select name="category" style="width:220px;">
-        <option value="">All Categories</option>
-
-        @foreach($categories as $category)
-            <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>
-                {{ $category }}
-            </option>
-        @endforeach
-    </select>
-
-    <button type="submit" class="btn btn-primary">Search</button>
-
-    <a href="{{ route('inventory.index') }}" class="btn btn-warning">Reset</a>
-</form>
-
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-danger">{{ session('error') }}</div>
-@endif
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>Item</th>
-            <th>Category</th>
-            <th>Current Stock</th>
-            <th>Minimum Stock</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        @forelse($items as $item)
-            <tr>
-                <td>
-                    <strong>{{ $item->name }}</strong>
-                    @if(!empty($item->remarks))
-                        <br>
-                        <small>{{ $item->remarks }}</small>
-                    @endif
-                </td>
-
-                <td>{{ $item->category ?? '-' }}</td>
-
-                <td>
-                    <strong>{{ $item->current_stock }}</strong> {{ $item->unit }}
-                </td>
-
-                <td>
-                    {{ $item->minimum_stock }} {{ $item->unit }}
-                </td>
-
-                <td>
-                    @if($item->current_stock <= 0)
-                        <span class="badge badge-red">Out of Stock</span>
-                    @elseif($item->current_stock <= $item->minimum_stock)
-                        <span class="badge badge-orange">Low Stock</span>
-                    @else
-                        <span class="badge badge-green">In Stock</span>
-                    @endif
-                </td>
-
-                <td>
-                    <div class="actions">
-    <a href="{{ route('inventory.stockInForm', $item->id) }}" class="btn btn-sm btn-success">
-        Stock In
-    </a>
-
-    <a href="{{ route('inventory.stockOutForm', $item->id) }}" class="btn btn-sm btn-danger">
-        Stock Out
-    </a>
-
-    <a href="{{ route('inventory.adjustForm', $item->id) }}" class="btn btn-sm btn-warning">
-        Adjust
-    </a>
-
-    <a href="{{ route('inventory.movements', $item->id) }}" class="btn btn-sm btn-primary">
-        History
-    </a>
-
-    <a href="{{ route('inventory.edit', $item->id) }}" class="btn btn-sm btn-warning">
-        Edit
-    </a>
-</div>
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="6" style="text-align: center; padding: 30px;">
-                    No inventory items yet.
-                    <br><br>
-                    <a href="{{ route('inventory.create') }}" class="btn btn-primary">Add First Item</a>
-                </td>
-            </tr>
-        @endforelse
-    </tbody>
-</table>
 
 @endsection
