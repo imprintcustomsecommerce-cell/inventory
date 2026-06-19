@@ -19,6 +19,7 @@ class StoreInventoryItemRequest extends FormRequest
             'unit' => 'required|string|max:50|in:pcs,yards,meters,rolls,packs,boxes',
             'current_stock' => 'required|integer|min:0',
             'minimum_stock' => 'required|integer|min:0',
+            'unit_cost' => 'nullable|numeric|min:0',
             'remarks' => 'nullable|string|max:1000',
         ];
     }

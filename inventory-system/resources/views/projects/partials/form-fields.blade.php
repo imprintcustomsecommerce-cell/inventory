@@ -26,12 +26,20 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
             <label class="label">Quantity</label>
             <input type="number" name="quantity" value="{{ old('quantity', $project->quantity ?? 1) }}" min="1" required class="input @error('quantity') input-error @enderror">
             @error('quantity') <p class="form-error">{{ $message }}</p> @enderror
         </div>
+        <div>
+            <label class="label">Quoted price <span class="font-normal text-zinc-400">(₱, optional)</span></label>
+            <input type="number" name="quoted_price" value="{{ old('quoted_price', $project->quoted_price ?? '') }}" min="0" step="0.01" class="input @error('quoted_price') input-error @enderror">
+            @error('quoted_price') <p class="form-error">{{ $message }}</p> @enderror
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
             <label class="label">Status</label>
             <select name="status" required class="select">

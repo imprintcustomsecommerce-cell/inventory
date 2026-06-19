@@ -59,6 +59,13 @@
             </div>
 
             <div>
+                <label class="label">Unit cost <span class="font-normal text-zinc-400">(₱ per {{ old('unit', 'unit') }}, optional)</span></label>
+                <input type="number" name="unit_cost" value="{{ old('unit_cost', 0) }}" min="0" step="0.01" class="input @error('unit_cost') input-error @enderror">
+                <p class="mt-1.5 text-xs text-zinc-400">Used to compute material cost on projects.</p>
+                @error('unit_cost') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
                 <label class="label">Remarks <span class="font-normal text-zinc-400">(optional)</span></label>
                 <textarea name="remarks" rows="3" placeholder="Notes about this item…" class="textarea">{{ old('remarks') }}</textarea>
             </div>

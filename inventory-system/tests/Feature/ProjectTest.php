@@ -98,4 +98,50 @@ class ProjectTest extends TestCase
         // Only deducted once.
         $this->assertEquals(70, $item->fresh()->current_stock);
     }
+
+    public function test_cancelling_a_deducted_project_returns_materials(): void
+    {
+        $user = User::factory()->create();
+        $item = $this->item(100);
+        $project = Project::create([
+            'project_name' => 'Jersey', 'quantity' => 1, 'status' => 'Pending',
+        ]);
+        $project->materials()->create(['inventory_item_id' => $item->id, 'quantity_needed' => 40]);
+
+        $this->actingAs($user)->post("/projects/{$project->id}/start-production");
+        $this->assertEquals(60, $item->fresh()->current_stock);
+
+        // Cancel via edit form.
+        $this->actingAs($user)->put("/projects/{$project->id}", [
+            'project_name' => 'Jersey', 'quantity' => 1, 'status' => 'Cancelled',
+        ]);
+
+        $this->assertEquals(100, $item->fresh()->current_stock);
+        $this->assertFalse($project->fresh()->materials_deducted);
+    }
+
+    public function test_status_changes_are_logged(): void
+    {
+        $user = User::factory()->create();
+        $project = Project::create(['project_name' => 'Demo', 'quantity' => 1, 'status' => 'Pending']);
+
+        $this->actingAs($user)->post("/projects/{$project->id}/complete");
+
+        $this->assertDatabaseHas('project_status_logs', [
+            'project_id' => $project->id,
+            'user_id' => $user->id,
+            'to_status' => 'Completed',
+        ]);
+    }
+
+    public function test_pdf_job_order_renders(): void
+    {
+        $user = User::factory()->create();
+        $project = Project::create(['project_name' => 'Demo', 'quantity' => 1, 'status' => 'Pending']);
+
+        $response = $this->actingAs($user)->get("/projects/{$project->id}/pdf");
+
+        $response->assertStatus(200);
+        $this->assertEquals('application/pdf', $response->headers->get('content-type'));
+    }
 }

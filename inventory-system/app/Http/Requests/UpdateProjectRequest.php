@@ -20,6 +20,7 @@ class UpdateProjectRequest extends FormRequest
             'customer_name' => 'nullable|string|max:255',
             'product_type' => 'nullable|string|max:255',
             'quantity' => 'required|integer|min:1',
+            'quoted_price' => 'nullable|numeric|min:0',
             'status' => ['required', Rule::in(Project::STATUSES)],
             'due_date' => 'nullable|date',
             'remarks' => 'nullable|string|max:1000',

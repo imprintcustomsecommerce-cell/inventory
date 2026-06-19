@@ -13,6 +13,7 @@ class InventoryItem extends Model
         'unit',
         'current_stock',
         'minimum_stock',
+        'unit_cost',
         'status',
         'remarks',
     ];
@@ -20,6 +21,7 @@ class InventoryItem extends Model
     protected $casts = [
         'current_stock' => 'integer',
         'minimum_stock' => 'integer',
+        'unit_cost' => 'decimal:2',
     ];
 
     public function movements(): HasMany

@@ -34,6 +34,10 @@
                 <button type="submit" class="btn btn-dark">Mark completed</button>
             </form>
         @endif
+        <a href="{{ route('projects.pdf', $project) }}" target="_blank" class="btn btn-ghost">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+            Job Order PDF
+        </a>
         <a href="{{ route('projects.edit', $project) }}" class="btn btn-ghost">Edit</a>
     </div>
 </div>
@@ -74,6 +78,56 @@
                 </div>
             @endif
         </div>
+
+        <!-- Costing -->
+        @php $cost = $project->materialsCost(); $margin = $project->margin(); @endphp
+        <div class="card p-6">
+            <h2 class="text-sm font-semibold text-zinc-900">Costing</h2>
+            <dl class="mt-4 space-y-3 text-sm">
+                <div class="flex justify-between gap-4">
+                    <dt class="text-zinc-500">Material cost</dt>
+                    <dd class="font-medium text-zinc-900">₱{{ number_format($cost, 2) }}</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <dt class="text-zinc-500">Quoted price</dt>
+                    <dd class="font-medium text-zinc-900">{{ $project->quoted_price !== null ? '₱' . number_format($project->quoted_price, 2) : '—' }}</dd>
+                </div>
+                @if($margin !== null)
+                    <div class="flex justify-between gap-4 border-t border-zinc-100 pt-3">
+                        <dt class="text-zinc-500">Margin</dt>
+                        <dd class="font-semibold {{ $margin >= 0 ? 'text-emerald-600' : 'text-red-600' }}">₱{{ number_format($margin, 2) }}</dd>
+                    </div>
+                @endif
+            </dl>
+            <p class="mt-3 text-xs text-zinc-400">Material cost uses each item's unit cost × quantity needed.</p>
+        </div>
+
+        <!-- Status history -->
+        <div class="card p-6">
+            <h2 class="text-sm font-semibold text-zinc-900">Status history</h2>
+            @if($project->statusLogs->count() > 0)
+                <ol class="mt-4 space-y-4">
+                    @foreach($project->statusLogs as $log)
+                        <li class="relative flex gap-3">
+                            <span class="mt-1 flex h-2 w-2 shrink-0 rounded-full bg-brand-400"></span>
+                            <div class="min-w-0">
+                                <p class="text-sm text-zinc-900">
+                                    @if($log->from_status)
+                                        <span class="text-zinc-500">{{ $log->from_status }}</span>
+                                        <span class="text-zinc-300">→</span>
+                                    @endif
+                                    <span class="font-medium">{{ $log->to_status }}</span>
+                                </p>
+                                @if($log->note)<p class="text-xs text-zinc-500">{{ $log->note }}</p>@endif
+                                <p class="text-xs text-zinc-400">{{ $log->created_at->format('M d, Y · h:i A') }}{{ $log->user ? ' · ' . $log->user->name : '' }}</p>
+                            </div>
+                        </li>
+                    @endforeach
+                </ol>
+            @else
+                <p class="mt-3 text-sm text-zinc-500">No status changes recorded yet.</p>
+            @endif
+        </div>
     </div>
 
     <!-- Materials (Bill of materials) -->
@@ -86,6 +140,14 @@
                 </div>
                 @if($project->materials_deducted)
                     <span class="badge badge-green">Locked</span>
+                @elseif($hasTemplate)
+                    <form action="{{ route('projects.applyTemplate', $project) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-ghost btn-sm">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                            Apply {{ $project->product_type }} template
+                        </button>
+                    </form>
                 @endif
             </div>
 

@@ -48,6 +48,7 @@ class ProjectController extends Controller
     public function store(StoreProjectRequest $request)
     {
         $project = Project::create($request->validated());
+        $this->projects->logCreated($project);
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Project created. Add the materials it needs below.');
@@ -55,10 +56,12 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load('materials.inventoryItem');
+        $project->load('materials.inventoryItem', 'statusLogs.user');
         $items = InventoryItem::orderBy('name')->get();
+        $hasTemplate = $project->product_type
+            && \App\Models\BomTemplate::where('product_type', $project->product_type)->exists();
 
-        return view('projects.show', compact('project', 'items'));
+        return view('projects.show', compact('project', 'items', 'hasTemplate'));
     }
 
     public function edit(Project $project)
@@ -68,7 +71,17 @@ class ProjectController extends Controller
 
     public function update(UpdateProjectRequest $request, Project $project)
     {
-        $project->update($request->validated());
+        $data = $request->validated();
+        $newStatus = $data['status'];
+        unset($data['status']);
+
+        $project->update($data);
+
+        // Route any status change through the service so it is logged and
+        // side effects (e.g. returning materials on cancel) are applied.
+        if ($project->status !== $newStatus) {
+            $this->projects->changeStatus($project, $newStatus);
+        }
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Project updated successfully.');
@@ -128,5 +141,30 @@ class ProjectController extends Controller
         $this->projects->markCompleted($project);
 
         return back()->with('success', 'Project marked as completed.');
+    }
+
+    public function applyTemplate(Project $project)
+    {
+        if ($project->materials_deducted) {
+            return back()->with('error', 'Materials are locked once production has started.');
+        }
+
+        $added = $this->projects->applyTemplate($project);
+
+        if ($added === 0) {
+            return back()->with('error', 'No new materials to add from the template.');
+        }
+
+        return back()->with('success', "Added {$added} material(s) from the {$project->product_type} template.");
+    }
+
+    public function pdf(Project $project)
+    {
+        $project->load('materials.inventoryItem');
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('projects.pdf', compact('project'))
+            ->setPaper('a4');
+
+        return $pdf->stream("project-{$project->id}-job-order.pdf");
     }
 }

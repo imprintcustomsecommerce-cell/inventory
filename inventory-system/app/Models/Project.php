@@ -12,6 +12,7 @@ class Project extends Model
         'customer_name',
         'product_type',
         'quantity',
+        'quoted_price',
         'status',
         'due_date',
         'remarks',
@@ -22,6 +23,7 @@ class Project extends Model
 
     protected $casts = [
         'quantity' => 'integer',
+        'quoted_price' => 'decimal:2',
         'due_date' => 'date',
         'materials_deducted' => 'boolean',
         'started_production_at' => 'datetime',
@@ -41,6 +43,30 @@ class Project extends Model
     public function materials(): HasMany
     {
         return $this->hasMany(ProjectMaterial::class);
+    }
+
+    public function statusLogs(): HasMany
+    {
+        return $this->hasMany(ProjectStatusLog::class)->latest();
+    }
+
+    /**
+     * Total material cost based on quantity needed × each item's unit cost.
+     */
+    public function materialsCost(): float
+    {
+        return (float) $this->materials->sum(
+            fn ($m) => (float) $m->quantity_needed * (float) ($m->inventoryItem->unit_cost ?? 0)
+        );
+    }
+
+    public function margin(): ?float
+    {
+        if ($this->quoted_price === null) {
+            return null;
+        }
+
+        return (float) $this->quoted_price - $this->materialsCost();
     }
 
     public function getStatusBadgeClass(): string
