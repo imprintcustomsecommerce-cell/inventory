@@ -18,6 +18,7 @@ class InventorySeeder extends Seeder
         }
 
         $now = now();
+        $userId = DB::table('users')->where('email', 'admin@imprint.ph')->value('id');
 
         $items = [
             ['name' => 'Aircool Fabric (Navy)', 'category' => 'Fabric', 'unit' => 'yards', 'current_stock' => 120, 'minimum_stock' => 30],
@@ -41,6 +42,7 @@ class InventorySeeder extends Seeder
             DB::table('inventory_movements')->insert([
                 [
                     'inventory_item_id' => $itemId,
+                    'user_id' => $userId,
                     'type' => 'stock_in',
                     'quantity' => $item['current_stock'] > 0 ? $item['current_stock'] : 50,
                     'reference' => 'Initial delivery',

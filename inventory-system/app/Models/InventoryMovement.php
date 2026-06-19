@@ -9,6 +9,7 @@ class InventoryMovement extends Model
 {
     protected $fillable = [
         'inventory_item_id',
+        'user_id',
         'type',
         'quantity',
         'reference',
@@ -22,6 +23,11 @@ class InventoryMovement extends Model
     public function item(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class, 'inventory_item_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function getTypeLabel(): string

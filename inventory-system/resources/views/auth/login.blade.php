@@ -15,9 +15,7 @@
         <div class="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-brand-400/5 blur-3xl"></div>
 
         <div class="relative flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-400">
-                <svg class="h-6 w-6 text-zinc-900" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
-            </div>
+            @include('partials.logo')
             <span class="text-lg font-semibold text-white">Imprint Inventory</span>
         </div>
 
@@ -44,9 +42,7 @@
         <div class="mx-auto w-full max-w-sm">
             <!-- Mobile logo -->
             <div class="mb-8 flex items-center gap-3 lg:hidden">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-400">
-                    <svg class="h-6 w-6 text-zinc-900" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
-                </div>
+                @include('partials.logo')
                 <span class="text-lg font-semibold text-zinc-900">Imprint Inventory</span>
             </div>
 

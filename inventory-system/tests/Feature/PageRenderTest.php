@@ -52,4 +52,22 @@ class PageRenderTest extends TestCase
         $this->get('/login')->assertStatus(200);
         $this->get('/register')->assertStatus(200);
     }
+
+    public function test_stock_movements_record_the_acting_user(): void
+    {
+        $user = User::factory()->create();
+        $item = $this->item();
+
+        $this->actingAs($user)->post("/inventory/{$item->id}/stock-in", [
+            'quantity' => 5,
+            'reference' => 'Test delivery',
+        ]);
+
+        $this->assertDatabaseHas('inventory_movements', [
+            'inventory_item_id' => $item->id,
+            'user_id' => $user->id,
+            'type' => 'stock_in',
+            'quantity' => 5,
+        ]);
+    }
 }

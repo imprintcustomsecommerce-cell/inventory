@@ -130,13 +130,13 @@ class InventoryController extends Controller
 
     public function movements(InventoryItem $inventoryItem)
     {
-        $movements = $inventoryItem->movements()->latest()->paginate(50);
+        $movements = $inventoryItem->movements()->with('user')->latest()->paginate(50);
         return view('inventory.movements', ['item' => $inventoryItem, 'movements' => $movements]);
     }
 
     public function allMovements(Request $request)
     {
-        $query = InventoryMovement::with('item')->latest();
+        $query = InventoryMovement::with(['item', 'user'])->latest();
 
         if ($request->filled('search')) {
             $search = $request->input('search');

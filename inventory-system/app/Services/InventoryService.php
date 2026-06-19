@@ -15,6 +15,7 @@ class InventoryService
 
             InventoryMovement::create([
                 'inventory_item_id' => $item->id,
+                'user_id' => auth()->id(),
                 'type' => 'stock_in',
                 'quantity' => $quantity,
                 'reference' => $reference,
@@ -38,6 +39,7 @@ class InventoryService
 
             InventoryMovement::create([
                 'inventory_item_id' => $item->id,
+                'user_id' => auth()->id(),
                 'type' => 'stock_out',
                 'quantity' => $quantity,
                 'reference' => $reference,
@@ -58,6 +60,7 @@ class InventoryService
 
             InventoryMovement::create([
                 'inventory_item_id' => $item->id,
+                'user_id' => auth()->id(),
                 'type' => 'adjustment',
                 'quantity' => $actualStock,
                 'reference' => $reference,

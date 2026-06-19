@@ -28,6 +28,7 @@
                         <th>Date</th>
                         <th>Type</th>
                         <th>Quantity</th>
+                        <th>By</th>
                         <th>Reference</th>
                         <th>Remarks</th>
                     </tr>
@@ -40,6 +41,16 @@
                                 <span class="badge {{ $movement->type === 'stock_in' ? 'badge-green' : ($movement->type === 'stock_out' ? 'badge-red' : 'badge-amber') }}">{{ $movement->getTypeLabel() }}</span>
                             </td>
                             <td class="font-semibold text-zinc-900">{{ $movement->quantity }} <span class="text-xs font-normal text-zinc-400">{{ $item->unit }}</span></td>
+                            <td>
+                                @if($movement->user)
+                                    <div class="flex items-center gap-2">
+                                        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-200 text-[10px] font-bold text-zinc-600">{{ strtoupper(substr($movement->user->name, 0, 1)) }}</span>
+                                        <span class="text-zinc-700">{{ $movement->user->name }}</span>
+                                    </div>
+                                @else
+                                    <span class="text-zinc-300">—</span>
+                                @endif
+                            </td>
                             <td class="text-zinc-500">{{ $movement->reference ?? '—' }}</td>
                             <td class="max-w-xs truncate text-zinc-500">{{ $movement->remarks ?? '—' }}</td>
                         </tr>
