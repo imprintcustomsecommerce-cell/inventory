@@ -1,6 +1,8 @@
 @php $box = $box ?? 'h-10 w-10'; @endphp
 @if (file_exists(public_path('images/logo.png')))
-    <img src="{{ asset('images/logo.png') }}" alt="Imprint" class="{{ $box }} rounded-lg object-contain">
+    <span class="flex {{ $box }} items-center justify-center overflow-hidden rounded-full bg-white p-0.5 ring-1 ring-black/5">
+        <img src="{{ asset('images/logo.png') }}" alt="Imprint Customs" class="h-full w-full rounded-full object-contain">
+    </span>
 @else
     <div class="flex {{ $box }} items-center justify-center rounded-lg bg-brand-400">
         <svg class="h-6 w-6 text-zinc-900" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
