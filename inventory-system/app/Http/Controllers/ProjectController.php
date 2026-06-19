@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ExportsCsv;
 use App\Http\Requests\StoreProjectMaterialRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
@@ -13,6 +14,8 @@ use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
+    use ExportsCsv;
+
     public function __construct(private ProjectService $projects)
     {
     }
@@ -156,6 +159,48 @@ class ProjectController extends Controller
         }
 
         return back()->with('success', "Added {$added} material(s) from the {$project->product_type} template.");
+    }
+
+    public function export(Request $request)
+    {
+        $query = Project::with('materials.inventoryItem');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('project_name', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhere('product_type', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $rows = $query->latest()->get()->map(function (Project $p) {
+            $cost = $p->materialsCost();
+            $margin = $p->margin();
+
+            return [
+                $p->project_name,
+                $p->customer_name,
+                $p->product_type,
+                $p->quantity,
+                $p->status,
+                $p->due_date?->format('Y-m-d'),
+                $p->quoted_price !== null ? number_format((float) $p->quoted_price, 2, '.', '') : '',
+                number_format($cost, 2, '.', ''),
+                $margin !== null ? number_format($margin, 2, '.', '') : '',
+                $p->materials_deducted ? 'Yes' : 'No',
+            ];
+        });
+
+        return $this->streamCsv(
+            'projects-' . now()->format('Y-m-d') . '.csv',
+            ['Project', 'Customer', 'Product', 'Quantity', 'Status', 'Due Date', 'Quoted Price', 'Material Cost', 'Margin', 'Materials Deducted'],
+            $rows
+        );
     }
 
     public function pdf(Project $project)

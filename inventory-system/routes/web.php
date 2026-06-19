@@ -33,6 +33,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/inventory-low-stock', [InventoryController::class, 'lowStock'])->name('inventory.lowStock');
     Route::get('/inventory-movements', [InventoryController::class, 'allMovements'])->name('inventory.allMovements');
 
+    Route::get('/inventory-export', [InventoryController::class, 'export'])->name('inventory.export');
+    Route::get('/inventory-movements-export', [InventoryController::class, 'exportMovements'])->name('inventory.movements.export');
+
     Route::get('/inventory/{inventoryItem}/adjust', [InventoryController::class, 'adjustForm'])->name('inventory.adjustForm');
     Route::post('/inventory/{inventoryItem}/adjust', [InventoryController::class, 'adjustStock'])->name('inventory.adjustStock');
 
@@ -50,6 +53,7 @@ Route::middleware('auth')->group(function () {
 
     // Projects
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects-export', [ProjectController::class, 'export'])->name('projects.export');
     Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
