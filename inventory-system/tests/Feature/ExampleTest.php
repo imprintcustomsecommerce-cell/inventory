@@ -48,9 +48,8 @@ class ExampleTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_register_page_is_accessible(): void
+    public function test_public_registration_is_disabled(): void
     {
-        $response = $this->get('/register');
-        $response->assertStatus(200);
+        $this->get('/register')->assertNotFound();
     }
 }

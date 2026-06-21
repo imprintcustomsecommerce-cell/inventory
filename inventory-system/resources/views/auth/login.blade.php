@@ -74,9 +74,8 @@
                 <button type="submit" class="btn btn-primary w-full">Sign in</button>
             </form>
 
-            <p class="mt-8 text-center text-sm text-zinc-500">
-                Don't have an account?
-                <a href="{{ route('register') }}" class="font-semibold text-zinc-900 hover:text-brand-600">Create one</a>
+            <p class="mt-8 text-center text-xs text-zinc-400">
+                Accounts are provisioned by an administrator.
             </p>
         </div>
     </div>

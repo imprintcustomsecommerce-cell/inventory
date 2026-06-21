@@ -50,7 +50,6 @@ class PageRenderTest extends TestCase
     public function test_guest_auth_pages_render(): void
     {
         $this->get('/login')->assertStatus(200);
-        $this->get('/register')->assertStatus(200);
     }
 
     public function test_stock_movements_record_the_acting_user(): void

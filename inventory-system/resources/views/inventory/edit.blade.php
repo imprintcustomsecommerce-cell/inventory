@@ -78,6 +78,7 @@
     </form>
 
     <!-- Danger zone -->
+    @if(auth()->user()->isAdmin())
     <div class="mt-6 rounded-xl border border-red-200 bg-red-50 p-6">
         <h3 class="text-sm font-semibold text-red-900">Delete this item</h3>
         <p class="mt-1 text-sm text-red-700">Permanently removes the item and its entire movement history. This cannot be undone.</p>
@@ -87,6 +88,7 @@
             <button type="submit" class="btn btn-danger btn-sm">Delete item</button>
         </form>
     </div>
+    @endif
 </div>
 
 @endsection

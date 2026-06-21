@@ -21,15 +21,17 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@imprint.ph'],
             [
                 'name' => 'Imprint Admin',
+                'role' => 'admin',
                 'password' => Hash::make('password'),
             ]
         );
 
-        // Kept for backwards compatibility.
+        // Example staff account (limited access).
         User::updateOrCreate(
-            ['email' => 'test@example.com'],
+            ['email' => 'staff@imprint.ph'],
             [
-                'name' => 'Test User',
+                'name' => 'Shop Staff',
+                'role' => 'staff',
                 'password' => Hash::make('password'),
             ]
         );

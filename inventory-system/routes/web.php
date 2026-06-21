@@ -6,13 +6,12 @@ use App\Http\Controllers\BomTemplateController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\UserController;
 
-// Authentication Routes
+// Authentication (accounts are created by an admin, not self-service)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
@@ -41,7 +40,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/inventory/{inventoryItem}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
     Route::put('/inventory/{inventoryItem}', [InventoryController::class, 'update'])->name('inventory.update');
-    Route::delete('/inventory/{inventoryItem}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
+    Route::delete('/inventory/{inventoryItem}', [InventoryController::class, 'destroy'])->middleware('admin')->name('inventory.destroy');
 
     Route::get('/inventory/{inventoryItem}/stock-in', [InventoryController::class, 'stockInForm'])->name('inventory.stockInForm');
     Route::get('/inventory/{inventoryItem}/stock-out', [InventoryController::class, 'stockOutForm'])->name('inventory.stockOutForm');
@@ -59,7 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::get('/projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
     Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
-    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->middleware('admin')->name('projects.destroy');
 
     Route::post('/projects/{project}/materials', [ProjectController::class, 'addMaterial'])->name('projects.materials.add');
     Route::delete('/projects/{project}/materials/{material}', [ProjectController::class, 'removeMaterial'])->name('projects.materials.remove');
@@ -69,8 +68,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/apply-template', [ProjectController::class, 'applyTemplate'])->name('projects.applyTemplate');
     Route::get('/projects/{project}/pdf', [ProjectController::class, 'pdf'])->name('projects.pdf');
 
-    // BOM templates (default materials per product type)
-    Route::get('/bom-templates', [BomTemplateController::class, 'index'])->name('bomTemplates.index');
-    Route::post('/bom-templates', [BomTemplateController::class, 'store'])->name('bomTemplates.store');
-    Route::delete('/bom-templates/{bomTemplate}', [BomTemplateController::class, 'destroy'])->name('bomTemplates.destroy');
+    // BOM templates (default materials per product type) — admin only
+    Route::middleware('admin')->group(function () {
+        Route::get('/bom-templates', [BomTemplateController::class, 'index'])->name('bomTemplates.index');
+        Route::post('/bom-templates', [BomTemplateController::class, 'store'])->name('bomTemplates.store');
+        Route::delete('/bom-templates/{bomTemplate}', [BomTemplateController::class, 'destroy'])->name('bomTemplates.destroy');
+
+        // User management
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    });
 });
