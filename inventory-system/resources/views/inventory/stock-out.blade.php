@@ -31,7 +31,7 @@
             <div>
                 <label class="label">Quantity to deduct</label>
                 <div class="relative">
-                    <input type="number" name="quantity" min="1" max="{{ $item->current_stock }}" required value="{{ old('quantity') }}" class="input pr-16 @error('quantity') input-error @enderror">
+                    <input type="number" name="quantity" min="0.01" step="0.01" max="{{ $item->current_stock }}" required value="{{ old('quantity') }}" class="input pr-16 @error('quantity') input-error @enderror">
                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">{{ $item->unit }}</span>
                 </div>
                 <p class="mt-1.5 text-xs text-zinc-400">Maximum {{ $item->current_stock }} {{ $item->unit }} available.</p>

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class InventoryService
 {
-    public function stockIn(InventoryItem $item, int $quantity, ?string $reference = null, ?string $remarks = null): InventoryMovement
+    public function stockIn(InventoryItem $item, float $quantity, ?string $reference = null, ?string $remarks = null): InventoryMovement
     {
         return \DB::transaction(function () use ($item, $quantity, $reference, $remarks) {
             $item->lockForUpdate()->first();
@@ -28,7 +28,7 @@ class InventoryService
         });
     }
 
-    public function stockOut(InventoryItem $item, int $quantity, ?string $reference = null, ?string $remarks = null): InventoryMovement|false
+    public function stockOut(InventoryItem $item, float $quantity, ?string $reference = null, ?string $remarks = null): InventoryMovement|false
     {
         return \DB::transaction(function () use ($item, $quantity, $reference, $remarks) {
             $item = $item->lockForUpdate()->first();
@@ -52,7 +52,7 @@ class InventoryService
         });
     }
 
-    public function adjustStock(InventoryItem $item, int $actualStock, ?string $reference = null, ?string $remarks = null): InventoryMovement
+    public function adjustStock(InventoryItem $item, float $actualStock, ?string $reference = null, ?string $remarks = null): InventoryMovement
     {
         return \DB::transaction(function () use ($item, $actualStock, $reference, $remarks) {
             $item = $item->lockForUpdate()->first();

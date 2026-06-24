@@ -14,7 +14,7 @@ class StockOutRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quantity' => 'required|integer|min:1|max:999999',
+            'quantity' => 'required|numeric|min:0.01|max:999999',
             'reference' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:1000',
         ];

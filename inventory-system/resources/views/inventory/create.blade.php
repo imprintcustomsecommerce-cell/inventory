@@ -48,12 +48,12 @@
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div>
                     <label class="label">Beginning stock</label>
-                    <input type="number" name="current_stock" value="{{ old('current_stock', 0) }}" min="0" required class="input @error('current_stock') input-error @enderror">
+                    <input type="number" name="current_stock" value="{{ old('current_stock', 0) }}" min="0" step="0.01" required class="input @error('current_stock') input-error @enderror">
                     @error('current_stock') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="label">Minimum stock alert</label>
-                    <input type="number" name="minimum_stock" value="{{ old('minimum_stock', 0) }}" min="0" required class="input @error('minimum_stock') input-error @enderror">
+                    <input type="number" name="minimum_stock" value="{{ old('minimum_stock', 0) }}" min="0" step="0.01" required class="input @error('minimum_stock') input-error @enderror">
                     @error('minimum_stock') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
             </div>

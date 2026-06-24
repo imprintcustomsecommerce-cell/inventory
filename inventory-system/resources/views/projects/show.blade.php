@@ -186,9 +186,10 @@
                         <tbody>
                             @foreach($project->materials as $material)
                                 @php
-                                    $needed = (int) ceil((float) $material->quantity_needed);
-                                    $available = (int) $material->inventoryItem->current_stock;
+                                    $needed = (float) $material->quantity_needed;
+                                    $available = (float) $material->inventoryItem->current_stock;
                                     $enough = $available >= $needed;
+                                    $shortBy = rtrim(rtrim(number_format($needed - $available, 2), '0'), '.');
                                 @endphp
                                 <tr>
                                     <td class="font-medium text-zinc-900">
@@ -209,7 +210,7 @@
                                         @elseif($enough)
                                             <span class="badge badge-green">Available</span>
                                         @else
-                                            <span class="badge badge-red">Short {{ $needed - $available }}</span>
+                                            <span class="badge badge-red">Short {{ $shortBy }}</span>
                                         @endif
                                     </td>
                                     @if(!$project->materials_deducted)

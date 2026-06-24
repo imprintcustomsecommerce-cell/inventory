@@ -14,7 +14,7 @@ class AdjustStockRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'actual_stock' => 'required|integer|min:0|max:999999',
+            'actual_stock' => 'required|numeric|min:0|max:999999',
             'reference' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:1000',
         ];

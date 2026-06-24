@@ -19,8 +19,8 @@ class InventoryItem extends Model
     ];
 
     protected $casts = [
-        'current_stock' => 'integer',
-        'minimum_stock' => 'integer',
+        'current_stock' => 'float',
+        'minimum_stock' => 'float',
         'unit_cost' => 'decimal:2',
     ];
 

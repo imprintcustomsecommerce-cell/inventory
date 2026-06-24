@@ -17,7 +17,7 @@ class InventoryMovement extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
+        'quantity' => 'float',
     ];
 
     public function item(): BelongsTo

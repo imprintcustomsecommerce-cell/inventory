@@ -53,7 +53,7 @@
                 </div>
                 <div>
                     <label class="label">Minimum stock alert</label>
-                    <input type="number" name="minimum_stock" value="{{ old('minimum_stock', $item->minimum_stock) }}" min="0" required class="input @error('minimum_stock') input-error @enderror">
+                    <input type="number" name="minimum_stock" value="{{ old('minimum_stock', $item->minimum_stock) }}" min="0" step="0.01" required class="input @error('minimum_stock') input-error @enderror">
                     @error('minimum_stock') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
             </div>

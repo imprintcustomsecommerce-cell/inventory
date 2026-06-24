@@ -30,8 +30,8 @@ class ProjectService
         // Pre-flight: make sure every material has enough stock before we touch anything.
         $shortages = [];
         foreach ($project->materials as $material) {
-            $needed = (int) ceil((float) $material->quantity_needed);
-            $available = (int) $material->inventoryItem->current_stock;
+            $needed = (float) $material->quantity_needed;
+            $available = (float) $material->inventoryItem->current_stock;
             if ($needed > $available) {
                 $shortages[] = [
                     'name' => $material->inventoryItem->name,
@@ -49,7 +49,7 @@ class ProjectService
             $from = $project->status;
 
             foreach ($project->materials as $material) {
-                $needed = (int) ceil((float) $material->quantity_needed);
+                $needed = (float) $material->quantity_needed;
 
                 if ($needed > 0) {
                     $this->inventory->stockOut(
@@ -116,7 +116,7 @@ class ProjectService
         $project->loadMissing('materials.inventoryItem');
 
         foreach ($project->materials as $material) {
-            $used = (int) ceil((float) $material->quantity_used);
+            $used = (float) $material->quantity_used;
             if ($used > 0) {
                 $this->inventory->stockIn(
                     $material->inventoryItem,
