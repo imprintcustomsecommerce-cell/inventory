@@ -76,10 +76,10 @@
                 <div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-400 text-sm font-bold text-zinc-900">
                     {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                 </div>
-                <div class="min-w-0 flex-1 leading-tight">
+                <a href="{{ route('profile.edit') }}" class="min-w-0 flex-1 leading-tight transition hover:opacity-80" title="Account settings">
                     <p class="truncate text-sm font-medium text-white">{{ auth()->user()->name }}</p>
                     <p class="truncate text-xs text-zinc-500">{{ auth()->user()->email }}</p>
-                </div>
+                </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" title="Sign out" class="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-white transition">
