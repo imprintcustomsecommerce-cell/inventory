@@ -18,9 +18,20 @@
     <form action="{{ route('inventory.store') }}" method="POST" class="card divide-y divide-zinc-200">
         @csrf
         <div class="space-y-5 p-6">
+            @if($warehouses->isNotEmpty())
+                <div>
+                    <label class="label">Warehouse</label>
+                    <select name="warehouse_id" required class="select">
+                        <option value="">Select warehouse</option>
+                        @foreach($warehouses as $w)
+                            <option value="{{ $w->id }}" {{ old('warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
             <div>
                 <label class="label">Item name</label>
-                <input type="text" name="name" value="{{ old('name') }}" required placeholder="e.g. Aircool Fabric (Navy)" class="input @error('name') input-error @enderror">
+                <input type="text" name="name" value="{{ old('name') }}" required placeholder="e.g. Esports Jersey (Black)" class="input @error('name') input-error @enderror">
                 @error('name') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 

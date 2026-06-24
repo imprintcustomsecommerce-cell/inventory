@@ -11,7 +11,7 @@
 
 <!-- Add user -->
 <div class="card mb-6 p-4">
-    <form action="{{ route('users.store') }}" method="POST" class="grid grid-cols-1 gap-3 sm:grid-cols-5">
+    <form action="{{ route('users.store') }}" method="POST" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         @csrf
         <div>
             <label class="label">Name</label>
@@ -29,6 +29,15 @@
             </select>
         </div>
         <div>
+            <label class="label">Warehouse <span class="font-normal text-zinc-400">(staff only)</span></label>
+            <select name="warehouse_id" class="select">
+                <option value="">— none / all —</option>
+                @foreach($warehouses as $w)
+                    <option value="{{ $w->id }}" {{ old('warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
             <label class="label">Password</label>
             <input type="password" name="password" required class="input">
         </div>
@@ -36,7 +45,7 @@
             <label class="label">Confirm</label>
             <input type="password" name="password_confirmation" required class="input">
         </div>
-        <div class="sm:col-span-5">
+        <div class="sm:col-span-3">
             <button type="submit" class="btn btn-primary">Create user</button>
         </div>
     </form>
@@ -49,6 +58,7 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Warehouse</th>
                 <th class="text-right">Actions</th>
             </tr>
         </thead>
@@ -67,6 +77,13 @@
                         <span class="badge {{ $user->isAdmin() ? 'badge-amber' : 'badge-zinc' }}">{{ ucfirst($user->role) }}</span>
                     </td>
                     <td>
+                        @if($user->isAdmin())
+                            <span class="text-xs text-zinc-400">All warehouses</span>
+                        @else
+                            <span class="badge badge-zinc">{{ $user->warehouse?->name ?? 'Unassigned' }}</span>
+                        @endif
+                    </td>
+                    <td>
                         <div class="flex items-center justify-end gap-2">
                             <form action="{{ route('users.update', $user) }}" method="POST" class="flex items-center gap-2">
                                 @csrf
@@ -74,6 +91,12 @@
                                 <select name="role" class="select py-1.5 text-xs" {{ $user->id === auth()->id() ? 'disabled' : '' }}>
                                     <option value="staff" {{ $user->role === 'staff' ? 'selected' : '' }}>Staff</option>
                                     <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>
+                                </select>
+                                <select name="warehouse_id" class="select py-1.5 text-xs">
+                                    <option value="">— warehouse —</option>
+                                    @foreach($warehouses as $w)
+                                        <option value="{{ $w->id }}" {{ $user->warehouse_id == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
+                                    @endforeach
                                 </select>
                                 @if($user->id !== auth()->id())
                                     <button type="submit" class="btn btn-ghost btn-sm">Save</button>

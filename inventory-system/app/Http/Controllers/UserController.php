@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -12,9 +13,10 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::orderBy('name')->get();
+        $users = User::with('warehouse')->orderBy('name')->get();
+        $warehouses = Warehouse::orderBy('name')->get();
 
-        return view('users.index', compact('users'));
+        return view('users.index', compact('users', 'warehouses'));
     }
 
     public function store(Request $request)
@@ -23,6 +25,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'role' => ['required', Rule::in(['admin', 'staff'])],
+            'warehouse_id' => 'nullable|exists:warehouses,id',
             'password' => ['required', 'confirmed', Password::min(8)],
         ]);
 
@@ -30,6 +33,8 @@ class UserController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'role' => $data['role'],
+            // Admins span all warehouses; staff are tied to one.
+            'warehouse_id' => $data['role'] === 'admin' ? null : ($data['warehouse_id'] ?? null),
             'password' => Hash::make($data['password']),
         ]);
 
@@ -40,6 +45,7 @@ class UserController extends Controller
     {
         $data = $request->validate([
             'role' => ['required', Rule::in(['admin', 'staff'])],
+            'warehouse_id' => 'nullable|exists:warehouses,id',
         ]);
 
         // Don't let an admin demote themselves and risk a lockout.
@@ -47,9 +53,12 @@ class UserController extends Controller
             return back()->with('error', "You can't change your own role.");
         }
 
-        $user->update(['role' => $data['role']]);
+        $user->update([
+            'role' => $data['role'],
+            'warehouse_id' => $data['role'] === 'admin' ? null : ($data['warehouse_id'] ?? null),
+        ]);
 
-        return back()->with('success', "{$user->name}'s role updated.");
+        return back()->with('success', "{$user->name}'s access updated.");
     }
 
     public function destroy(Request $request, User $user)

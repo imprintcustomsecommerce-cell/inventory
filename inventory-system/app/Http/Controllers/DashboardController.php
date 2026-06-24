@@ -5,20 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Project;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $stockValue = (float) InventoryItem::select(
+        $user = $request->user();
+
+        $stockValue = (float) InventoryItem::query()->visibleTo($user)->select(
             DB::raw('COALESCE(SUM(current_stock * unit_cost), 0) as total')
         )->value('total');
 
         $inventory = [
-            'total_items' => InventoryItem::count(),
-            'low_stock' => InventoryItem::whereColumn('current_stock', '<=', 'minimum_stock')->where('current_stock', '>', 0)->count(),
-            'out_of_stock' => InventoryItem::where('current_stock', '<=', 0)->count(),
+            'total_items' => InventoryItem::query()->visibleTo($user)->count(),
+            'low_stock' => InventoryItem::query()->visibleTo($user)->whereColumn('current_stock', '<=', 'minimum_stock')->where('current_stock', '>', 0)->count(),
+            'out_of_stock' => InventoryItem::query()->visibleTo($user)->where('current_stock', '<=', 0)->count(),
             'stock_value' => $stockValue,
         ];
 
@@ -30,7 +33,8 @@ class DashboardController extends Controller
             'completed' => Project::where('status', 'Completed')->count(),
         ];
 
-        $lowStockItems = InventoryItem::whereColumn('current_stock', '<=', 'minimum_stock')
+        $lowStockItems = InventoryItem::query()->visibleTo($user)
+            ->whereColumn('current_stock', '<=', 'minimum_stock')
             ->orderBy('current_stock')
             ->limit(6)
             ->get();
@@ -42,6 +46,7 @@ class DashboardController extends Controller
             ->get();
 
         $recentMovements = InventoryMovement::with(['item', 'user'])
+            ->whereHas('item', fn ($q) => $q->visibleTo($user))
             ->latest()
             ->limit(8)
             ->get();

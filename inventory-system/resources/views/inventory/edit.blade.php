@@ -19,6 +19,16 @@
         @csrf
         @method('PUT')
         <div class="space-y-5 p-6">
+            @if($warehouses->isNotEmpty())
+                <div>
+                    <label class="label">Warehouse</label>
+                    <select name="warehouse_id" required class="select">
+                        @foreach($warehouses as $w)
+                            <option value="{{ $w->id }}" {{ old('warehouse_id', $item->warehouse_id) == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
             <div>
                 <label class="label">Item name</label>
                 <input type="text" name="name" value="{{ old('name', $item->name) }}" required class="input @error('name') input-error @enderror">

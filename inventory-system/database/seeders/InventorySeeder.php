@@ -19,17 +19,20 @@ class InventorySeeder extends Seeder
 
         $now = now();
         $userId = DB::table('users')->where('email', 'admin@imprint.ph')->value('id');
+        $store = DB::table('warehouses')->where('name', 'Store')->value('id');
+        $stockroom = DB::table('warehouses')->where('name', 'Inventory')->value('id');
 
-        // Finished apparel stock (Imprint Customs product lines).
+        // Finished apparel stock (Imprint Customs product lines), split across
+        // the Store front and the main Inventory stockroom.
         $items = [
-            ['name' => 'Esports Jersey (Black)', 'category' => 'Jersey', 'size' => 'M', 'unit' => 'pcs', 'current_stock' => 42, 'minimum_stock' => 15, 'unit_cost' => 250.00],
-            ['name' => 'Esports Jersey (Black)', 'category' => 'Jersey', 'size' => 'L', 'unit' => 'pcs', 'current_stock' => 28, 'minimum_stock' => 15, 'unit_cost' => 250.00],
-            ['name' => 'Team Polo Shirt (Navy)', 'category' => 'Polo Shirt', 'size' => 'M', 'unit' => 'pcs', 'current_stock' => 9, 'minimum_stock' => 20, 'unit_cost' => 220.00],
-            ['name' => 'Round Neck Shirt (White)', 'category' => 'Round Neck Shirt', 'size' => 'L', 'unit' => 'pcs', 'current_stock' => 0, 'minimum_stock' => 25, 'unit_cost' => 160.00],
-            ['name' => 'Pullover Hoodie (Black)', 'category' => 'Jacket / Hoodie', 'size' => 'XL', 'unit' => 'pcs', 'current_stock' => 16, 'minimum_stock' => 8, 'unit_cost' => 420.00],
-            ['name' => 'V-Neck Shirt (Gray)', 'category' => 'V-Neck Shirt', 'size' => 'S', 'unit' => 'pcs', 'current_stock' => 55, 'minimum_stock' => 20, 'unit_cost' => 150.00],
-            ['name' => 'Jogger Pants (Black)', 'category' => 'Jogger Pants', 'size' => 'M', 'unit' => 'pcs', 'current_stock' => 21, 'minimum_stock' => 10, 'unit_cost' => 320.00],
-            ['name' => 'Snapback Cap (Black)', 'category' => 'Cap', 'size' => 'One Size', 'unit' => 'pcs', 'current_stock' => 70, 'minimum_stock' => 20, 'unit_cost' => 130.00],
+            ['warehouse_id' => $store, 'name' => 'Esports Jersey (Black)', 'category' => 'Jersey', 'size' => 'M', 'unit' => 'pcs', 'current_stock' => 42, 'minimum_stock' => 15, 'unit_cost' => 250.00],
+            ['warehouse_id' => $store, 'name' => 'Esports Jersey (Black)', 'category' => 'Jersey', 'size' => 'L', 'unit' => 'pcs', 'current_stock' => 28, 'minimum_stock' => 15, 'unit_cost' => 250.00],
+            ['warehouse_id' => $store, 'name' => 'Team Polo Shirt (Navy)', 'category' => 'Polo Shirt', 'size' => 'M', 'unit' => 'pcs', 'current_stock' => 9, 'minimum_stock' => 20, 'unit_cost' => 220.00],
+            ['warehouse_id' => $store, 'name' => 'Snapback Cap (Black)', 'category' => 'Cap', 'size' => 'One Size', 'unit' => 'pcs', 'current_stock' => 70, 'minimum_stock' => 20, 'unit_cost' => 130.00],
+            ['warehouse_id' => $stockroom, 'name' => 'Round Neck Shirt (White)', 'category' => 'Round Neck Shirt', 'size' => 'L', 'unit' => 'pcs', 'current_stock' => 0, 'minimum_stock' => 25, 'unit_cost' => 160.00],
+            ['warehouse_id' => $stockroom, 'name' => 'Pullover Hoodie (Black)', 'category' => 'Jacket / Hoodie', 'size' => 'XL', 'unit' => 'pcs', 'current_stock' => 16, 'minimum_stock' => 8, 'unit_cost' => 420.00],
+            ['warehouse_id' => $stockroom, 'name' => 'V-Neck Shirt (Gray)', 'category' => 'V-Neck Shirt', 'size' => 'S', 'unit' => 'pcs', 'current_stock' => 55, 'minimum_stock' => 20, 'unit_cost' => 150.00],
+            ['warehouse_id' => $stockroom, 'name' => 'Jogger Pants (Black)', 'category' => 'Jogger Pants', 'size' => 'M', 'unit' => 'pcs', 'current_stock' => 21, 'minimum_stock' => 10, 'unit_cost' => 320.00],
         ];
 
         foreach ($items as $item) {

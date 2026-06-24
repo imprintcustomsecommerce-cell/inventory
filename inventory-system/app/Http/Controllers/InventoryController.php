@@ -10,6 +10,7 @@ use App\Http\Requests\StoreInventoryItemRequest;
 use App\Http\Requests\UpdateInventoryItemRequest;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
+use App\Models\Warehouse;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 
@@ -24,9 +25,31 @@ class InventoryController extends Controller
         $this->inventoryService = $inventoryService;
     }
 
+    /** Block staff from touching items outside their warehouse. */
+    private function guard(InventoryItem $item): void
+    {
+        $user = auth()->user();
+        if (!$user->isAdmin() && $user->warehouse_id && $item->warehouse_id !== $user->warehouse_id) {
+            abort(403, 'This item belongs to another warehouse.');
+        }
+    }
+
+    private function statsFor($user): array
+    {
+        $base = fn () => InventoryItem::query()->visibleTo($user);
+
+        return [
+            'total_items' => $base()->count(),
+            'low_stock_items' => $base()->whereColumn('current_stock', '<=', 'minimum_stock')->where('current_stock', '>', 0)->count(),
+            'out_of_stock_items' => $base()->where('current_stock', '<=', 0)->count(),
+            'total_movements' => InventoryMovement::whereHas('item', fn ($q) => $q->visibleTo($user))->count(),
+        ];
+    }
+
     public function index(Request $request)
     {
-        $query = InventoryItem::query();
+        $user = $request->user();
+        $query = InventoryItem::query()->visibleTo($user)->with('warehouse');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -41,48 +64,86 @@ class InventoryController extends Controller
             $query->where('category', $request->input('category'));
         }
 
-        $items = $query->orderBy('name')->paginate(50);
-        $categories = InventoryItem::whereNotNull('category')->distinct()->pluck('category')->sort();
-        $stats = $this->inventoryService->getStatistics();
+        // Admins can additionally filter by warehouse.
+        if ($user->isAdmin() && $request->filled('warehouse')) {
+            $query->where('warehouse_id', $request->input('warehouse'));
+        }
 
-        return view('inventory.index', compact('items', 'categories', 'stats'));
+        $items = $query->orderBy('name')->paginate(50)->withQueryString();
+        $categories = InventoryItem::query()->visibleTo($user)->whereNotNull('category')->distinct()->pluck('category')->sort();
+        $warehouses = $user->isAdmin() ? Warehouse::orderBy('name')->get() : collect();
+        $stats = $this->statsFor($user);
+
+        return view('inventory.index', compact('items', 'categories', 'stats', 'warehouses'));
     }
 
     public function create()
     {
-        return view('inventory.create');
+        $warehouses = auth()->user()->isAdmin() ? Warehouse::orderBy('name')->get() : collect();
+
+        return view('inventory.create', compact('warehouses'));
     }
 
     public function store(StoreInventoryItemRequest $request)
     {
-        InventoryItem::create($request->validated());
+        $user = $request->user();
+        $data = $request->validated();
+
+        // Staff create in their own warehouse; admins choose one.
+        $data['warehouse_id'] = $user->isAdmin()
+            ? ($data['warehouse_id'] ?? null)
+            : $user->warehouse_id;
+
+        if (!$data['warehouse_id']) {
+            return back()->withInput()->with('error', 'Please choose a warehouse for this item.');
+        }
+
+        InventoryItem::create($data);
+
         return redirect()->route('inventory.index')->with('success', 'Item created successfully.');
     }
 
     public function edit(InventoryItem $inventoryItem)
     {
-        return view('inventory.edit', ['item' => $inventoryItem]);
+        $this->guard($inventoryItem);
+        $warehouses = auth()->user()->isAdmin() ? Warehouse::orderBy('name')->get() : collect();
+
+        return view('inventory.edit', ['item' => $inventoryItem, 'warehouses' => $warehouses]);
     }
 
     public function update(UpdateInventoryItemRequest $request, InventoryItem $inventoryItem)
     {
-        $inventoryItem->update($request->validated());
+        $this->guard($inventoryItem);
+        $data = $request->validated();
+
+        if (!$request->user()->isAdmin()) {
+            unset($data['warehouse_id']);
+        }
+
+        $inventoryItem->update($data);
+
         return redirect()->route('inventory.index')->with('success', 'Item updated successfully.');
     }
 
     public function destroy(InventoryItem $inventoryItem)
     {
+        $this->guard($inventoryItem);
         $inventoryItem->delete();
+
         return redirect()->route('inventory.index')->with('success', 'Item deleted successfully.');
     }
 
     public function stockInForm(InventoryItem $inventoryItem)
     {
+        $this->guard($inventoryItem);
+
         return view('inventory.stock-in', ['item' => $inventoryItem]);
     }
 
     public function stockIn(StockInRequest $request, InventoryItem $inventoryItem)
     {
+        $this->guard($inventoryItem);
+
         $this->inventoryService->stockIn(
             $inventoryItem,
             $request->input('quantity'),
@@ -95,11 +156,15 @@ class InventoryController extends Controller
 
     public function stockOutForm(InventoryItem $inventoryItem)
     {
+        $this->guard($inventoryItem);
+
         return view('inventory.stock-out', ['item' => $inventoryItem]);
     }
 
     public function stockOut(StockOutRequest $request, InventoryItem $inventoryItem)
     {
+        $this->guard($inventoryItem);
+
         $result = $this->inventoryService->stockOut(
             $inventoryItem,
             $request->input('quantity'),
@@ -116,11 +181,15 @@ class InventoryController extends Controller
 
     public function adjustForm(InventoryItem $inventoryItem)
     {
+        $this->guard($inventoryItem);
+
         return view('inventory.adjust', ['item' => $inventoryItem]);
     }
 
     public function adjustStock(AdjustStockRequest $request, InventoryItem $inventoryItem)
     {
+        $this->guard($inventoryItem);
+
         $this->inventoryService->adjustStock(
             $inventoryItem,
             $request->input('actual_stock'),
@@ -133,13 +202,18 @@ class InventoryController extends Controller
 
     public function movements(InventoryItem $inventoryItem)
     {
+        $this->guard($inventoryItem);
         $movements = $inventoryItem->movements()->with('user')->latest()->paginate(50);
+
         return view('inventory.movements', ['item' => $inventoryItem, 'movements' => $movements]);
     }
 
     public function allMovements(Request $request)
     {
-        $query = InventoryMovement::with(['item', 'user'])->latest();
+        $user = $request->user();
+        $query = InventoryMovement::with(['item.warehouse', 'user'])
+            ->whereHas('item', fn ($q) => $q->visibleTo($user))
+            ->latest();
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -169,7 +243,9 @@ class InventoryController extends Controller
 
     public function lowStock(Request $request)
     {
-        $query = InventoryItem::whereColumn('current_stock', '<=', 'minimum_stock');
+        $user = $request->user();
+        $query = InventoryItem::query()->visibleTo($user)->with('warehouse')
+            ->whereColumn('current_stock', '<=', 'minimum_stock');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -188,14 +264,15 @@ class InventoryController extends Controller
             }
         }
 
-        $items = $query->orderBy('current_stock')->paginate(50);
+        $items = $query->orderBy('current_stock')->paginate(50)->withQueryString();
 
         return view('inventory.low-stock', compact('items'));
     }
 
     public function export(Request $request)
     {
-        $query = InventoryItem::query();
+        $user = $request->user();
+        $query = InventoryItem::query()->visibleTo($user)->with('warehouse');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -210,9 +287,14 @@ class InventoryController extends Controller
             $query->where('category', $request->input('category'));
         }
 
+        if ($user->isAdmin() && $request->filled('warehouse')) {
+            $query->where('warehouse_id', $request->input('warehouse'));
+        }
+
         $items = $query->orderBy('name')->get();
 
         $rows = $items->map(fn (InventoryItem $i) => [
+            $i->warehouse?->name,
             $i->name,
             $i->category,
             $i->size,
@@ -226,14 +308,17 @@ class InventoryController extends Controller
 
         return $this->streamCsv(
             'inventory-' . now()->format('Y-m-d') . '.csv',
-            ['Item', 'Category', 'Size', 'Unit', 'Current Stock', 'Minimum Stock', 'Unit Cost', 'Stock Value', 'Status'],
+            ['Warehouse', 'Item', 'Category', 'Size', 'Unit', 'Current Stock', 'Minimum Stock', 'Unit Cost', 'Stock Value', 'Status'],
             $rows
         );
     }
 
     public function exportMovements(Request $request)
     {
-        $query = InventoryMovement::with(['item', 'user'])->latest();
+        $user = $request->user();
+        $query = InventoryMovement::with(['item.warehouse', 'user'])
+            ->whereHas('item', fn ($q) => $q->visibleTo($user))
+            ->latest();
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -258,6 +343,7 @@ class InventoryController extends Controller
 
         $rows = $query->get()->map(fn (InventoryMovement $m) => [
             $m->created_at->format('Y-m-d H:i'),
+            $m->item?->warehouse?->name,
             $m->item?->name,
             $m->item?->category,
             $m->getTypeLabel(),
@@ -270,7 +356,7 @@ class InventoryController extends Controller
 
         return $this->streamCsv(
             'stock-movements-' . now()->format('Y-m-d') . '.csv',
-            ['Date', 'Item', 'Category', 'Type', 'Quantity', 'Unit', 'Reference', 'By', 'Remarks'],
+            ['Date', 'Warehouse', 'Item', 'Category', 'Type', 'Quantity', 'Unit', 'Reference', 'By', 'Remarks'],
             $rows
         );
     }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class InventoryItem extends Model
 {
     protected $fillable = [
+        'warehouse_id',
         'name',
         'category',
         'size',
@@ -50,6 +51,21 @@ class InventoryItem extends Model
     public function movements(): HasMany
     {
         return $this->hasMany(InventoryMovement::class);
+    }
+
+    public function warehouse(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    /** Limit a query to the items a given user may see (admins see all). */
+    public function scopeVisibleTo($query, User $user)
+    {
+        if (!$user->isAdmin() && $user->warehouse_id) {
+            $query->where('warehouse_id', $user->warehouse_id);
+        }
+
+        return $query;
     }
 
     public function isLowStock(): bool

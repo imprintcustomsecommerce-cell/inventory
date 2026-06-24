@@ -23,11 +23,17 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'warehouse_id',
     ];
 
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function warehouse(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
     /**

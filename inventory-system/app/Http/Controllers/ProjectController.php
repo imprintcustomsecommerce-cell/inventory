@@ -60,7 +60,7 @@ class ProjectController extends Controller
     public function show(Project $project)
     {
         $project->load('materials.inventoryItem', 'statusLogs.user');
-        $items = InventoryItem::orderBy('name')->get();
+        $items = InventoryItem::query()->visibleTo(auth()->user())->orderBy('name')->get();
         $hasTemplate = $project->product_type
             && \App\Models\BomTemplate::where('product_type', $project->product_type)->exists();
 

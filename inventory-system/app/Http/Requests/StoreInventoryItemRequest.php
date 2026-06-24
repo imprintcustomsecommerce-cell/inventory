@@ -14,7 +14,8 @@ class StoreInventoryItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255|unique:inventory_items,name',
+            'name' => 'required|string|max:255',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
             'category' => 'nullable|string|max:255',
             'size' => 'nullable|string|max:20',
             'unit' => 'required|string|max:50|in:pcs,sets,packs,boxes,yards,meters,rolls',
