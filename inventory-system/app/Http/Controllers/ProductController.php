@@ -210,8 +210,9 @@ class ProductController extends Controller
         ]);
 
         try {
-            $sheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($request->file('file')->getRealPath());
-            $rows = $sheet->getActiveSheet()->toArray(null, true, false, false);
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($request->file('file')->getRealPath());
+            $worksheet = $spreadsheet->getActiveSheet();
+            $rows = $worksheet->toArray(null, true, false, false);
         } catch (\Throwable $e) {
             return back()->with('error', 'Could not read the file. Upload a valid Excel or CSV.');
         }
@@ -220,26 +221,32 @@ class ProductController extends Controller
             return back()->with('error', 'The file appears to be empty.');
         }
 
+        // Pull any images embedded (anchored) in cells, keyed by spreadsheet row.
+        $imagesByRow = $this->extractRowImages($worksheet);
+
         $header = array_map(fn ($h) => trim((string) $h), array_shift($rows));
         $col = array_flip($header);
         $get = fn (array $row, string $name) => isset($col[$name]) && isset($row[$col[$name]]) ? trim((string) $row[$col[$name]]) : null;
 
         $warehouseId = (int) $data['warehouse_id'];
         $created = 0;
+        $updated = 0;
         $variants = 0;
         $skipped = 0;
 
-        DB::transaction(function () use ($rows, $get, $warehouseId, &$created, &$variants, &$skipped) {
-            foreach ($rows as $row) {
+        DB::transaction(function () use ($rows, $get, $warehouseId, $imagesByRow, &$created, &$updated, &$variants, &$skipped) {
+            foreach ($rows as $i => $row) {
                 $name = $get($row, 'Product name');
                 if (!$name) {
                     $skipped++;
                     continue;
                 }
 
-                $product = Product::create([
-                    'warehouse_id' => $warehouseId,
-                    'sku' => $get($row, 'Product ID') ?: null,
+                // Data started at spreadsheet row 2 (row 1 was the header).
+                $rowNumber = $i + 2;
+                $sku = $get($row, 'Product ID') ?: null;
+
+                $attributes = [
                     'name' => $name,
                     'category' => $get($row, 'Categories') ?: null,
                     'brand' => $get($row, 'Brand name') ?: null,
@@ -247,33 +254,94 @@ class ProductController extends Controller
                     'retail_price' => (float) ($get($row, 'Retail price') ?? 0),
                     'cost_price' => (float) ($get($row, 'Imported price') ?? 0),
                     'description' => $get($row, 'Description') ?: null,
-                ]);
-                $created++;
+                ];
+                if (isset($imagesByRow[$rowNumber])) {
+                    $attributes['image_path'] = $imagesByRow[$rowNumber];
+                }
+
+                // Idempotent: match an existing product by SKU (or name) so a
+                // re-import updates details/images instead of duplicating.
+                $match = $sku
+                    ? ['warehouse_id' => $warehouseId, 'sku' => $sku]
+                    : ['warehouse_id' => $warehouseId, 'name' => $name];
+
+                $product = Product::where($match)->first();
+                if ($product) {
+                    $product->update($attributes);
+                    $updated++;
+                } else {
+                    $product = Product::create(array_merge($match, $attributes));
+                    $created++;
+                }
 
                 // "Product attributes" looks like "SIZE: 2XS, XS, S, M, ..."
-                $attr = $get($row, 'Product attributes') ?? '';
-                $attr = preg_replace('/^\s*SIZE\s*:/i', '', $attr);
-                $sizes = array_filter(array_map('trim', explode(',', $attr)));
-
-                foreach ($sizes as $size) {
-                    $product->variants()->create([
-                        'warehouse_id' => $warehouseId,
-                        'name' => $name,
-                        'category' => $product->category,
-                        'size' => $size,
-                        'unit' => 'pcs',
-                        'current_stock' => 0,
-                        'minimum_stock' => 0,
-                        'unit_cost' => $product->cost_price,
-                        'status' => 'active',
-                    ]);
-                    $variants++;
+                $attr = preg_replace('/^\s*SIZE\s*:/i', '', $get($row, 'Product attributes') ?? '');
+                foreach (array_filter(array_map('trim', explode(',', $attr))) as $size) {
+                    // firstOrCreate keeps existing stock on re-import.
+                    $created_variant = $product->variants()->firstOrCreate(
+                        ['size' => $size],
+                        [
+                            'warehouse_id' => $warehouseId,
+                            'name' => $name,
+                            'category' => $product->category,
+                            'unit' => 'pcs',
+                            'current_stock' => 0,
+                            'minimum_stock' => 0,
+                            'unit_cost' => $product->cost_price,
+                            'status' => 'active',
+                        ]
+                    );
+                    if ($created_variant->wasRecentlyCreated) {
+                        $variants++;
+                    }
                 }
             }
         });
 
         return redirect()->route('products.index')
-            ->with('success', "Imported {$created} products with {$variants} sizes" . ($skipped ? ", {$skipped} rows skipped." : '.'));
+            ->with('success', "Import complete: {$created} added, {$updated} updated, {$variants} new sizes" . ($skipped ? ", {$skipped} skipped." : '.'));
+    }
+
+    /**
+     * Save images embedded in a worksheet to storage, keyed by their row.
+     *
+     * @return array<int, string>
+     */
+    private function extractRowImages(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $worksheet): array
+    {
+        $map = [];
+
+        foreach ($worksheet->getDrawingCollection() as $drawing) {
+            try {
+                $row = (int) preg_replace('/[^0-9]/', '', $drawing->getCoordinates());
+                if (!$row) {
+                    continue;
+                }
+
+                if ($drawing instanceof \PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing) {
+                    ob_start();
+                    call_user_func($drawing->getRenderingFunction(), $drawing->getImageResource());
+                    $contents = ob_get_clean();
+                    $ext = 'png';
+                } else {
+                    $path = $drawing->getPath();
+                    $contents = $path ? @file_get_contents($path) : null;
+                    $ext = $drawing->getExtension() ?: 'png';
+                }
+
+                if (!$contents) {
+                    continue;
+                }
+
+                $stored = 'product-images/' . \Illuminate\Support\Str::random(40) . '.' . $ext;
+                Storage::disk('public')->put($stored, $contents);
+                $map[$row] = $stored;
+            } catch (\Throwable $e) {
+                // Skip unreadable images.
+            }
+        }
+
+        return $map;
     }
 
     /** Create inventory_item variants for each chosen size. */
