@@ -23,6 +23,7 @@ class StoreInventoryItemRequest extends FormRequest
             'minimum_stock' => 'required|numeric|min:0',
             'unit_cost' => 'nullable|numeric|min:0',
             'remarks' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|max:4096',
         ];
     }
 

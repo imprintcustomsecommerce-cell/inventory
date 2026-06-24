@@ -18,6 +18,7 @@ class InventoryItem extends Model
         'unit_cost',
         'status',
         'remarks',
+        'image_path',
     ];
 
     /** Product categories for Imprint's apparel lines. */
@@ -40,6 +41,11 @@ class InventoryItem extends Model
     public function displayName(): string
     {
         return $this->size ? "{$this->name} ({$this->size})" : $this->name;
+    }
+
+    public function imageUrl(): ?string
+    {
+        return $this->image_path ? \Illuminate\Support\Facades\Storage::url($this->image_path) : null;
     }
 
     protected $casts = [

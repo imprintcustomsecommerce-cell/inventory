@@ -100,10 +100,21 @@
                     @foreach($items as $item)
                         <tr>
                             <td>
-                                <div class="font-medium text-zinc-900">{{ $item->name }}</div>
-                                @if($item->remarks)
-                                    <div class="text-xs text-zinc-400">{{ \Illuminate\Support\Str::limit($item->remarks, 48) }}</div>
-                                @endif
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
+                                        @if($item->imageUrl())
+                                            <img src="{{ $item->imageUrl() }}" alt="{{ $item->name }}" class="h-full w-full object-cover">
+                                        @else
+                                            <svg class="h-5 w-5 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z"/></svg>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-zinc-900">{{ $item->name }}</div>
+                                        @if($item->remarks)
+                                            <div class="text-xs text-zinc-400">{{ \Illuminate\Support\Str::limit($item->remarks, 40) }}</div>
+                                        @endif
+                                    </div>
+                                </div>
                             </td>
                             @if(auth()->user()->isAdmin())
                                 <td><span class="badge badge-zinc">{{ $item->warehouse?->name ?? '—' }}</span></td>

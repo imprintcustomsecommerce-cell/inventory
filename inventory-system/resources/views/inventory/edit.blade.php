@@ -15,7 +15,7 @@
         <p class="mt-1 text-sm text-zinc-500">{{ $item->name }}</p>
     </div>
 
-    <form action="{{ route('inventory.update', $item->id) }}" method="POST" class="card divide-y divide-zinc-200">
+    <form action="{{ route('inventory.update', $item->id) }}" method="POST" enctype="multipart/form-data" class="card divide-y divide-zinc-200">
         @csrf
         @method('PUT')
         <div class="space-y-5 p-6">
@@ -82,6 +82,23 @@
                 <input type="number" name="unit_cost" value="{{ old('unit_cost', $item->unit_cost) }}" min="0" step="0.01" class="input @error('unit_cost') input-error @enderror">
                 <p class="mt-1.5 text-xs text-zinc-400">Used to compute material cost on projects.</p>
                 @error('unit_cost') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="label">Photo <span class="font-normal text-zinc-400">(optional)</span></label>
+                <div class="flex items-center gap-4">
+                    <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
+                        @if($item->imageUrl())
+                            <img src="{{ $item->imageUrl() }}" alt="{{ $item->name }}" class="h-full w-full object-cover">
+                        @else
+                            <svg class="h-6 w-6 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+                        @endif
+                    </div>
+                    <input type="file" name="image" accept="image/*"
+                           class="block w-full text-sm text-zinc-600 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-zinc-800 @error('image') text-red-600 @enderror">
+                </div>
+                <p class="mt-1.5 text-xs text-zinc-400">Upload a new photo to replace the current one.</p>
+                @error('image') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 
             <div>

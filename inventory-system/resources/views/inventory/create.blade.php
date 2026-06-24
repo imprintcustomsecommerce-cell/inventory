@@ -15,7 +15,7 @@
         <p class="mt-1 text-sm text-zinc-500">Create a new material or stock item.</p>
     </div>
 
-    <form action="{{ route('inventory.store') }}" method="POST" class="card divide-y divide-zinc-200">
+    <form action="{{ route('inventory.store') }}" method="POST" enctype="multipart/form-data" class="card divide-y divide-zinc-200">
         @csrf
         <div class="space-y-5 p-6">
             @if($warehouses->isNotEmpty())
@@ -83,6 +83,13 @@
                 <input type="number" name="unit_cost" value="{{ old('unit_cost', 0) }}" min="0" step="0.01" class="input @error('unit_cost') input-error @enderror">
                 <p class="mt-1.5 text-xs text-zinc-400">Used to compute material cost on projects.</p>
                 @error('unit_cost') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="label">Photo <span class="font-normal text-zinc-400">(optional)</span></label>
+                <input type="file" name="image" accept="image/*"
+                       class="block w-full text-sm text-zinc-600 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-zinc-800 @error('image') text-red-600 @enderror">
+                @error('image') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 
             <div>

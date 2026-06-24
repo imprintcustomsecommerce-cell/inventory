@@ -14,6 +14,7 @@ use App\Models\Warehouse;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class InventoryController extends Controller
 {
@@ -99,6 +100,11 @@ class InventoryController extends Controller
             return back()->withInput()->with('error', 'Please choose a warehouse for this item.');
         }
 
+        unset($data['image']);
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('inventory-images', 'public');
+        }
+
         InventoryItem::create($data);
 
         return redirect()->route('inventory.index')->with('success', 'Item created successfully.');
@@ -121,6 +127,14 @@ class InventoryController extends Controller
             unset($data['warehouse_id']);
         }
 
+        unset($data['image']);
+        if ($request->hasFile('image')) {
+            if ($inventoryItem->image_path) {
+                Storage::disk('public')->delete($inventoryItem->image_path);
+            }
+            $data['image_path'] = $request->file('image')->store('inventory-images', 'public');
+        }
+
         $inventoryItem->update($data);
 
         return redirect()->route('inventory.index')->with('success', 'Item updated successfully.');
@@ -129,6 +143,11 @@ class InventoryController extends Controller
     public function destroy(InventoryItem $inventoryItem)
     {
         $this->guard($inventoryItem);
+
+        if ($inventoryItem->image_path) {
+            Storage::disk('public')->delete($inventoryItem->image_path);
+        }
+
         $inventoryItem->delete();
 
         return redirect()->route('inventory.index')->with('success', 'Item deleted successfully.');
