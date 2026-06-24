@@ -144,13 +144,38 @@ class InventoryController extends Controller
     {
         $this->guard($inventoryItem);
 
-        if ($inventoryItem->image_path) {
-            Storage::disk('public')->delete($inventoryItem->image_path);
-        }
-
+        // Soft delete — moves the item to the trash; image is kept for restore.
         $inventoryItem->delete();
 
-        return redirect()->route('inventory.index')->with('success', 'Item deleted successfully.');
+        return redirect()->route('inventory.index')->with('success', 'Item moved to trash. You can restore it from the trash bin.');
+    }
+
+    public function trash()
+    {
+        $items = InventoryItem::onlyTrashed()->with('warehouse')->latest('deleted_at')->paginate(50);
+
+        return view('inventory.trash', compact('items'));
+    }
+
+    public function restore($id)
+    {
+        $item = InventoryItem::onlyTrashed()->findOrFail($id);
+        $item->restore();
+
+        return back()->with('success', "“{$item->name}” restored.");
+    }
+
+    public function forceDelete($id)
+    {
+        $item = InventoryItem::onlyTrashed()->findOrFail($id);
+
+        if ($item->image_path) {
+            Storage::disk('public')->delete($item->image_path);
+        }
+
+        $item->forceDelete();
+
+        return back()->with('success', 'Item permanently deleted.');
     }
 
     public function stockInForm(InventoryItem $inventoryItem)

@@ -45,6 +45,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/inventory-import', [InventoryController::class, 'importForm'])->middleware('admin')->name('inventory.importForm');
     Route::post('/inventory-import', [InventoryController::class, 'import'])->middleware('admin')->name('inventory.import');
 
+    // Trash bin (admin only)
+    Route::get('/inventory-trash', [InventoryController::class, 'trash'])->middleware('admin')->name('inventory.trash');
+    Route::post('/inventory/{id}/restore', [InventoryController::class, 'restore'])->middleware('admin')->name('inventory.restore');
+    Route::delete('/inventory/{id}/force', [InventoryController::class, 'forceDelete'])->middleware('admin')->name('inventory.forceDelete');
+
     // Warehouse transfer
     Route::get('/inventory/{inventoryItem}/transfer', [InventoryController::class, 'transferForm'])->name('inventory.transferForm');
     Route::post('/inventory/{inventoryItem}/transfer', [InventoryController::class, 'transfer'])->name('inventory.transfer');

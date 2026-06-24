@@ -116,12 +116,12 @@
     <!-- Danger zone -->
     @if(auth()->user()->isAdmin())
     <div class="mt-6 rounded-xl border border-red-200 bg-red-50 p-6">
-        <h3 class="text-sm font-semibold text-red-900">Delete this item</h3>
-        <p class="mt-1 text-sm text-red-700">Permanently removes the item and its entire movement history. This cannot be undone.</p>
-        <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Delete “{{ $item->name }}” and all its history? This cannot be undone.');" class="mt-4">
+        <h3 class="text-sm font-semibold text-red-900">Move this item to trash</h3>
+        <p class="mt-1 text-sm text-red-700">The item is hidden from inventory but can be restored from the trash bin. Its history and photo are kept.</p>
+        <form action="{{ route('inventory.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Move “{{ $item->name }}” to trash?');" class="mt-4">
             @csrf
             @method('DELETE')
-            <button type="submit" class="btn btn-danger btn-sm">Delete item</button>
+            <button type="submit" class="btn btn-danger btn-sm">Move to trash</button>
         </form>
     </div>
     @endif
