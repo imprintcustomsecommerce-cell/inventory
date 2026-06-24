@@ -63,6 +63,54 @@ class TransferImportTest extends TestCase
         $this->assertEquals(40, $second->fresh()->current_stock); // deducted
     }
 
+    public function test_staff_can_transfer_both_directions(): void
+    {
+        $store = Warehouse::create(['name' => 'Store']);
+        $stockroom = Warehouse::create(['name' => 'Inventory']);
+
+        $storeStaff = User::factory()->create(['warehouse_id' => $store->id]);
+        $whStaff = User::factory()->create(['warehouse_id' => $stockroom->id]);
+
+        $storeItem = InventoryItem::create([
+            'warehouse_id' => $store->id, 'name' => 'Jersey', 'size' => 'M', 'unit' => 'pcs',
+            'current_stock' => 20, 'minimum_stock' => 2, 'status' => 'active',
+        ]);
+        $whItem = InventoryItem::create([
+            'warehouse_id' => $stockroom->id, 'name' => 'Joggers', 'unit' => 'pcs',
+            'current_stock' => 15, 'minimum_stock' => 2, 'status' => 'active',
+        ]);
+
+        // Store -> Inventory by store staff
+        $this->actingAs($storeStaff)->post("/inventory/{$storeItem->id}/transfer", [
+            'destination_warehouse_id' => $stockroom->id, 'quantity' => 5,
+        ])->assertRedirect();
+        $this->assertEquals(15, $storeItem->fresh()->current_stock);
+        $this->assertEquals(5, InventoryItem::where('warehouse_id', $stockroom->id)->where('name', 'Jersey')->value('current_stock'));
+
+        // Inventory -> Store by warehouse staff
+        $this->actingAs($whStaff)->post("/inventory/{$whItem->id}/transfer", [
+            'destination_warehouse_id' => $store->id, 'quantity' => 4,
+        ])->assertRedirect();
+        $this->assertEquals(11, $whItem->fresh()->current_stock);
+        $this->assertEquals(4, InventoryItem::where('warehouse_id', $store->id)->where('name', 'Joggers')->value('current_stock'));
+    }
+
+    public function test_staff_cannot_transfer_an_item_from_another_warehouse(): void
+    {
+        $store = Warehouse::create(['name' => 'Store']);
+        $stockroom = Warehouse::create(['name' => 'Inventory']);
+        $storeStaff = User::factory()->create(['warehouse_id' => $store->id]);
+
+        $whItem = InventoryItem::create([
+            'warehouse_id' => $stockroom->id, 'name' => 'Joggers', 'unit' => 'pcs',
+            'current_stock' => 15, 'minimum_stock' => 2, 'status' => 'active',
+        ]);
+
+        $this->actingAs($storeStaff)->post("/inventory/{$whItem->id}/transfer", [
+            'destination_warehouse_id' => $store->id, 'quantity' => 4,
+        ])->assertForbidden();
+    }
+
     public function test_cannot_transfer_more_than_available(): void
     {
         $store = Warehouse::create(['name' => 'Store']);
