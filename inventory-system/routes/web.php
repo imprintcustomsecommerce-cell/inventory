@@ -41,6 +41,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/inventory-export', [InventoryController::class, 'export'])->name('inventory.export');
     Route::get('/inventory-movements-export', [InventoryController::class, 'exportMovements'])->name('inventory.movements.export');
 
+    // CSV import / restore (admin only)
+    Route::get('/inventory-import', [InventoryController::class, 'importForm'])->middleware('admin')->name('inventory.importForm');
+    Route::post('/inventory-import', [InventoryController::class, 'import'])->middleware('admin')->name('inventory.import');
+
+    // Warehouse transfer
+    Route::get('/inventory/{inventoryItem}/transfer', [InventoryController::class, 'transferForm'])->name('inventory.transferForm');
+    Route::post('/inventory/{inventoryItem}/transfer', [InventoryController::class, 'transfer'])->name('inventory.transfer');
+
     Route::get('/inventory/{inventoryItem}/adjust', [InventoryController::class, 'adjustForm'])->name('inventory.adjustForm');
     Route::post('/inventory/{inventoryItem}/adjust', [InventoryController::class, 'adjustStock'])->name('inventory.adjustStock');
 

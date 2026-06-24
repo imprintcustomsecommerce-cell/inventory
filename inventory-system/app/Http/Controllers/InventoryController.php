@@ -13,6 +13,7 @@ use App\Models\InventoryMovement;
 use App\Models\Warehouse;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InventoryController extends Controller
 {
@@ -206,6 +207,109 @@ class InventoryController extends Controller
         $movements = $inventoryItem->movements()->with('user')->latest()->paginate(50);
 
         return view('inventory.movements', ['item' => $inventoryItem, 'movements' => $movements]);
+    }
+
+    public function transferForm(InventoryItem $inventoryItem)
+    {
+        $this->guard($inventoryItem);
+        $warehouses = Warehouse::where('id', '!=', $inventoryItem->warehouse_id)->orderBy('name')->get();
+
+        return view('inventory.transfer', ['item' => $inventoryItem, 'warehouses' => $warehouses]);
+    }
+
+    public function transfer(Request $request, InventoryItem $inventoryItem)
+    {
+        $this->guard($inventoryItem);
+
+        $data = $request->validate([
+            'destination_warehouse_id' => 'required|exists:warehouses,id',
+            'quantity' => 'required|numeric|min:0.01|max:' . $inventoryItem->current_stock,
+            'remarks' => 'nullable|string|max:255',
+        ]);
+
+        if ((int) $data['destination_warehouse_id'] === (int) $inventoryItem->warehouse_id) {
+            return back()->with('error', 'Choose a different destination warehouse.');
+        }
+
+        $destination = Warehouse::findOrFail($data['destination_warehouse_id']);
+        $ok = $this->inventoryService->transfer($inventoryItem, $destination, (float) $data['quantity'], $data['remarks'] ?? null);
+
+        if (!$ok) {
+            return back()->with('error', 'Transfer failed — check the available stock.');
+        }
+
+        return redirect()->route('inventory.index')
+            ->with('success', "Transferred {$data['quantity']} to {$destination->name}.");
+    }
+
+    public function importForm()
+    {
+        return view('inventory.import');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt|max:5120',
+        ]);
+
+        $handle = fopen($request->file('file')->getRealPath(), 'r');
+        if (!$handle) {
+            return back()->with('error', 'Could not read the uploaded file.');
+        }
+
+        $header = fgetcsv($handle);
+        if (!$header) {
+            fclose($handle);
+            return back()->with('error', 'The file appears to be empty.');
+        }
+        // Strip a UTF-8 BOM from the first header cell, if present.
+        $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header[0]);
+        $col = array_flip(array_map('trim', $header));
+
+        $get = fn (array $row, string $name) => isset($col[$name]) && isset($row[$col[$name]]) ? trim($row[$col[$name]]) : null;
+
+        $created = 0;
+        $updated = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($handle, $get, &$created, &$updated, &$skipped) {
+            while (($row = fgetcsv($handle)) !== false) {
+                $name = $get($row, 'Item');
+                if (!$name) {
+                    $skipped++;
+                    continue;
+                }
+
+                $warehouseName = $get($row, 'Warehouse');
+                $warehouseId = $warehouseName
+                    ? Warehouse::firstOrCreate(['name' => $warehouseName])->id
+                    : null;
+
+                $item = InventoryItem::updateOrCreate(
+                    [
+                        'warehouse_id' => $warehouseId,
+                        'name' => $name,
+                        'size' => $get($row, 'Size') ?: null,
+                    ],
+                    [
+                        'category' => $get($row, 'Category') ?: null,
+                        'unit' => $get($row, 'Unit') ?: 'pcs',
+                        'current_stock' => (float) ($get($row, 'Current Stock') ?? 0),
+                        'minimum_stock' => (float) ($get($row, 'Minimum Stock') ?? 0),
+                        'unit_cost' => (float) ($get($row, 'Unit Cost') ?? 0),
+                        'status' => 'active',
+                    ]
+                );
+
+                $item->wasRecentlyCreated ? $created++ : $updated++;
+            }
+        });
+
+        fclose($handle);
+
+        return redirect()->route('inventory.index')
+            ->with('success', "Import complete: {$created} added, {$updated} updated" . ($skipped ? ", {$skipped} skipped." : '.'));
     }
 
     public function allMovements(Request $request)
