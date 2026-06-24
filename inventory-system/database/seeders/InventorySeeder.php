@@ -103,5 +103,44 @@ class InventorySeeder extends Seeder
                 ]);
             }
         }
+
+        // Sample products (one product, many sizes) for the Store front.
+        $products = [
+            ['name' => 'Makina Oversized Shirt', 'category' => 'Cotton Shirt', 'brand' => 'Imprint Customs', 'retail' => 850, 'cost' => 450, 'sizes' => ['S' => 12, 'M' => 20, 'L' => 18, 'XL' => 8]],
+            ['name' => 'Thomas White Cotton Shirt', 'category' => 'Cotton Shirt', 'brand' => 'Imprint Customs', 'retail' => 850, 'cost' => 450, 'sizes' => ['S' => 5, 'M' => 9, 'L' => 0]],
+            ['name' => 'Velocitas Beige Cotton Shirt', 'category' => 'Cotton Shirt', 'brand' => 'Imprint Customs', 'retail' => 750, 'cost' => 450, 'sizes' => ['M' => 14, 'L' => 11, 'XL' => 6, '2XL' => 3]],
+        ];
+
+        foreach ($products as $p) {
+            $productId = DB::table('products')->insertGetId([
+                'warehouse_id' => $store,
+                'name' => $p['name'],
+                'category' => $p['category'],
+                'brand' => $p['brand'],
+                'material' => '100% Cotton',
+                'retail_price' => $p['retail'],
+                'cost_price' => $p['cost'],
+                'description' => 'Premium soft cotton. Please see size chart for your reference.',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            foreach ($p['sizes'] as $size => $stock) {
+                DB::table('inventory_items')->insert([
+                    'warehouse_id' => $store,
+                    'product_id' => $productId,
+                    'name' => $p['name'],
+                    'category' => $p['category'],
+                    'size' => $size,
+                    'unit' => 'pcs',
+                    'current_stock' => $stock,
+                    'minimum_stock' => 5,
+                    'unit_cost' => $p['cost'],
+                    'status' => 'active',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+        }
     }
 }

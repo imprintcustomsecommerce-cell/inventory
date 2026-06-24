@@ -12,6 +12,7 @@ class InventoryItem extends Model
 
     protected $fillable = [
         'warehouse_id',
+        'product_id',
         'name',
         'category',
         'size',
@@ -65,6 +66,11 @@ class InventoryItem extends Model
     public function warehouse(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    public function product(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 
     /** Limit a query to the items a given user may see (admins see all). */
