@@ -12,7 +12,7 @@
 
     <div class="mb-6">
         <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Import / restore inventory</h1>
-        <p class="mt-1 text-sm text-zinc-500">Upload a CSV to add or update items in bulk. Works with files produced by Export CSV — a quick backup &amp; restore.</p>
+        <p class="mt-1 text-sm text-zinc-500">Upload an Excel (.xlsx) or CSV file to add or update items in bulk. Works with files produced by Export Excel — a quick backup &amp; restore.</p>
     </div>
 
     <div class="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-900">
@@ -29,8 +29,8 @@
         @csrf
         <div class="space-y-5 p-6">
             <div>
-                <label class="label">CSV file</label>
-                <input type="file" name="file" accept=".csv,text/csv" required
+                <label class="label">Excel or CSV file</label>
+                <input type="file" name="file" accept=".xlsx,.xls,.csv,text/csv" required
                        class="block w-full text-sm text-zinc-600 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-zinc-800 @error('file') text-red-600 @enderror">
                 @error('file') <p class="form-error">{{ $message }}</p> @enderror
             </div>

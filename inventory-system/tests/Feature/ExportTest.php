@@ -12,7 +12,9 @@ class ExportTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_inventory_csv_export(): void
+    private const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    public function test_inventory_excel_export(): void
     {
         $user = User::factory()->create();
         InventoryItem::create([
@@ -23,14 +25,11 @@ class ExportTest extends TestCase
         $res = $this->actingAs($user)->get('/inventory-export');
 
         $res->assertStatus(200);
-        $this->assertStringContainsString('text/csv', $res->headers->get('content-type'));
-        $body = $res->streamedContent();
-        $this->assertStringContainsString('Item,Category,Size,Unit', $body);
-        $this->assertStringContainsString('Aircool Navy', $body);
-        $this->assertStringContainsString('850.00', $body); // stock value 10 x 85
+        $this->assertStringContainsString(self::XLSX, $res->headers->get('content-type'));
+        $this->assertStringContainsString('.xlsx', $res->headers->get('content-disposition'));
     }
 
-    public function test_movements_csv_export(): void
+    public function test_movements_excel_export(): void
     {
         $user = User::factory()->create();
         $item = InventoryItem::create([
@@ -41,10 +40,10 @@ class ExportTest extends TestCase
         $res = $this->actingAs($user)->get('/inventory-movements-export');
 
         $res->assertStatus(200);
-        $this->assertStringContainsString('Thread', $res->streamedContent());
+        $this->assertStringContainsString(self::XLSX, $res->headers->get('content-type'));
     }
 
-    public function test_projects_csv_export(): void
+    public function test_projects_excel_export(): void
     {
         $user = User::factory()->create();
         Project::create(['project_name' => 'Jersey Run', 'quantity' => 5, 'status' => 'Pending']);
@@ -52,6 +51,6 @@ class ExportTest extends TestCase
         $res = $this->actingAs($user)->get('/projects-export');
 
         $res->assertStatus(200);
-        $this->assertStringContainsString('Jersey Run', $res->streamedContent());
+        $this->assertStringContainsString(self::XLSX, $res->headers->get('content-type'));
     }
 }

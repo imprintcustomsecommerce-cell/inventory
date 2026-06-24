@@ -34,7 +34,7 @@ class RoleTest extends TestCase
         $item = $this->item();
 
         $this->actingAs($admin)->delete("/inventory/{$item->id}")->assertRedirect();
-        $this->assertDatabaseMissing('inventory_items', ['id' => $item->id]);
+        $this->assertSoftDeleted('inventory_items', ['id' => $item->id]);
     }
 
     public function test_staff_cannot_access_user_management(): void

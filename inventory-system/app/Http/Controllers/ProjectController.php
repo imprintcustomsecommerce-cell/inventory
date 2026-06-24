@@ -196,8 +196,8 @@ class ProjectController extends Controller
             ];
         });
 
-        return $this->streamCsv(
-            'projects-' . now()->format('Y-m-d') . '.csv',
+        return $this->streamXlsx(
+            'projects-' . now()->format('Y-m-d') . '.xlsx',
             ['Project', 'Customer', 'Product', 'Quantity', 'Status', 'Due Date', 'Quoted Price', 'Material Cost', 'Margin', 'Materials Deducted'],
             $rows
         );

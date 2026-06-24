@@ -294,31 +294,30 @@ class InventoryController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:5120',
+            'file' => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
         ]);
 
-        $handle = fopen($request->file('file')->getRealPath(), 'r');
-        if (!$handle) {
-            return back()->with('error', 'Could not read the uploaded file.');
+        try {
+            $sheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($request->file('file')->getRealPath());
+            $rows = $sheet->getActiveSheet()->toArray(null, true, false, false);
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Could not read the file. Please upload a valid Excel or CSV file.');
         }
 
-        $header = fgetcsv($handle);
-        if (!$header) {
-            fclose($handle);
+        if (empty($rows)) {
             return back()->with('error', 'The file appears to be empty.');
         }
-        // Strip a UTF-8 BOM from the first header cell, if present.
-        $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header[0]);
-        $col = array_flip(array_map('trim', $header));
 
-        $get = fn (array $row, string $name) => isset($col[$name]) && isset($row[$col[$name]]) ? trim($row[$col[$name]]) : null;
+        $header = array_map(fn ($h) => trim((string) $h), array_shift($rows));
+        $col = array_flip($header);
+        $get = fn (array $row, string $name) => isset($col[$name]) && isset($row[$col[$name]]) ? trim((string) $row[$col[$name]]) : null;
 
         $created = 0;
         $updated = 0;
         $skipped = 0;
 
-        DB::transaction(function () use ($handle, $get, &$created, &$updated, &$skipped) {
-            while (($row = fgetcsv($handle)) !== false) {
+        DB::transaction(function () use ($rows, $get, &$created, &$updated, &$skipped) {
+            foreach ($rows as $row) {
                 $name = $get($row, 'Item');
                 if (!$name) {
                     $skipped++;
@@ -349,8 +348,6 @@ class InventoryController extends Controller
                 $item->wasRecentlyCreated ? $created++ : $updated++;
             }
         });
-
-        fclose($handle);
 
         return redirect()->route('inventory.index')
             ->with('success', "Import complete: {$created} added, {$updated} updated" . ($skipped ? ", {$skipped} skipped." : '.'));
@@ -454,8 +451,8 @@ class InventoryController extends Controller
             $i->getStatusLabel(),
         ]);
 
-        return $this->streamCsv(
-            'inventory-' . now()->format('Y-m-d') . '.csv',
+        return $this->streamXlsx(
+            'inventory-' . now()->format('Y-m-d') . '.xlsx',
             ['Warehouse', 'Item', 'Category', 'Size', 'Unit', 'Current Stock', 'Minimum Stock', 'Unit Cost', 'Stock Value', 'Status'],
             $rows
         );
@@ -502,8 +499,8 @@ class InventoryController extends Controller
             $m->remarks,
         ]);
 
-        return $this->streamCsv(
-            'stock-movements-' . now()->format('Y-m-d') . '.csv',
+        return $this->streamXlsx(
+            'stock-movements-' . now()->format('Y-m-d') . '.xlsx',
             ['Date', 'Warehouse', 'Item', 'Category', 'Type', 'Quantity', 'Unit', 'Reference', 'By', 'Remarks'],
             $rows
         );
