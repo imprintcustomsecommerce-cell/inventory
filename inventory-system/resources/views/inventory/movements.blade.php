@@ -12,7 +12,7 @@
 <div class="mb-6 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
     <div>
         <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Stock history</h1>
-        <p class="mt-1 text-sm text-zinc-500">{{ $item->name }}</p>
+        <p class="mt-1 text-sm text-zinc-500">{{ $item->displayName() }}</p>
     </div>
     <span class="badge {{ $item->isOutOfStock() ? 'badge-red' : ($item->isLowStock() ? 'badge-amber' : 'badge-green') }} self-start">
         {{ $item->current_stock }} {{ $item->unit }} in stock

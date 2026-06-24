@@ -45,7 +45,7 @@
                 <tbody>
                     @foreach($lowStockItems as $item)
                         <tr>
-                            <td class="font-medium text-zinc-900">{{ $item->name }}</td>
+                            <td class="font-medium text-zinc-900">{{ $item->displayName() }}</td>
                             <td class="text-zinc-500">{{ $item->current_stock }} / {{ $item->minimum_stock }} {{ $item->unit }}</td>
                             <td class="text-right">
                                 <span class="badge {{ $item->isOutOfStock() ? 'badge-red' : 'badge-amber' }}">{{ $item->getStatusLabel() }}</span>
@@ -101,7 +101,7 @@
                         <td>
                             <span class="badge {{ $m->type === 'stock_in' ? 'badge-green' : ($m->type === 'stock_out' ? 'badge-red' : 'badge-amber') }}">{{ $m->getTypeLabel() }}</span>
                         </td>
-                        <td class="font-medium text-zinc-900">{{ $m->item?->name ?? '—' }}</td>
+                        <td class="font-medium text-zinc-900">{{ $m->item?->displayName() ?? '—' }}</td>
                         <td class="text-zinc-700">{{ $m->quantity }} {{ $m->item?->unit }}</td>
                         <td class="text-right text-zinc-500">{{ $m->user?->name ?? 'System' }}</td>
                     </tr>

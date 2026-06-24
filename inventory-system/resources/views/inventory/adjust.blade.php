@@ -16,7 +16,7 @@
         </div>
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Adjust stock</h1>
-            <p class="text-sm text-zinc-500">Correct the count for {{ $item->name }} after a physical check.</p>
+            <p class="text-sm text-zinc-500">Correct the count for {{ $item->displayName() }} after a physical check.</p>
         </div>
     </div>
 

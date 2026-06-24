@@ -16,7 +16,8 @@ class StoreInventoryItemRequest extends FormRequest
         return [
             'name' => 'required|string|max:255|unique:inventory_items,name',
             'category' => 'nullable|string|max:255',
-            'unit' => 'required|string|max:50|in:pcs,yards,meters,rolls,packs,boxes',
+            'size' => 'nullable|string|max:20',
+            'unit' => 'required|string|max:50|in:pcs,sets,packs,boxes,yards,meters,rolls',
             'current_stock' => 'required|numeric|min:0',
             'minimum_stock' => 'required|numeric|min:0',
             'unit_cost' => 'nullable|numeric|min:0',

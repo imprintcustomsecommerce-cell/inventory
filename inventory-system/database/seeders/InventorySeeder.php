@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class InventorySeeder extends Seeder
 {
     /**
-     * Seed sample inventory items and stock movements.
+     * Seed sample clothing stock and movements.
      */
     public function run(): void
     {
@@ -20,14 +20,16 @@ class InventorySeeder extends Seeder
         $now = now();
         $userId = DB::table('users')->where('email', 'admin@imprint.ph')->value('id');
 
+        // Finished apparel stock (Imprint Customs product lines).
         $items = [
-            ['name' => 'Aircool Fabric (Navy)', 'category' => 'Fabric', 'unit' => 'yards', 'current_stock' => 120, 'minimum_stock' => 30, 'unit_cost' => 85.00],
-            ['name' => 'Aircool Fabric (Black)', 'category' => 'Fabric', 'unit' => 'yards', 'current_stock' => 18, 'minimum_stock' => 30, 'unit_cost' => 85.00],
-            ['name' => 'Metal Zipper #5', 'category' => 'Zipper', 'unit' => 'pcs', 'current_stock' => 0, 'minimum_stock' => 50, 'unit_cost' => 12.50],
-            ['name' => 'Polyester Thread (White)', 'category' => 'Thread', 'unit' => 'rolls', 'current_stock' => 60, 'minimum_stock' => 15, 'unit_cost' => 30.00],
-            ['name' => 'Knitted Collar (Red)', 'category' => 'Collar', 'unit' => 'pcs', 'current_stock' => 25, 'minimum_stock' => 40, 'unit_cost' => 18.00],
-            ['name' => 'Woven Label', 'category' => 'Label', 'unit' => 'packs', 'current_stock' => 200, 'minimum_stock' => 50, 'unit_cost' => 2.50],
-            ['name' => 'Poly Mailer (Medium)', 'category' => 'Packaging', 'unit' => 'boxes', 'current_stock' => 12, 'minimum_stock' => 5, 'unit_cost' => 6.00],
+            ['name' => 'Esports Jersey (Black)', 'category' => 'Jersey', 'size' => 'M', 'unit' => 'pcs', 'current_stock' => 42, 'minimum_stock' => 15, 'unit_cost' => 250.00],
+            ['name' => 'Esports Jersey (Black)', 'category' => 'Jersey', 'size' => 'L', 'unit' => 'pcs', 'current_stock' => 28, 'minimum_stock' => 15, 'unit_cost' => 250.00],
+            ['name' => 'Team Polo Shirt (Navy)', 'category' => 'Polo Shirt', 'size' => 'M', 'unit' => 'pcs', 'current_stock' => 9, 'minimum_stock' => 20, 'unit_cost' => 220.00],
+            ['name' => 'Round Neck Shirt (White)', 'category' => 'Round Neck Shirt', 'size' => 'L', 'unit' => 'pcs', 'current_stock' => 0, 'minimum_stock' => 25, 'unit_cost' => 160.00],
+            ['name' => 'Pullover Hoodie (Black)', 'category' => 'Jacket / Hoodie', 'size' => 'XL', 'unit' => 'pcs', 'current_stock' => 16, 'minimum_stock' => 8, 'unit_cost' => 420.00],
+            ['name' => 'V-Neck Shirt (Gray)', 'category' => 'V-Neck Shirt', 'size' => 'S', 'unit' => 'pcs', 'current_stock' => 55, 'minimum_stock' => 20, 'unit_cost' => 150.00],
+            ['name' => 'Jogger Pants (Black)', 'category' => 'Jogger Pants', 'size' => 'M', 'unit' => 'pcs', 'current_stock' => 21, 'minimum_stock' => 10, 'unit_cost' => 320.00],
+            ['name' => 'Snapback Cap (Black)', 'category' => 'Cap', 'size' => 'One Size', 'unit' => 'pcs', 'current_stock' => 70, 'minimum_stock' => 20, 'unit_cost' => 130.00],
         ];
 
         foreach ($items as $item) {
@@ -38,14 +40,14 @@ class InventorySeeder extends Seeder
                 'updated_at' => $now,
             ]));
 
-            // A couple of illustrative movements per item.
+            // Opening-stock movement.
             DB::table('inventory_movements')->insert([
                 [
                     'inventory_item_id' => $itemId,
                     'user_id' => $userId,
                     'type' => 'stock_in',
                     'quantity' => $item['current_stock'] > 0 ? $item['current_stock'] : 50,
-                    'reference' => 'Initial delivery',
+                    'reference' => 'Initial production run',
                     'remarks' => 'Opening stock',
                     'created_at' => $now,
                     'updated_at' => $now,
@@ -53,13 +55,13 @@ class InventorySeeder extends Seeder
             ]);
         }
 
-        // Sample project with a bill of materials (not yet in production).
-        $navyId = DB::table('inventory_items')->where('name', 'Aircool Fabric (Navy)')->value('id');
-        $threadId = DB::table('inventory_items')->where('name', 'Polyester Thread (White)')->value('id');
-        $labelId = DB::table('inventory_items')->where('name', 'Woven Label')->value('id');
+        // Reusable references for the sample order / template.
+        $jerseyM = DB::table('inventory_items')->where('name', 'Esports Jersey (Black)')->where('size', 'M')->value('id');
+        $jerseyL = DB::table('inventory_items')->where('name', 'Esports Jersey (Black)')->where('size', 'L')->value('id');
+        $capId = DB::table('inventory_items')->where('name', 'Snapback Cap (Black)')->value('id');
 
-        // Jersey BOM template (per piece).
-        foreach ([[$navyId, 1.5], [$threadId, 0.2], [$labelId, 1]] as [$itemId, $perUnit]) {
+        // Jersey order template — one jersey (M) per piece, with a cap add-on.
+        foreach ([[$jerseyM, 1], [$capId, 1]] as [$itemId, $perUnit]) {
             if ($itemId) {
                 DB::table('bom_templates')->insert([
                     'product_type' => 'Jersey',
@@ -71,21 +73,22 @@ class InventorySeeder extends Seeder
             }
         }
 
+        // Sample customer order drawing from finished stock.
         $projectId = DB::table('projects')->insertGetId([
-            'project_name' => 'ABC Riders Jersey Order',
+            'project_name' => 'ABC Riders Team Order',
             'customer_name' => 'ABC Riders Club',
             'product_type' => 'Jersey',
             'quantity' => 30,
-            'quoted_price' => 9000.00,
-            'status' => 'For Production',
+            'quoted_price' => 12000.00,
+            'status' => 'Pending',
             'due_date' => $now->copy()->addDays(10)->toDateString(),
-            'remarks' => 'Full sublimation, navy base.',
+            'remarks' => 'Black esports jerseys, mixed M/L, with caps.',
             'materials_deducted' => false,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
 
-        foreach ([[$navyId, 45], [$threadId, 6], [$labelId, 30]] as [$itemId, $qty]) {
+        foreach ([[$jerseyM, 20], [$jerseyL, 10], [$capId, 30]] as [$itemId, $qty]) {
             if ($itemId) {
                 DB::table('project_materials')->insert([
                     'project_id' => $projectId,

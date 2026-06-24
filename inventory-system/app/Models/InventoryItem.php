@@ -10,6 +10,7 @@ class InventoryItem extends Model
     protected $fillable = [
         'name',
         'category',
+        'size',
         'unit',
         'current_stock',
         'minimum_stock',
@@ -17,6 +18,28 @@ class InventoryItem extends Model
         'status',
         'remarks',
     ];
+
+    /** Product categories for Imprint's apparel lines. */
+    public const CATEGORIES = [
+        'Jersey',
+        'Polo Shirt',
+        'Round Neck Shirt',
+        'V-Neck Shirt',
+        'Jacket / Hoodie',
+        'Shorts',
+        'Jogger Pants',
+        'Cap',
+        'Accessories',
+        'Other',
+    ];
+
+    /** Common apparel sizes. */
+    public const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'One Size'];
+
+    public function displayName(): string
+    {
+        return $this->size ? "{$this->name} ({$this->size})" : $this->name;
+    }
 
     protected $casts = [
         'current_stock' => 'float',

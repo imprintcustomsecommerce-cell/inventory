@@ -16,7 +16,8 @@ class UpdateInventoryItemRequest extends FormRequest
         return [
             'name' => 'required|string|max:255|unique:inventory_items,name,' . $this->route('inventoryItem')?->id,
             'category' => 'nullable|string|max:255',
-            'unit' => 'required|string|max:50|in:pcs,yards,meters,rolls,packs,boxes',
+            'size' => 'nullable|string|max:20',
+            'unit' => 'required|string|max:50|in:pcs,sets,packs,boxes,yards,meters,rolls',
             'minimum_stock' => 'required|numeric|min:0',
             'unit_cost' => 'nullable|numeric|min:0',
             'remarks' => 'nullable|string|max:1000',

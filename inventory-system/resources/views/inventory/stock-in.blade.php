@@ -16,7 +16,7 @@
         </div>
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Stock in</h1>
-            <p class="text-sm text-zinc-500">Add incoming stock for {{ $item->name }}.</p>
+            <p class="text-sm text-zinc-500">Add incoming stock for {{ $item->displayName() }}.</p>
         </div>
     </div>
 

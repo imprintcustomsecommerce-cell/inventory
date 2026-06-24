@@ -74,6 +74,7 @@
                     <tr>
                         <th>Item</th>
                         <th>Category</th>
+                        <th>Size</th>
                         <th>Stock</th>
                         <th>Minimum</th>
                         <th>Status</th>
@@ -92,6 +93,13 @@
                             <td>
                                 @if($item->category)
                                     <span class="badge badge-zinc">{{ $item->category }}</span>
+                                @else
+                                    <span class="text-zinc-300">—</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($item->size)
+                                    <span class="badge badge-zinc">{{ $item->size }}</span>
                                 @else
                                     <span class="text-zinc-300">—</span>
                                 @endif

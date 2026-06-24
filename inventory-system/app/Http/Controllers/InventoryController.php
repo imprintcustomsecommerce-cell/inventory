@@ -215,6 +215,7 @@ class InventoryController extends Controller
         $rows = $items->map(fn (InventoryItem $i) => [
             $i->name,
             $i->category,
+            $i->size,
             $i->unit,
             $i->current_stock,
             $i->minimum_stock,
@@ -225,7 +226,7 @@ class InventoryController extends Controller
 
         return $this->streamCsv(
             'inventory-' . now()->format('Y-m-d') . '.csv',
-            ['Item', 'Category', 'Unit', 'Current Stock', 'Minimum Stock', 'Unit Cost', 'Stock Value', 'Status'],
+            ['Item', 'Category', 'Size', 'Unit', 'Current Stock', 'Minimum Stock', 'Unit Cost', 'Stock Value', 'Status'],
             $rows
         );
     }

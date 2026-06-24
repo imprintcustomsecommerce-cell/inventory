@@ -55,7 +55,7 @@
                     @foreach($movements as $movement)
                         <tr>
                             <td class="whitespace-nowrap text-zinc-500">{{ $movement->created_at->format('M d, Y') }}</td>
-                            <td class="font-medium text-zinc-900">{{ $movement->item->name }}</td>
+                            <td class="font-medium text-zinc-900">{{ $movement->item->displayName() }}</td>
                             <td>
                                 @if($movement->item->category)
                                     <span class="badge badge-zinc">{{ $movement->item->category }}</span>

@@ -159,7 +159,7 @@
                         <select name="inventory_item_id" required class="select">
                             <option value="">Select item…</option>
                             @foreach($items as $item)
-                                <option value="{{ $item->id }}">{{ $item->name }} ({{ $item->current_stock }} {{ $item->unit }} in stock)</option>
+                                <option value="{{ $item->id }}">{{ $item->displayName() }} ({{ $item->current_stock }} {{ $item->unit }} in stock)</option>
                             @endforeach
                         </select>
                     </div>
@@ -193,7 +193,7 @@
                                 @endphp
                                 <tr>
                                     <td class="font-medium text-zinc-900">
-                                        {{ $material->inventoryItem->name }}
+                                        {{ $material->inventoryItem->displayName() }}
                                         @if($material->remarks)<div class="text-xs text-zinc-400">{{ $material->remarks }}</div>@endif
                                     </td>
                                     <td class="text-zinc-700">{{ rtrim(rtrim(number_format($material->quantity_needed, 2), '0'), '.') }} {{ $material->inventoryItem->unit }}</td>

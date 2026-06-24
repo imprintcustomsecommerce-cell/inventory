@@ -25,20 +25,29 @@
                 @error('name') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
                 <div>
                     <label class="label">Category</label>
                     <select name="category" class="select">
                         <option value="">Select category</option>
-                        @foreach(['Fabric','Zipper','Thread','Collar','Cuffs','Label','Packaging','Other'] as $opt)
+                        @foreach(\App\Models\InventoryItem::CATEGORIES as $opt)
                             <option value="{{ $opt }}" {{ old('category', $item->category) == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="label">Size</label>
+                    <select name="size" class="select">
+                        <option value="">—</option>
+                        @foreach(\App\Models\InventoryItem::SIZES as $opt)
+                            <option value="{{ $opt }}" {{ old('size', $item->size) == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
                     <label class="label">Unit</label>
                     <select name="unit" required class="select @error('unit') input-error @enderror">
-                        @foreach(['pcs','yards','meters','rolls','packs','boxes'] as $opt)
+                        @foreach(['pcs','sets','packs','boxes'] as $opt)
                             <option value="{{ $opt }}" {{ old('unit', $item->unit) == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                         @endforeach
                     </select>

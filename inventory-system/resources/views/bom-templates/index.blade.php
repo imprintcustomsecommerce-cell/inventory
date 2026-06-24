@@ -26,7 +26,7 @@
             <select name="inventory_item_id" required class="select">
                 <option value="">Select item…</option>
                 @foreach($items as $item)
-                    <option value="{{ $item->id }}">{{ $item->name }} ({{ $item->unit }})</option>
+                    <option value="{{ $item->id }}">{{ $item->displayName() }} ({{ $item->unit }})</option>
                 @endforeach
             </select>
         </div>
@@ -56,7 +56,7 @@
             <tbody>
                 @foreach($rows as $row)
                     <tr>
-                        <td class="font-medium text-zinc-900">{{ $row->inventoryItem->name }}</td>
+                        <td class="font-medium text-zinc-900">{{ $row->inventoryItem->displayName() }}</td>
                         <td class="text-zinc-700">{{ rtrim(rtrim(number_format($row->quantity_per_unit, 2), '0'), '.') }} {{ $row->inventoryItem->unit }}</td>
                         <td class="text-right">
                             <form action="{{ route('bomTemplates.destroy', $row) }}" method="POST" onsubmit="return confirm('Remove this template material?');">

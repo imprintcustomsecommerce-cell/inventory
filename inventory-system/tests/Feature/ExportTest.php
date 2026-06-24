@@ -25,7 +25,7 @@ class ExportTest extends TestCase
         $res->assertStatus(200);
         $this->assertStringContainsString('text/csv', $res->headers->get('content-type'));
         $body = $res->streamedContent();
-        $this->assertStringContainsString('Item,Category,Unit', $body);
+        $this->assertStringContainsString('Item,Category,Size,Unit', $body);
         $this->assertStringContainsString('Aircool Navy', $body);
         $this->assertStringContainsString('850.00', $body); // stock value 10 x 85
     }

@@ -35,6 +35,7 @@
                     <tr>
                         <th>Item</th>
                         <th>Category</th>
+                        <th>Size</th>
                         <th>Stock</th>
                         <th>Minimum</th>
                         <th>Status</th>
@@ -47,6 +48,9 @@
                             <td class="font-medium text-zinc-900">{{ $item->name }}</td>
                             <td>
                                 @if($item->category)<span class="badge badge-zinc">{{ $item->category }}</span>@else <span class="text-zinc-300">—</span> @endif
+                            </td>
+                            <td>
+                                @if($item->size)<span class="badge badge-zinc">{{ $item->size }}</span>@else <span class="text-zinc-300">—</span> @endif
                             </td>
                             <td class="font-semibold text-zinc-900">{{ $item->current_stock }} <span class="text-xs font-normal text-zinc-400">{{ $item->unit }}</span></td>
                             <td class="text-zinc-500">{{ $item->minimum_stock }} {{ $item->unit }}</td>
