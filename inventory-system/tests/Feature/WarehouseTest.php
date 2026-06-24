@@ -61,6 +61,24 @@ class WarehouseTest extends TestCase
             ->assertSee('Stockroom Hoodie');
     }
 
+    public function test_staff_can_add_item_to_their_own_warehouse(): void
+    {
+        $store = Warehouse::create(['name' => 'Store']);
+        $stockroom = Warehouse::create(['name' => 'Inventory']);
+        $staff = User::factory()->create(['warehouse_id' => $store->id]);
+
+        // No warehouse_id sent; it should be forced to the staff member's own.
+        $this->actingAs($staff)->post('/inventory', [
+            'name' => 'Staff Tee', 'unit' => 'pcs', 'current_stock' => 5, 'minimum_stock' => 1,
+            // even if they try to inject another warehouse, it's ignored for staff
+            'warehouse_id' => $stockroom->id,
+        ])->assertRedirect();
+
+        $item = InventoryItem::where('name', 'Staff Tee')->first();
+        $this->assertNotNull($item);
+        $this->assertEquals($store->id, $item->warehouse_id);
+    }
+
     public function test_staff_member_acts_within_their_warehouse(): void
     {
         $store = Warehouse::create(['name' => 'Store']);
