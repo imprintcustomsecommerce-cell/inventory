@@ -67,9 +67,9 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         @foreach($products as $product)
             <a href="{{ route('products.show', $product) }}" class="card group overflow-hidden transition hover:shadow-md">
-                <div class="flex aspect-square items-center justify-center overflow-hidden bg-zinc-50">
+                <div class="flex aspect-square items-center justify-center overflow-hidden bg-white p-2">
                     @if($product->imageUrl())
-                        <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" class="h-full w-full object-cover transition group-hover:scale-105">
+                        <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" class="max-h-full max-w-full object-contain">
                     @else
                         <svg class="h-12 w-12 text-zinc-200" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z"/></svg>
                     @endif
