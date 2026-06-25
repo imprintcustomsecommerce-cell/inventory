@@ -54,11 +54,15 @@ class ProductController extends Controller
 
     public function create(Request $request)
     {
+        abort_unless($request->user()->canCreateItems(), 403, 'This warehouse can only receive stock via transfer.');
+
         return view('products.create', ['warehouses' => $this->warehousesForUser($request->user())]);
     }
 
     public function store(Request $request)
     {
+        abort_unless($request->user()->canCreateItems(), 403, 'This warehouse can only receive stock via transfer.');
+
         $user = $request->user();
         $data = $request->validate([
             'name' => 'required|string|max:255',
@@ -170,6 +174,8 @@ class ProductController extends Controller
     public function addSize(Request $request, Product $product)
     {
         $this->guard($product);
+        abort_unless($request->user()->canCreateItems(), 403, 'This warehouse can only receive stock via transfer.');
+
         $data = $request->validate([
             'size' => ['required', 'string', 'max:20'],
             'current_stock' => 'nullable|numeric|min:0',

@@ -25,10 +25,12 @@
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
             Export Excel
         </a>
-        <a href="{{ route('inventory.create') }}" class="btn btn-primary">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-            Add Item
-        </a>
+        @if(auth()->user()->canCreateItems())
+            <a href="{{ route('inventory.create') }}" class="btn btn-primary">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Add Item
+            </a>
+        @endif
     </div>
 </div>
 
@@ -181,8 +183,10 @@
                 <svg class="h-6 w-6 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m16.5 0a48.667 48.667 0 00-16.5 0"/></svg>
             </div>
             <p class="mt-4 text-sm font-medium text-zinc-900">No items found</p>
-            <p class="mt-1 text-sm text-zinc-500">{{ request('search') || request('category') ? 'Try adjusting your filters.' : 'Get started by adding your first inventory item.' }}</p>
-            <a href="{{ route('inventory.create') }}" class="btn btn-primary mt-4">Add Item</a>
+            <p class="mt-1 text-sm text-zinc-500">{{ request('search') || request('category') ? 'Try adjusting your filters.' : (auth()->user()->canCreateItems() ? 'Get started by adding your first inventory item.' : 'Stock arrives here by transfer from the stockroom.') }}</p>
+            @if(auth()->user()->canCreateItems())
+                <a href="{{ route('inventory.create') }}" class="btn btn-primary mt-4">Add Item</a>
+            @endif
         </div>
     @endif
 </div>

@@ -113,7 +113,7 @@ class InventorySeeder extends Seeder
 
         foreach ($products as $p) {
             $productId = DB::table('products')->insertGetId([
-                'warehouse_id' => $store,
+                'warehouse_id' => $stockroom,
                 'name' => $p['name'],
                 'category' => $p['category'],
                 'brand' => $p['brand'],
@@ -127,7 +127,7 @@ class InventorySeeder extends Seeder
 
             foreach ($p['sizes'] as $size => $stock) {
                 DB::table('inventory_items')->insert([
-                    'warehouse_id' => $store,
+                    'warehouse_id' => $stockroom,
                     'product_id' => $productId,
                     'name' => $p['name'],
                     'category' => $p['category'],

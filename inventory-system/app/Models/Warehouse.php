@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Warehouse extends Model
 {
-    protected $fillable = ['name', 'location'];
+    protected $fillable = ['name', 'location', 'can_create_items'];
+
+    protected $casts = [
+        'can_create_items' => 'boolean',
+    ];
 
     public function items(): HasMany
     {

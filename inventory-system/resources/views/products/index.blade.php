@@ -16,10 +16,12 @@
                 Import
             </a>
         @endif
-        <a href="{{ route('products.create') }}" class="btn btn-primary">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-            New Product
-        </a>
+        @if(auth()->user()->canCreateItems())
+            <a href="{{ route('products.create') }}" class="btn btn-primary">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                New Product
+            </a>
+        @endif
     </div>
 </div>
 
@@ -85,8 +87,10 @@
             <svg class="h-6 w-6 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m16.5 0a48.667 48.667 0 00-16.5 0"/></svg>
         </div>
         <p class="mt-4 text-sm font-medium text-zinc-900">No products yet</p>
-        <p class="mt-1 text-sm text-zinc-500">Create one, or import your products file.</p>
-        <a href="{{ route('products.create') }}" class="btn btn-primary mt-4">New Product</a>
+        <p class="mt-1 text-sm text-zinc-500">{{ auth()->user()->canCreateItems() ? 'Create one, or import your products file.' : 'Stock arrives here by transfer from the stockroom.' }}</p>
+        @if(auth()->user()->canCreateItems())
+            <a href="{{ route('products.create') }}" class="btn btn-primary mt-4">New Product</a>
+        @endif
     </div>
 @endif
 

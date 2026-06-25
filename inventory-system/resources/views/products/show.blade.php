@@ -101,6 +101,7 @@
             @endif
 
             <!-- Add size -->
+            @if(auth()->user()->canCreateItems())
             <form action="{{ route('products.addSize', $product) }}" method="POST" class="flex flex-col gap-3 border-t border-zinc-200 bg-zinc-50 p-4 sm:flex-row sm:items-end">
                 @csrf
                 <div class="flex-1">
@@ -124,6 +125,7 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Add</button>
             </form>
+            @endif
         </div>
     </div>
 </div>

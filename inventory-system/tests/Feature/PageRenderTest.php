@@ -25,7 +25,7 @@ class PageRenderTest extends TestCase
 
     public function test_all_authenticated_pages_render(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $item = $this->item();
 
         $this->actingAs($user);

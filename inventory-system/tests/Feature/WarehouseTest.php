@@ -79,6 +79,33 @@ class WarehouseTest extends TestCase
         $this->assertEquals($store->id, $item->warehouse_id);
     }
 
+    public function test_store_staff_cannot_create_items(): void
+    {
+        $store = Warehouse::create(['name' => 'Store', 'can_create_items' => false]);
+        $staff = User::factory()->create(['warehouse_id' => $store->id]);
+
+        $this->actingAs($staff)->get('/inventory/create')->assertForbidden();
+        $this->actingAs($staff)->post('/inventory', [
+            'name' => 'Sneaky Tee', 'unit' => 'pcs', 'current_stock' => 1, 'minimum_stock' => 1,
+        ])->assertForbidden();
+        $this->actingAs($staff)->get('/products/create')->assertForbidden();
+
+        $this->assertDatabaseMissing('inventory_items', ['name' => 'Sneaky Tee']);
+    }
+
+    public function test_stockroom_staff_can_create_items(): void
+    {
+        $stockroom = Warehouse::create(['name' => 'Inventory', 'can_create_items' => true]);
+        $staff = User::factory()->create(['warehouse_id' => $stockroom->id]);
+
+        $this->actingAs($staff)->get('/inventory/create')->assertStatus(200);
+        $this->actingAs($staff)->post('/inventory', [
+            'name' => 'Stockroom Tee', 'unit' => 'pcs', 'current_stock' => 5, 'minimum_stock' => 1,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('inventory_items', ['name' => 'Stockroom Tee', 'warehouse_id' => $stockroom->id]);
+    }
+
     public function test_staff_member_acts_within_their_warehouse(): void
     {
         $store = Warehouse::create(['name' => 'Store']);

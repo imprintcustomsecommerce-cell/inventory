@@ -81,6 +81,8 @@ class InventoryController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->canCreateItems(), 403, 'This warehouse can only receive stock via transfer.');
+
         $warehouses = auth()->user()->isAdmin() ? Warehouse::orderBy('name')->get() : collect();
 
         return view('inventory.create', compact('warehouses'));
@@ -88,6 +90,8 @@ class InventoryController extends Controller
 
     public function store(StoreInventoryItemRequest $request)
     {
+        abort_unless($request->user()->canCreateItems(), 403, 'This warehouse can only receive stock via transfer.');
+
         $user = $request->user();
         $data = $request->validated();
 

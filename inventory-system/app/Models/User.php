@@ -37,6 +37,19 @@ class User extends Authenticatable
     }
 
     /**
+     * Whether this user may create new items/products. Admins always can;
+     * staff only if their warehouse is a stockroom (not a receive-only store).
+     */
+    public function canCreateItems(): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->warehouse && $this->warehouse->can_create_items;
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>

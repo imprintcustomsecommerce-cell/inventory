@@ -17,9 +17,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Two warehouses.
-        $store = Warehouse::firstOrCreate(['name' => 'Store'], ['location' => 'Retail front']);
-        $stockroom = Warehouse::firstOrCreate(['name' => 'Inventory'], ['location' => 'Main stockroom']);
+        // Two warehouses. The stockroom (Inventory) creates items; the Store
+        // is receive-only and gets stock via transfer.
+        $stockroom = Warehouse::updateOrCreate(
+            ['name' => 'Inventory'],
+            ['location' => 'Main stockroom', 'can_create_items' => true]
+        );
+        $store = Warehouse::updateOrCreate(
+            ['name' => 'Store'],
+            ['location' => 'Retail front', 'can_create_items' => false]
+        );
 
         // Admin — spans all warehouses.
         User::updateOrCreate(
