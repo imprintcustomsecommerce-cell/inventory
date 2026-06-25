@@ -7,7 +7,16 @@
 <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
         <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Products</h1>
-        <p class="mt-1 text-sm text-zinc-500">{{ $products->total() }} product{{ $products->total() === 1 ? '' : 's' }} — open one to see its sizes.</p>
+        <p class="mt-1 text-sm text-zinc-500">
+            {{ $products->total() }} {{ $showMissing ? 'product(s) without a photo' : 'product' . ($products->total() === 1 ? '' : 's') }} — open one to see its sizes.
+            @if(auth()->user()->isAdmin() && $missingCount > 0)
+                @if($showMissing)
+                    <a href="{{ route('products.index') }}" class="font-medium text-zinc-700 underline">← Back to catalog</a>
+                @else
+                    <a href="{{ route('products.index', ['no_image' => 1]) }}" class="font-medium text-amber-700 underline">{{ $missingCount }} missing a photo</a>
+                @endif
+            @endif
+        </p>
     </div>
     <div class="flex gap-2">
         @if(auth()->user()->isAdmin())

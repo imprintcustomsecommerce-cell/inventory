@@ -45,11 +45,20 @@ class ProductController extends Controller
             $query->where('warehouse_id', $request->input('warehouse'));
         }
 
+        // Only show products that have a photo. Admins can flip to the
+        // missing-image list to fix them.
+        $showMissing = $user->isAdmin() && $request->boolean('no_image');
+        $query->{$showMissing ? 'whereNull' : 'whereNotNull'}('image_path');
+
+        $missingCount = $user->isAdmin()
+            ? Product::query()->visibleTo($user)->whereNull('image_path')->count()
+            : 0;
+
         $products = $query->orderBy('name')->paginate(24)->withQueryString();
         $categories = Product::query()->visibleTo($user)->whereNotNull('category')->distinct()->pluck('category')->sort();
         $warehouses = $this->warehousesForUser($user);
 
-        return view('products.index', compact('products', 'categories', 'warehouses'));
+        return view('products.index', compact('products', 'categories', 'warehouses', 'missingCount', 'showMissing'));
     }
 
     public function create(Request $request)

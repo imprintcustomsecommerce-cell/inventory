@@ -17,11 +17,28 @@ class ProductTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $w = Warehouse::create(['name' => 'Store']);
-        $product = Product::create(['warehouse_id' => $w->id, 'name' => 'Tee', 'retail_price' => 100, 'cost_price' => 40]);
+        $product = Product::create(['warehouse_id' => $w->id, 'name' => 'Tee', 'retail_price' => 100, 'cost_price' => 40, 'image_path' => 'product-images/tee.png']);
 
         $this->actingAs($admin)->get('/products')->assertStatus(200)->assertSee('Tee');
         $this->actingAs($admin)->get('/products/create')->assertStatus(200);
         $this->actingAs($admin)->get("/products/{$product->id}")->assertStatus(200);
+    }
+
+    public function test_catalog_hides_products_without_an_image(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $w = Warehouse::create(['name' => 'Store']);
+        Product::create(['warehouse_id' => $w->id, 'name' => 'WithPhoto', 'image_path' => 'product-images/a.png']);
+        Product::create(['warehouse_id' => $w->id, 'name' => 'NoPhoto']);
+
+        $this->actingAs($admin)->get('/products')
+            ->assertSee('WithPhoto')
+            ->assertDontSee('NoPhoto');
+
+        // Admin can review the ones missing a photo.
+        $this->actingAs($admin)->get('/products?no_image=1')
+            ->assertSee('NoPhoto')
+            ->assertDontSee('WithPhoto');
     }
 
     public function test_creating_a_product_generates_size_variants(): void
