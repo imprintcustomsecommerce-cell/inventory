@@ -83,7 +83,7 @@ class InventoryController extends Controller
     {
         abort_unless(auth()->user()->canCreateItems(), 403, 'This warehouse can only receive stock via transfer.');
 
-        $warehouses = auth()->user()->isAdmin() ? Warehouse::orderBy('name')->get() : collect();
+        $warehouses = auth()->user()->isAdmin() ? Warehouse::stockrooms()->orderBy('name')->get() : collect();
 
         return view('inventory.create', compact('warehouses'));
     }
@@ -102,6 +102,11 @@ class InventoryController extends Controller
 
         if (!$data['warehouse_id']) {
             return back()->withInput()->with('error', 'Please choose a warehouse for this item.');
+        }
+
+        // Items can only originate in a stockroom; stores receive via transfer.
+        if (!Warehouse::whereKey($data['warehouse_id'])->where('can_create_items', true)->exists()) {
+            return back()->withInput()->with('error', 'Items can only be added to a stockroom. Transfer stock to the store instead.');
         }
 
         unset($data['image']);

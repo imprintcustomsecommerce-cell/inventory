@@ -13,6 +13,11 @@ class Warehouse extends Model
         'can_create_items' => 'boolean',
     ];
 
+    public function scopeStockrooms($query)
+    {
+        return $query->where('can_create_items', true);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(InventoryItem::class);

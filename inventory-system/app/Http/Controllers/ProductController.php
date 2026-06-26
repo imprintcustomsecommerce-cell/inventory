@@ -14,7 +14,8 @@ class ProductController extends Controller
 {
     private function warehousesForUser($user)
     {
-        return $user->isAdmin() ? Warehouse::orderBy('name')->get() : collect();
+        // Only stockrooms can hold newly created products; stores receive transfers.
+        return $user->isAdmin() ? Warehouse::stockrooms()->orderBy('name')->get() : collect();
     }
 
     private function guard(Product $product): void
@@ -91,6 +92,10 @@ class ProductController extends Controller
         $warehouseId = $user->isAdmin() ? ($data['warehouse_id'] ?? null) : $user->warehouse_id;
         if (!$warehouseId) {
             return back()->withInput()->with('error', 'Please choose a warehouse.');
+        }
+
+        if (!Warehouse::whereKey($warehouseId)->where('can_create_items', true)->exists()) {
+            return back()->withInput()->with('error', 'Products can only be added to a stockroom. Transfer stock to the store instead.');
         }
 
         $imagePath = $request->hasFile('image')
@@ -213,7 +218,7 @@ class ProductController extends Controller
 
     public function importForm()
     {
-        return view('products.import', ['warehouses' => Warehouse::orderBy('name')->get()]);
+        return view('products.import', ['warehouses' => Warehouse::stockrooms()->orderBy('name')->get()]);
     }
 
     /** Import products from the Imprint products Excel (one row per product). */
@@ -223,6 +228,10 @@ class ProductController extends Controller
             'file' => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
             'warehouse_id' => 'required|exists:warehouses,id',
         ]);
+
+        if (!Warehouse::whereKey($data['warehouse_id'])->where('can_create_items', true)->exists()) {
+            return back()->with('error', 'Import is only allowed into a stockroom.');
+        }
 
         try {
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($request->file('file')->getRealPath());

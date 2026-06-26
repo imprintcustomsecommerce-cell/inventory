@@ -93,6 +93,23 @@ class WarehouseTest extends TestCase
         $this->assertDatabaseMissing('inventory_items', ['name' => 'Sneaky Tee']);
     }
 
+    public function test_admin_cannot_create_items_into_a_receive_only_store(): void
+    {
+        $store = Warehouse::create(['name' => 'Store', 'can_create_items' => false]);
+        $admin = User::factory()->admin()->create();
+
+        // The store must not be offered as a creation target.
+        $this->actingAs($admin)->get('/inventory/create')->assertDontSee('>Store<', false);
+
+        // And a forced post into the store is rejected (no item created).
+        $this->actingAs($admin)->post('/inventory', [
+            'warehouse_id' => $store->id,
+            'name' => 'Forced Tee', 'unit' => 'pcs', 'current_stock' => 3, 'minimum_stock' => 1,
+        ]);
+
+        $this->assertDatabaseMissing('inventory_items', ['name' => 'Forced Tee']);
+    }
+
     public function test_stockroom_staff_can_create_items(): void
     {
         $stockroom = Warehouse::create(['name' => 'Inventory', 'can_create_items' => true]);
