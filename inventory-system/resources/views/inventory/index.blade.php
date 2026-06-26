@@ -8,7 +8,7 @@
 <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
         <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Inventory</h1>
-        <p class="mt-1 text-sm text-zinc-500">Track materials, supplies, and stock levels.</p>
+        <p class="mt-1 text-sm text-zinc-500">Per-size stock levels across your warehouses.</p>
     </div>
     <div class="flex gap-2">
         @if(auth()->user()->isAdmin())

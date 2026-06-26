@@ -102,6 +102,26 @@ class ProductTest extends TestCase
         $this->assertEquals(3, $decade->variants()->count());
     }
 
+    public function test_products_excel_export(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $w = Warehouse::create(['name' => 'Inventory']);
+        $product = Product::create(['warehouse_id' => $w->id, 'name' => 'Export Tee', 'retail_price' => 100, 'cost_price' => 40]);
+        $product->variants()->create([
+            'warehouse_id' => $w->id, 'name' => 'Export Tee', 'size' => 'M', 'unit' => 'pcs',
+            'current_stock' => 7, 'minimum_stock' => 1, 'status' => 'active',
+        ]);
+
+        $res = $this->actingAs($admin)->get('/products-export');
+
+        $res->assertStatus(200);
+        $this->assertStringContainsString(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            $res->headers->get('content-type')
+        );
+        $this->assertStringContainsString('.xlsx', $res->headers->get('content-disposition'));
+    }
+
     public function test_adding_a_size_to_a_product(): void
     {
         $admin = User::factory()->admin()->create();

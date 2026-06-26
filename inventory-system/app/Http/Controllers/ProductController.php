@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ExportsCsv;
 use App\Models\InventoryItem;
 use App\Models\Product;
 use App\Models\Warehouse;
@@ -12,6 +13,8 @@ use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
+    use ExportsCsv;
+
     private function warehousesForUser($user)
     {
         // Only stockrooms can hold newly created products; stores receive transfers.
@@ -216,6 +219,47 @@ class ProductController extends Controller
         ]);
 
         return back()->with('success', "Size {$data['size']} added.");
+    }
+
+    public function export(Request $request)
+    {
+        $user = $request->user();
+        $query = Product::query()->visibleTo($user)->with('variants.warehouse');
+
+        if ($request->filled('search')) {
+            $s = $request->input('search');
+            $query->where(fn ($q) => $q->where('name', 'like', "%{$s}%")
+                ->orWhere('category', 'like', "%{$s}%")
+                ->orWhere('brand', 'like', "%{$s}%"));
+        }
+        if ($request->filled('category')) {
+            $query->where('category', $request->input('category'));
+        }
+        if ($user->isAdmin() && $request->filled('warehouse')) {
+            $query->whereHas('variants', fn ($q) => $q->where('warehouse_id', $request->input('warehouse')));
+        }
+
+        $rows = [];
+        foreach ($query->orderBy('name')->get() as $p) {
+            if ($p->variants->isEmpty()) {
+                $rows[] = [$p->name, $p->sku, $p->category, $p->brand, '', '', 0, number_format((float) $p->retail_price, 2, '.', ''), number_format((float) $p->cost_price, 2, '.', '')];
+                continue;
+            }
+            foreach ($p->variants as $v) {
+                $rows[] = [
+                    $p->name, $p->sku, $p->category, $p->brand,
+                    $v->size, $v->warehouse?->name, $v->current_stock,
+                    number_format((float) $p->retail_price, 2, '.', ''),
+                    number_format((float) $p->cost_price, 2, '.', ''),
+                ];
+            }
+        }
+
+        return $this->streamXlsx(
+            'products-' . now()->format('Y-m-d') . '.xlsx',
+            ['Product', 'SKU', 'Category', 'Brand', 'Size', 'Warehouse', 'Stock', 'Retail Price', 'Cost Price'],
+            $rows
+        );
     }
 
     public function importForm()
