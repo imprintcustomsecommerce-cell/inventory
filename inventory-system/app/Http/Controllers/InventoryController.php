@@ -262,12 +262,21 @@ class InventoryController extends Controller
         return view('inventory.movements', ['item' => $inventoryItem, 'movements' => $movements]);
     }
 
-    public function transferForm(InventoryItem $inventoryItem)
+    public function transferForm(Request $request, InventoryItem $inventoryItem)
     {
         $this->guard($inventoryItem);
         $warehouses = Warehouse::where('id', '!=', $inventoryItem->warehouse_id)->orderBy('name')->get();
 
-        return view('inventory.transfer', ['item' => $inventoryItem, 'warehouses' => $warehouses]);
+        // Preselect a destination: an explicit ?to=, else a receive-only store
+        // (the usual target), else the only / first other warehouse.
+        $preselect = (int) $request->input('to')
+            ?: optional($warehouses->firstWhere('can_create_items', false) ?? $warehouses->first())->id;
+
+        return view('inventory.transfer', [
+            'item' => $inventoryItem,
+            'warehouses' => $warehouses,
+            'preselect' => $preselect,
+        ]);
     }
 
     public function transfer(Request $request, InventoryItem $inventoryItem)

@@ -39,7 +39,7 @@
                     <select name="destination_warehouse_id" required class="select @error('destination_warehouse_id') input-error @enderror">
                         <option value="">Select warehouse</option>
                         @foreach($warehouses as $w)
-                            <option value="{{ $w->id }}" {{ old('destination_warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
+                            <option value="{{ $w->id }}" {{ old('destination_warehouse_id', $preselect ?? '') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
                         @endforeach
                     </select>
                     @error('destination_warehouse_id') <p class="form-error">{{ $message }}</p> @enderror
