@@ -66,6 +66,19 @@ class Product extends Model
     }
 
     /**
+     * Total stock per warehouse, e.g. ['Inventory' => 40, 'Store' => 12].
+     *
+     * @return array<string, float>
+     */
+    public function stockByWarehouse(): array
+    {
+        return $this->variants
+            ->groupBy(fn ($v) => $v->warehouse?->name ?? '—')
+            ->map(fn ($group) => (float) $group->sum('current_stock'))
+            ->all();
+    }
+
+    /**
      * Limit to products a user may see (admins all). A product is visible to a
      * warehouse if it has a size variant stored there.
      */

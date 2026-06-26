@@ -76,8 +76,8 @@
                 </div>
                 <div class="p-4">
                     <div class="flex flex-wrap items-center gap-1.5">
-                        @foreach($product->stockWarehouseNames() as $whName)
-                            <span class="badge {{ $whName === 'Store' ? 'badge-amber' : 'badge-green' }}">{{ $whName }}</span>
+                        @foreach($product->stockByWarehouse() as $whName => $qty)
+                            <span class="badge {{ $whName === 'Store' ? 'badge-amber' : 'badge-green' }}">{{ $whName }} {{ rtrim(rtrim(number_format($qty, 2), '0'), '.') }}</span>
                         @endforeach
                         @if($product->category)<span class="badge badge-zinc">{{ $product->category }}</span>@endif
                     </div>
