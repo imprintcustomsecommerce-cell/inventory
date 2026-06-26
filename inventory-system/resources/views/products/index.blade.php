@@ -75,9 +75,11 @@
                     @endif
                 </div>
                 <div class="p-4">
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        @foreach($product->stockWarehouseNames() as $whName)
+                            <span class="badge {{ $whName === 'Store' ? 'badge-amber' : 'badge-green' }}">{{ $whName }}</span>
+                        @endforeach
                         @if($product->category)<span class="badge badge-zinc">{{ $product->category }}</span>@endif
-                        <span class="text-xs text-zinc-400">{{ $product->variants->count() }} sizes</span>
                     </div>
                     <h3 class="mt-2 font-semibold text-zinc-900 line-clamp-2">{{ $product->name }}</h3>
                     @if($product->brand)<p class="text-xs text-zinc-400">{{ $product->brand }}</p>@endif

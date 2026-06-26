@@ -21,7 +21,10 @@
                 @endif
             </div>
             <div class="space-y-3 p-5">
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-1.5">
+                    @foreach($product->stockWarehouseNames() as $whName)
+                        <span class="badge {{ $whName === 'Store' ? 'badge-amber' : 'badge-green' }}">{{ $whName }}</span>
+                    @endforeach
                     @if($product->category)<span class="badge badge-zinc">{{ $product->category }}</span>@endif
                     @if($product->brand)<span class="text-xs text-zinc-400">{{ $product->brand }}</span>@endif
                 </div>
@@ -68,6 +71,7 @@
                         <thead>
                             <tr>
                                 <th>Size</th>
+                                <th>Warehouse</th>
                                 <th>In stock</th>
                                 <th>Minimum</th>
                                 <th>Status</th>
@@ -78,6 +82,7 @@
                             @foreach($product->variants as $v)
                                 <tr>
                                     <td class="font-semibold text-zinc-900">{{ $v->size ?? '—' }}</td>
+                                    <td><span class="badge {{ $v->warehouse?->name === 'Store' ? 'badge-amber' : 'badge-green' }}">{{ $v->warehouse?->name ?? '—' }}</span></td>
                                     <td class="text-zinc-900">{{ $v->current_stock }} {{ $v->unit }}</td>
                                     <td class="text-zinc-500">{{ $v->minimum_stock }}</td>
                                     <td>

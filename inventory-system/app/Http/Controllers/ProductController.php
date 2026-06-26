@@ -29,7 +29,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = Product::query()->visibleTo($user)->with(['warehouse', 'variants']);
+        $query = Product::query()->visibleTo($user)->with(['warehouse', 'variants.warehouse']);
 
         if ($request->filled('search')) {
             $s = $request->input('search');
@@ -42,8 +42,9 @@ class ProductController extends Controller
             $query->where('category', $request->input('category'));
         }
 
+        // Filter by the warehouse that holds the product (any of its sizes).
         if ($user->isAdmin() && $request->filled('warehouse')) {
-            $query->where('warehouse_id', $request->input('warehouse'));
+            $query->whereHas('variants', fn ($q) => $q->where('warehouse_id', $request->input('warehouse')));
         }
 
         // Only show products that have a photo. Admins can flip to the
@@ -57,7 +58,8 @@ class ProductController extends Controller
 
         $products = $query->orderBy('name')->paginate(24)->withQueryString();
         $categories = Product::query()->visibleTo($user)->whereNotNull('category')->distinct()->pluck('category')->sort();
-        $warehouses = $this->warehousesForUser($user);
+        // All warehouses for the filter (admins); creation is still stockroom-only.
+        $warehouses = $user->isAdmin() ? Warehouse::orderBy('name')->get() : collect();
 
         return view('products.index', compact('products', 'categories', 'warehouses', 'missingCount', 'showMissing'));
     }
@@ -125,7 +127,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         $this->guard($product);
-        $product->load(['variants' => fn ($q) => $q->orderBy('id'), 'warehouse']);
+        $product->load(['variants' => fn ($q) => $q->orderBy('id'), 'variants.warehouse', 'warehouse']);
         $allSizes = InventoryItem::SIZES;
 
         return view('products.show', compact('product', 'allSizes'));

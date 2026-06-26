@@ -38,6 +38,7 @@ class InventoryService
                     'size' => $source->size,
                 ],
                 [
+                    'product_id' => $source->product_id,
                     'category' => $source->category,
                     'unit' => $source->unit,
                     'minimum_stock' => $source->minimum_stock,
@@ -45,6 +46,11 @@ class InventoryService
                     'status' => 'active',
                 ]
             );
+
+            // Keep the destination copy linked to the same product.
+            if (!$target->product_id && $source->product_id) {
+                $target->update(['product_id' => $source->product_id]);
+            }
 
             $this->stockIn($target, $quantity, "Transfer from {$fromName}", $remarks);
 

@@ -54,11 +54,25 @@ class Product extends Model
         return (float) $this->retail_price - (float) $this->cost_price;
     }
 
-    /** Limit a query to products a given user may see (admins see all). */
+    /** Warehouses that currently hold this product (have a size variant there). */
+    public function stockWarehouseNames(): array
+    {
+        return $this->variants
+            ->map(fn ($v) => $v->warehouse?->name)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Limit to products a user may see (admins all). A product is visible to a
+     * warehouse if it has a size variant stored there.
+     */
     public function scopeVisibleTo($query, User $user)
     {
         if (!$user->isAdmin() && $user->warehouse_id) {
-            $query->where('warehouse_id', $user->warehouse_id);
+            $query->whereHas('variants', fn ($q) => $q->where('warehouse_id', $user->warehouse_id));
         }
 
         return $query;
