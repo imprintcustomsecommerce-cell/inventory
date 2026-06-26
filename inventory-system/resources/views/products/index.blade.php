@@ -40,14 +40,14 @@
             <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, category, brand…" class="input pl-9">
         </div>
-        <select name="category" class="select sm:w-44">
+        <select name="category" onchange="this.form.submit()" class="select sm:w-44">
             <option value="">All categories</option>
             @foreach($categories as $cat)
                 <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
             @endforeach
         </select>
         @if($warehouses->isNotEmpty())
-            <select name="warehouse" class="select sm:w-44">
+            <select name="warehouse" onchange="this.form.submit()" class="select sm:w-44">
                 <option value="">All warehouses</option>
                 @foreach($warehouses as $w)
                     <option value="{{ $w->id }}" {{ request('warehouse') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
