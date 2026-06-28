@@ -8,6 +8,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\StockRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
@@ -40,6 +41,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/sell/{inventoryItem}', [SaleController::class, 'create'])->name('sales.create');
     Route::post('/sell/{inventoryItem}', [SaleController::class, 'store'])->name('sales.store');
     Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
+
+    // Stock requests (store requests items from the stockroom)
+    Route::get('/requests', [StockRequestController::class, 'index'])->name('requests.index');
+    Route::post('/requests', [StockRequestController::class, 'store'])->name('requests.store');
+    Route::get('/requests/{stockRequest}', [StockRequestController::class, 'show'])->name('requests.show');
+    Route::post('/requests/{stockRequest}/items', [StockRequestController::class, 'addItem'])->name('requests.items.add');
+    Route::delete('/requests/{stockRequest}/items/{item}', [StockRequestController::class, 'removeItem'])->name('requests.items.remove');
+    Route::post('/requests/{stockRequest}/fulfill', [StockRequestController::class, 'fulfill'])->name('requests.fulfill');
+    Route::post('/requests/{stockRequest}/reject', [StockRequestController::class, 'reject'])->name('requests.reject');
+    Route::post('/requests/{stockRequest}/cancel', [StockRequestController::class, 'cancel'])->name('requests.cancel');
 
     // Events (pull stock from inventory to an event location)
     Route::get('/events', [EventController::class, 'index'])->name('events.index');
