@@ -64,6 +64,20 @@ class SaleController extends Controller
         return redirect()->route('sales.index')->with('success', 'Sale recorded: ₱' . number_format($sale->total, 2) . '.');
     }
 
+    public function receipt(Sale $sale)
+    {
+        $user = auth()->user();
+        if (!$user->isAdmin() && $user->warehouse_id && $sale->warehouse_id !== $user->warehouse_id) {
+            abort(403);
+        }
+
+        $sale->load(['warehouse', 'user']);
+
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('sales.receipt', compact('sale'))
+            ->setPaper('a6') // compact receipt size
+            ->stream("receipt-{$sale->id}.pdf");
+    }
+
     public function export(Request $request)
     {
         $user = $request->user();

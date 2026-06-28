@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/sales-export', [SaleController::class, 'export'])->name('sales.export');
     Route::get('/sell/{inventoryItem}', [SaleController::class, 'create'])->name('sales.create');
     Route::post('/sell/{inventoryItem}', [SaleController::class, 'store'])->name('sales.store');
+    Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
 
     // Events (pull stock from inventory to an event location)
     Route::get('/events', [EventController::class, 'index'])->name('events.index');

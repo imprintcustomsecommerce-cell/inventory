@@ -64,6 +64,19 @@ class SalesEventTest extends TestCase
         $this->actingAs($admin)->get('/sales')->assertStatus(200)->assertSee('1,000.00');
     }
 
+    public function test_sale_receipt_pdf_renders(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $item = $this->storeItem();
+        $this->actingAs($admin)->post("/sell/{$item->id}", ['quantity' => 1, 'unit_price' => 500]);
+        $sale = \App\Models\Sale::first();
+
+        $res = $this->actingAs($admin)->get("/sales/{$sale->id}/receipt");
+
+        $res->assertStatus(200);
+        $this->assertEquals('application/pdf', $res->headers->get('content-type'));
+    }
+
     public function test_admin_can_create_event(): void
     {
         $admin = User::factory()->admin()->create();

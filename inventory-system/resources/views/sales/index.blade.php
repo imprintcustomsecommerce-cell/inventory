@@ -39,6 +39,7 @@
                         <th>Unit Price</th>
                         <th>Total</th>
                         <th>Sold By</th>
+                        <th class="text-right">Receipt</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -51,6 +52,12 @@
                             <td class="text-zinc-500">₱{{ number_format($sale->unit_price, 2) }}</td>
                             <td class="font-semibold text-zinc-900">₱{{ number_format($sale->total, 2) }}</td>
                             <td class="text-zinc-500">{{ $sale->user?->name ?? '—' }}</td>
+                            <td class="text-right">
+                                <a href="{{ route('sales.receipt', $sale) }}" target="_blank" class="btn btn-ghost btn-sm">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 3h6m2.25 6H6.75A2.25 2.25 0 014.5 18.75V5.25A2.25 2.25 0 016.75 3h7.5l5.25 5.25v10.5A2.25 2.25 0 0117.25 21z"/></svg>
+                                    Receipt
+                                </a>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
