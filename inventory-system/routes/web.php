@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BomTemplateController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
@@ -31,6 +32,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // Materials (raw materials department)
+    Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
+    Route::get('/materials-export', [MaterialController::class, 'export'])->name('materials.export');
+    Route::get('/materials/create', [MaterialController::class, 'create'])->name('materials.create');
+    Route::post('/materials', [MaterialController::class, 'store'])->name('materials.store');
+    Route::get('/materials/{material}/edit', [MaterialController::class, 'edit'])->name('materials.edit');
+    Route::put('/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
+    Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->middleware('admin')->name('materials.destroy');
+    Route::get('/materials/{material}/movement', [MaterialController::class, 'movementForm'])->name('materials.movementForm');
+    Route::post('/materials/{material}/movement', [MaterialController::class, 'recordMovement'])->name('materials.recordMovement');
+    Route::get('/materials/{material}/movements', [MaterialController::class, 'movements'])->name('materials.movements');
 
     // Products (each groups its size variants)
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');

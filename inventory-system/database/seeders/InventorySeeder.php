@@ -104,6 +104,33 @@ class InventorySeeder extends Seeder
             }
         }
 
+        // Raw materials (separate department), held in the stockroom.
+        $materials = [
+            ['name' => 'Aircool Fabric (Navy)', 'category' => 'Fabric', 'unit' => 'yards', 'current_stock' => 120, 'minimum_stock' => 30, 'unit_cost' => 85, 'supplier' => 'TexSupply Co.'],
+            ['name' => 'Aircool Fabric (Black)', 'category' => 'Fabric', 'unit' => 'yards', 'current_stock' => 18, 'minimum_stock' => 30, 'unit_cost' => 85, 'supplier' => 'TexSupply Co.'],
+            ['name' => 'Polyester Thread (White)', 'category' => 'Thread', 'unit' => 'spools', 'current_stock' => 60, 'minimum_stock' => 15, 'unit_cost' => 30, 'supplier' => 'ThreadWorks'],
+            ['name' => 'Metal Zipper #5', 'category' => 'Zipper', 'unit' => 'pcs', 'current_stock' => 0, 'minimum_stock' => 50, 'unit_cost' => 12.5, 'supplier' => 'ZipMart'],
+            ['name' => 'DTF Ink (Black)', 'category' => 'Ink', 'unit' => 'liters', 'current_stock' => 8, 'minimum_stock' => 3, 'unit_cost' => 950, 'supplier' => 'PrintPro'],
+            ['name' => 'Poly Mailer (Medium)', 'category' => 'Packaging', 'unit' => 'packs', 'current_stock' => 25, 'minimum_stock' => 10, 'unit_cost' => 120, 'supplier' => 'PackHouse'],
+        ];
+        foreach ($materials as $mat) {
+            $matId = DB::table('materials')->insertGetId(array_merge($mat, [
+                'warehouse_id' => $stockroom,
+                'remarks' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]));
+            DB::table('material_movements')->insert([
+                'material_id' => $matId,
+                'user_id' => $userId,
+                'type' => 'stock_in',
+                'quantity' => $mat['current_stock'] > 0 ? $mat['current_stock'] : 50,
+                'reference' => 'Opening stock',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
         // Sample products (one product, many sizes) for the Store front.
         $products = [
             ['name' => 'Makina Oversized Shirt', 'category' => 'Cotton Shirt', 'brand' => 'Imprint Customs', 'retail' => 850, 'cost' => 450, 'sizes' => ['S' => 12, 'M' => 20, 'L' => 18, 'XL' => 8]],
