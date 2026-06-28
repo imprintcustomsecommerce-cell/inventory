@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Project;
+use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -51,12 +52,23 @@ class DashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $sales = [
+            'today' => (float) Sale::query()->visibleTo($user)->whereDate('created_at', today())->sum('total'),
+            'month' => (float) Sale::query()->visibleTo($user)
+                ->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('total'),
+        ];
+
+        $recentSales = Sale::query()->visibleTo($user)->with(['warehouse', 'user'])
+            ->latest()->limit(6)->get();
+
         return view('dashboard', compact(
             'inventory',
             'projects',
             'lowStockItems',
             'upcomingProjects',
-            'recentMovements'
+            'recentMovements',
+            'sales',
+            'recentSales'
         ));
     }
 }
