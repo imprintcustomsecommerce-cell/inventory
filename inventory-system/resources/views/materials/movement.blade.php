@@ -29,7 +29,7 @@
             <div>
                 <label class="label"><span x-text="type === 'adjustment' ? 'Actual counted stock' : 'Quantity'"></span></label>
                 <div class="relative">
-                    <input type="number" name="quantity" min="0" step="0.01" required value="{{ old('quantity') }}" class="input pr-16 @error('quantity') input-error @enderror">
+                    <input type="number" name="quantity" min="0" step="1" required value="{{ old('quantity') }}" class="input pr-16 @error('quantity') input-error @enderror">
                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">{{ $material->unit }}</span>
                 </div>
                 @error('quantity') <p class="form-error">{{ $message }}</p> @enderror

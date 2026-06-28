@@ -33,7 +33,7 @@
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div>
                     <label class="label">Quantity</label>
-                    <input type="number" name="quantity" x-model.number="qty" min="0.01" step="0.01" max="{{ $item->current_stock }}" required class="input @error('quantity') input-error @enderror">
+                    <input type="number" name="quantity" x-model.number="qty" min="1" step="1" max="{{ $item->current_stock }}" required class="input @error('quantity') input-error @enderror">
                     @error('quantity') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
                 <div>

@@ -157,7 +157,7 @@
                     </div>
                     <div class="w-full sm:w-32">
                         <label class="label">Qty needed</label>
-                        <input type="number" name="quantity_needed" min="0.01" step="0.01" required class="input">
+                        <input type="number" name="quantity_needed" min="1" step="1" required class="input">
                     </div>
                     <button type="submit" class="btn btn-primary">Add</button>
                 </form>

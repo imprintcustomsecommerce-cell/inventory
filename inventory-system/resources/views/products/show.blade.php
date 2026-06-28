@@ -126,11 +126,11 @@
                 </div>
                 <div class="w-full sm:w-28">
                     <label class="label">Start qty</label>
-                    <input type="number" name="current_stock" min="0" step="0.01" value="0" class="input">
+                    <input type="number" name="current_stock" min="0" step="1" value="0" class="input">
                 </div>
                 <div class="w-full sm:w-28">
                     <label class="label">Min</label>
-                    <input type="number" name="minimum_stock" min="0" step="0.01" value="0" class="input">
+                    <input type="number" name="minimum_stock" min="0" step="1" value="0" class="input">
                 </div>
                 <button type="submit" class="btn btn-primary">Add</button>
             </form>

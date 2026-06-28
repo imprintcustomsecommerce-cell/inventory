@@ -31,7 +31,7 @@
             <div>
                 <label class="label">Actual stock count</label>
                 <div class="relative">
-                    <input type="number" name="actual_stock" min="0" step="0.01" required value="{{ old('actual_stock', $item->current_stock) }}" class="input pr-16 @error('actual_stock') input-error @enderror">
+                    <input type="number" name="actual_stock" min="0" step="1" required value="{{ old('actual_stock', $item->current_stock) }}" class="input pr-16 @error('actual_stock') input-error @enderror">
                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">{{ $item->unit }}</span>
                 </div>
                 <p class="mt-1.5 text-xs text-zinc-400">Enter the verified count. The difference is logged automatically.</p>

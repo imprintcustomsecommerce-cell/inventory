@@ -66,12 +66,12 @@
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
                 <div>
                     <label class="label">{{ $editing ? 'Current stock' : 'Beginning stock' }}</label>
-                    <input type="number" name="current_stock" value="{{ old('current_stock', $editing ? $material->current_stock : 0) }}" min="0" step="0.01" {{ $editing ? 'disabled' : 'required' }} class="input {{ $editing ? 'cursor-not-allowed bg-zinc-100 text-zinc-500' : '' }}">
+                    <input type="number" name="current_stock" value="{{ old('current_stock', $editing ? $material->current_stock : 0) }}" min="0" step="1" {{ $editing ? 'disabled' : 'required' }} class="input {{ $editing ? 'cursor-not-allowed bg-zinc-100 text-zinc-500' : '' }}">
                     @if($editing)<p class="mt-1.5 text-xs text-zinc-400">Change via stock movement.</p>@endif
                 </div>
                 <div>
                     <label class="label">Minimum stock</label>
-                    <input type="number" name="minimum_stock" value="{{ old('minimum_stock', $material->minimum_stock ?: 0) }}" min="0" step="0.01" required class="input">
+                    <input type="number" name="minimum_stock" value="{{ old('minimum_stock', $material->minimum_stock ?: 0) }}" min="0" step="1" required class="input">
                 </div>
                 <div>
                     <label class="label">Unit cost (₱)</label>
