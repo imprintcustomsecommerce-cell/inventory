@@ -9,8 +9,16 @@ use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
+    /** Events are managed by the stockroom (Inventory) and admins. */
+    private function authorizeAccess(): void
+    {
+        abort_unless(auth()->user()->canCreateItems(), 403);
+    }
+
     public function index()
     {
+        $this->authorizeAccess();
+
         $events = Warehouse::events()->orderByDesc('event_date')->orderBy('name')->get()
             ->map(function ($e) {
                 $e->stock_total = InventoryItem::where('warehouse_id', $e->id)->sum('current_stock');
@@ -52,6 +60,7 @@ class EventController extends Controller
 
     public function show(Warehouse $event)
     {
+        $this->authorizeAccess();
         abort_unless($event->isEvent(), 404);
 
         $items = InventoryItem::where('warehouse_id', $event->id)

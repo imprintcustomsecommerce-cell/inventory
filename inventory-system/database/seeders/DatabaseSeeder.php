@@ -60,6 +60,18 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Materials-department staff (sees only Materials).
+        User::updateOrCreate(
+            ['email' => 'materials@imprint.ph'],
+            [
+                'name' => 'Materials Staff',
+                'role' => 'staff',
+                'department' => 'materials',
+                'warehouse_id' => $stockroom->id,
+                'password' => Hash::make('password'),
+            ]
+        );
+
         $this->call(InventorySeeder::class);
     }
 }

@@ -38,6 +38,13 @@
             </select>
         </div>
         <div>
+            <label class="label">Department</label>
+            <select name="department" class="select">
+                <option value="">General</option>
+                <option value="materials" {{ old('department') === 'materials' ? 'selected' : '' }}>Materials only</option>
+            </select>
+        </div>
+        <div>
             <label class="label">Password</label>
             <input type="password" name="password" required class="input">
         </div>
@@ -75,6 +82,7 @@
                     <td class="text-zinc-500">{{ $user->email }}</td>
                     <td>
                         <span class="badge {{ $user->isAdmin() ? 'badge-amber' : 'badge-zinc' }}">{{ ucfirst($user->role) }}</span>
+                        @if($user->department === 'materials')<span class="badge badge-green">Materials</span>@endif
                     </td>
                     <td>
                         @if($user->isAdmin())

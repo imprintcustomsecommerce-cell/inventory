@@ -23,12 +23,25 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'department',
         'warehouse_id',
     ];
 
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    /** A staff member in the materials department (sees only Materials). */
+    public function isMaterialsStaff(): bool
+    {
+        return !$this->isAdmin() && $this->department === 'materials';
+    }
+
+    /** Who may view the Materials department: admins and materials staff. */
+    public function canSeeMaterials(): bool
+    {
+        return $this->isAdmin() || $this->department === 'materials';
     }
 
     public function warehouse(): \Illuminate\Database\Eloquent\Relations\BelongsTo

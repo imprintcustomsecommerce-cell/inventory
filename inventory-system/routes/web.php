@@ -23,11 +23,15 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 
 // Redirect root to dashboard or login
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+    if (!auth()->check()) {
+        return redirect()->route('login');
+    }
+
+    return redirect()->route(auth()->user()->isMaterialsStaff() ? 'materials.index' : 'dashboard');
 });
 
 // Protected routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'dept'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Account / profile (any logged-in user)
@@ -58,17 +62,19 @@ Route::middleware('auth')->group(function () {
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
 
-    // Materials (raw materials department)
-    Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
-    Route::get('/materials-export', [MaterialController::class, 'export'])->name('materials.export');
-    Route::get('/materials/create', [MaterialController::class, 'create'])->name('materials.create');
-    Route::post('/materials', [MaterialController::class, 'store'])->name('materials.store');
-    Route::get('/materials/{material}/edit', [MaterialController::class, 'edit'])->name('materials.edit');
-    Route::put('/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
-    Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->middleware('admin')->name('materials.destroy');
-    Route::get('/materials/{material}/movement', [MaterialController::class, 'movementForm'])->name('materials.movementForm');
-    Route::post('/materials/{material}/movement', [MaterialController::class, 'recordMovement'])->name('materials.recordMovement');
-    Route::get('/materials/{material}/movements', [MaterialController::class, 'movements'])->name('materials.movements');
+    // Materials (separate department — only materials staff + admins)
+    Route::middleware('materials')->group(function () {
+        Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
+        Route::get('/materials-export', [MaterialController::class, 'export'])->name('materials.export');
+        Route::get('/materials/create', [MaterialController::class, 'create'])->name('materials.create');
+        Route::post('/materials', [MaterialController::class, 'store'])->name('materials.store');
+        Route::get('/materials/{material}/edit', [MaterialController::class, 'edit'])->name('materials.edit');
+        Route::put('/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
+        Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->middleware('admin')->name('materials.destroy');
+        Route::get('/materials/{material}/movement', [MaterialController::class, 'movementForm'])->name('materials.movementForm');
+        Route::post('/materials/{material}/movement', [MaterialController::class, 'recordMovement'])->name('materials.recordMovement');
+        Route::get('/materials/{material}/movements', [MaterialController::class, 'movements'])->name('materials.movements');
+    });
 
     // Products (each groups its size variants)
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');

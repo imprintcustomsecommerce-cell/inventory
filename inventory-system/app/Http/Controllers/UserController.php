@@ -25,16 +25,22 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'role' => ['required', Rule::in(['admin', 'staff'])],
+            'department' => ['nullable', Rule::in(['materials'])],
             'warehouse_id' => 'nullable|exists:warehouses,id',
             'password' => ['required', 'confirmed', Password::min(8)],
         ]);
+
+        $isMaterials = ($data['role'] === 'staff') && (($data['department'] ?? null) === 'materials');
 
         User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'role' => $data['role'],
-            // Admins span all warehouses; staff are tied to one.
-            'warehouse_id' => $data['role'] === 'admin' ? null : ($data['warehouse_id'] ?? null),
+            'department' => $data['role'] === 'admin' ? null : ($data['department'] ?? null),
+            // Admins span all; materials staff work in the stockroom; other staff in their warehouse.
+            'warehouse_id' => $data['role'] === 'admin'
+                ? null
+                : ($isMaterials ? \App\Models\Warehouse::stockrooms()->value('id') : ($data['warehouse_id'] ?? null)),
             'password' => Hash::make($data['password']),
         ]);
 
