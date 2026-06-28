@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\BomTemplate;
 use App\Models\Project;
 use App\Models\ProjectStatusLog;
 use Illuminate\Support\Facades\DB;
@@ -129,36 +128,6 @@ class ProjectService
         }
 
         $project->update(['materials_deducted' => false]);
-    }
-
-    /**
-     * Populate a project's bill of materials from the template for its
-     * product type (quantity_per_unit × project quantity). Skips items
-     * already on the project. Returns the number of materials added.
-     */
-    public function applyTemplate(Project $project): int
-    {
-        if ($project->materials_deducted || !$project->product_type) {
-            return 0;
-        }
-
-        $existing = $project->materials()->pluck('inventory_item_id')->all();
-        $templates = BomTemplate::where('product_type', $project->product_type)->get();
-
-        $added = 0;
-        foreach ($templates as $template) {
-            if (in_array($template->inventory_item_id, $existing)) {
-                continue;
-            }
-
-            $project->materials()->create([
-                'inventory_item_id' => $template->inventory_item_id,
-                'quantity_needed' => round((float) $template->quantity_per_unit * $project->quantity, 2),
-            ]);
-            $added++;
-        }
-
-        return $added;
     }
 
     public function logCreated(Project $project): void

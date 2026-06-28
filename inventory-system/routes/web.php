@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\BomTemplateController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\MaterialController;
@@ -111,15 +110,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/projects/{project}/start-production', [ProjectController::class, 'startProduction'])->name('projects.startProduction');
     Route::post('/projects/{project}/complete', [ProjectController::class, 'markCompleted'])->name('projects.complete');
-    Route::post('/projects/{project}/apply-template', [ProjectController::class, 'applyTemplate'])->name('projects.applyTemplate');
     Route::get('/projects/{project}/pdf', [ProjectController::class, 'pdf'])->name('projects.pdf');
 
-    // BOM templates (default materials per product type) — admin only
+    // Admin-only
     Route::middleware('admin')->group(function () {
-        Route::get('/bom-templates', [BomTemplateController::class, 'index'])->name('bomTemplates.index');
-        Route::post('/bom-templates', [BomTemplateController::class, 'store'])->name('bomTemplates.store');
-        Route::delete('/bom-templates/{bomTemplate}', [BomTemplateController::class, 'destroy'])->name('bomTemplates.destroy');
-
         // User management
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');

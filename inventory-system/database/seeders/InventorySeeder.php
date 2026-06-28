@@ -58,23 +58,10 @@ class InventorySeeder extends Seeder
             ]);
         }
 
-        // Reusable references for the sample order / template.
+        // Reusable references for the sample order.
         $jerseyM = DB::table('inventory_items')->where('name', 'Esports Jersey (Black)')->where('size', 'M')->value('id');
         $jerseyL = DB::table('inventory_items')->where('name', 'Esports Jersey (Black)')->where('size', 'L')->value('id');
         $capId = DB::table('inventory_items')->where('name', 'Snapback Cap (Black)')->value('id');
-
-        // Jersey order template — one jersey (M) per piece, with a cap add-on.
-        foreach ([[$jerseyM, 1], [$capId, 1]] as [$itemId, $perUnit]) {
-            if ($itemId) {
-                DB::table('bom_templates')->insert([
-                    'product_type' => 'Jersey',
-                    'inventory_item_id' => $itemId,
-                    'quantity_per_unit' => $perUnit,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-            }
-        }
 
         // Sample customer order drawing from finished stock.
         $projectId = DB::table('projects')->insertGetId([
