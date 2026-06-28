@@ -3,9 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SaleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\UserController;
@@ -31,6 +33,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // Sales
+    Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
+    Route::get('/sales-export', [SaleController::class, 'export'])->name('sales.export');
+    Route::get('/sell/{inventoryItem}', [SaleController::class, 'create'])->name('sales.create');
+    Route::post('/sell/{inventoryItem}', [SaleController::class, 'store'])->name('sales.store');
+
+    // Events (pull stock from inventory to an event location)
+    Route::get('/events', [EventController::class, 'index'])->name('events.index');
+    Route::get('/events/create', [EventController::class, 'create'])->name('events.create');
+    Route::post('/events', [EventController::class, 'store'])->name('events.store');
+    Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
 
     // Materials (raw materials department)
     Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
