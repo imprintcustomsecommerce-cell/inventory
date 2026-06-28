@@ -29,13 +29,14 @@ class SaleController extends Controller
             $query->whereDate('created_at', '<=', $request->input('date_to'));
         }
 
-        $totalQuery = (clone $query);
-        $revenue = (float) $totalQuery->sum('total');
+        $revenue = (float) (clone $query)->sum('total');
         $count = (clone $query)->count();
+        $profit = (float) (clone $query)->selectRaw('COALESCE(SUM(total - (unit_cost * quantity)), 0) as p')->value('p');
+        $showProfit = $user->isAdmin();
 
         $sales = $query->paginate(50)->withQueryString();
 
-        return view('sales.index', compact('sales', 'revenue', 'count'));
+        return view('sales.index', compact('sales', 'revenue', 'count', 'profit', 'showProfit'));
     }
 
     /** Show the sell form for a specific stock item. */

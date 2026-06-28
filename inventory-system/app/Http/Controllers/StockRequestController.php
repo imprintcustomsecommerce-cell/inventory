@@ -54,6 +54,57 @@ class StockRequestController extends Controller
         return redirect()->route('requests.show', $req)->with('success', 'Request started — add the items you need.');
     }
 
+    /** Start a request pre-filled with the location's low-stock items. */
+    public function restockLow(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->warehouse_id) {
+            return back()->with('error', 'You must belong to a location to request stock.');
+        }
+
+        $low = InventoryItem::where('warehouse_id', $user->warehouse_id)
+            ->whereColumn('current_stock', '<=', 'minimum_stock')->get();
+
+        if ($low->isEmpty()) {
+            return back()->with('error', 'Nothing is low on stock right now.');
+        }
+
+        $req = StockRequest::create([
+            'warehouse_id' => $user->warehouse_id,
+            'requested_by_id' => $user->id,
+            'status' => 'pending',
+            'note' => 'Restock of low-stock items',
+        ]);
+
+        $added = 0;
+        foreach ($low as $it) {
+            $source = InventoryItem::whereHas('warehouse', fn ($q) => $q->where('can_create_items', true))
+                ->where('name', $it->name)
+                ->where(fn ($q) => $it->size ? $q->where('size', $it->size) : $q->whereNull('size'))
+                ->where('current_stock', '>', 0)->first();
+
+            if (!$source) {
+                continue;
+            }
+
+            $need = max(1, (int) ceil((float) $it->minimum_stock - (float) $it->current_stock));
+            $req->items()->create([
+                'inventory_item_id' => $source->id,
+                'item_label' => trim($it->name . ($it->size ? " ({$it->size})" : '')),
+                'quantity' => $need,
+            ]);
+            $added++;
+        }
+
+        if ($added === 0) {
+            $req->delete();
+            return back()->with('error', 'No matching stockroom items found to restock.');
+        }
+
+        return redirect()->route('requests.show', $req)
+            ->with('success', "Draft request created for {$added} low item(s) — review and submit.");
+    }
+
     public function show(StockRequest $stockRequest)
     {
         $this->guard($stockRequest);

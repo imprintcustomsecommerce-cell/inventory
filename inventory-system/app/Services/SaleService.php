@@ -26,6 +26,7 @@ class SaleService
             }
 
             $label = trim($item->name . ($item->size ? " ({$item->size})" : ''));
+            $unitCost = (float) ($item->product?->cost_price ?? $item->unit_cost ?? 0);
 
             return Sale::create([
                 'warehouse_id' => $item->warehouse_id,
@@ -35,6 +36,7 @@ class SaleService
                 'item_label' => $label,
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
+                'unit_cost' => $unitCost,
                 'total' => round($quantity * $unitPrice, 2),
                 'remarks' => $remarks,
             ]);

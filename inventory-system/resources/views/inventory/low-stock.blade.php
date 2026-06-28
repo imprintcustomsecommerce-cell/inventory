@@ -4,9 +4,20 @@
 
 @section('content')
 
-<div class="mb-6">
-    <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Low stock</h1>
-    <p class="mt-1 text-sm text-zinc-500">{{ $items->total() }} item{{ $items->total() === 1 ? '' : 's' }} at or below the minimum level.</p>
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Low stock</h1>
+        <p class="mt-1 text-sm text-zinc-500">{{ $items->total() }} item{{ $items->total() === 1 ? '' : 's' }} at or below the minimum level.</p>
+    </div>
+    @if(!auth()->user()->canCreateItems() && auth()->user()->warehouse_id && $items->total() > 0)
+        <form action="{{ route('requests.restockLow') }}" method="POST" onsubmit="return confirm('Create a stock request for all low items?');">
+            @csrf
+            <button type="submit" class="btn btn-primary">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0l-3.75-3.75M17.25 21L21 17.25"/></svg>
+                Request restock
+            </button>
+        </form>
+    @endif
 </div>
 
 <div class="card overflow-hidden">

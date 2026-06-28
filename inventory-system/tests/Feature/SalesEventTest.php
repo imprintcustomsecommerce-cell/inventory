@@ -64,6 +64,18 @@ class SalesEventTest extends TestCase
         $this->actingAs($admin)->get('/sales')->assertStatus(200)->assertSee('1,000.00');
     }
 
+    public function test_sale_records_cost_and_profit(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $item = $this->storeItem(20); // product retail 500, cost 200
+
+        $this->actingAs($admin)->post("/sell/{$item->id}", ['quantity' => 2, 'unit_price' => 500]);
+
+        $sale = \App\Models\Sale::first();
+        $this->assertEquals(200, $sale->unit_cost);
+        $this->assertEquals(600, $sale->profit()); // (500-200) * 2
+    }
+
     public function test_sale_receipt_pdf_renders(): void
     {
         $admin = User::factory()->admin()->create();

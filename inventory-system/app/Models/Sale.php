@@ -15,6 +15,7 @@ class Sale extends Model
         'item_label',
         'quantity',
         'unit_price',
+        'unit_cost',
         'total',
         'remarks',
     ];
@@ -22,8 +23,15 @@ class Sale extends Model
     protected $casts = [
         'quantity' => 'float',
         'unit_price' => 'decimal:2',
+        'unit_cost' => 'decimal:2',
         'total' => 'decimal:2',
     ];
+
+    /** Gross profit for this sale line. */
+    public function profit(): float
+    {
+        return (float) $this->total - ((float) $this->unit_cost * (float) $this->quantity);
+    }
 
     public function warehouse(): BelongsTo
     {

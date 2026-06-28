@@ -26,6 +26,13 @@
     </div>
 </div>
 
+@if($lowCount > 0)
+    <a href="{{ route('materials.index', ['status' => 'low']) }}" class="mb-6 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 hover:bg-amber-100">
+        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+        <span><strong>{{ $lowCount }}</strong> material{{ $lowCount === 1 ? '' : 's' }} at or below the minimum level. Click to review and restock.</span>
+    </a>
+@endif
+
 <div class="card overflow-hidden">
     <form method="GET" action="{{ route('materials.index') }}" class="flex flex-col gap-3 border-b border-zinc-200 p-4 sm:flex-row sm:items-center">
         <div class="relative flex-1">

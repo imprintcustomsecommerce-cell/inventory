@@ -64,6 +64,24 @@ class StockRequestTest extends TestCase
         $this->assertEquals(10, $storeItem->current_stock);
     }
 
+    public function test_restock_low_builds_a_request_from_low_items(): void
+    {
+        [$stockroom, $store] = $this->setupWarehouses();
+        $staff = User::factory()->create(['warehouse_id' => $store->id]);
+
+        // Source in stockroom + a matching low item in the store.
+        InventoryItem::create(['warehouse_id' => $stockroom->id, 'name' => 'Cap', 'size' => null, 'unit' => 'pcs', 'current_stock' => 50, 'minimum_stock' => 5, 'status' => 'active']);
+        InventoryItem::create(['warehouse_id' => $store->id, 'name' => 'Cap', 'size' => null, 'unit' => 'pcs', 'current_stock' => 1, 'minimum_stock' => 10, 'status' => 'active']);
+
+        $this->actingAs($staff)->post('/requests-restock-low')->assertRedirect();
+
+        $req = StockRequest::first();
+        $this->assertNotNull($req);
+        $this->assertEquals($store->id, $req->warehouse_id);
+        $this->assertEquals(1, $req->items()->count());
+        $this->assertEquals(9, $req->items()->first()->quantity); // 10 - 1
+    }
+
     public function test_staff_cannot_fulfill_their_own_request(): void
     {
         [$stockroom, $store] = $this->setupWarehouses();

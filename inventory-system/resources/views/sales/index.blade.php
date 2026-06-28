@@ -7,7 +7,7 @@
 <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
         <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Sales</h1>
-        <p class="mt-1 text-sm text-zinc-500">{{ $count }} sale{{ $count === 1 ? '' : 's' }} · revenue <span class="font-semibold text-emerald-600">₱{{ number_format($revenue, 2) }}</span></p>
+        <p class="mt-1 text-sm text-zinc-500">{{ $count }} sale{{ $count === 1 ? '' : 's' }} · revenue <span class="font-semibold text-emerald-600">₱{{ number_format($revenue, 2) }}</span>@if($showProfit) · profit <span class="font-semibold text-emerald-600">₱{{ number_format($profit, 2) }}</span>@endif</p>
     </div>
     <a href="{{ route('sales.export', request()->query()) }}" class="btn btn-ghost">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
@@ -38,6 +38,7 @@
                         <th>Qty</th>
                         <th>Unit Price</th>
                         <th>Total</th>
+                        @if($showProfit)<th>Profit</th>@endif
                         <th>Sold By</th>
                         <th class="text-right">Receipt</th>
                     </tr>
@@ -51,6 +52,7 @@
                             <td class="text-zinc-700">{{ $sale->quantity }}</td>
                             <td class="text-zinc-500">₱{{ number_format($sale->unit_price, 2) }}</td>
                             <td class="font-semibold text-zinc-900">₱{{ number_format($sale->total, 2) }}</td>
+                            @if($showProfit)<td class="font-medium {{ $sale->profit() >= 0 ? 'text-emerald-600' : 'text-red-600' }}">₱{{ number_format($sale->profit(), 2) }}</td>@endif
                             <td class="text-zinc-500">{{ $sale->user?->name ?? '—' }}</td>
                             <td class="text-right">
                                 <a href="{{ route('sales.receipt', $sale) }}" target="_blank" class="btn btn-ghost btn-sm">

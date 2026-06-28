@@ -49,6 +49,7 @@ Route::middleware(['auth', 'dept'])->group(function () {
     // Stock requests (store requests items from the stockroom)
     Route::get('/requests', [StockRequestController::class, 'index'])->name('requests.index');
     Route::post('/requests', [StockRequestController::class, 'store'])->name('requests.store');
+    Route::post('/requests-restock-low', [StockRequestController::class, 'restockLow'])->name('requests.restockLow');
     Route::get('/requests/{stockRequest}', [StockRequestController::class, 'show'])->name('requests.show');
     Route::post('/requests/{stockRequest}/items', [StockRequestController::class, 'addItem'])->name('requests.items.add');
     Route::delete('/requests/{stockRequest}/items/{item}', [StockRequestController::class, 'removeItem'])->name('requests.items.remove');
