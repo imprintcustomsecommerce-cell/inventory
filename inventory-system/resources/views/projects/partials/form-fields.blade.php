@@ -1,5 +1,6 @@
 @php
     $project = $project ?? null;
+    $customers = $customers ?? collect();
     $productTypes = ['Jersey', 'Polo Shirt', 'Round Neck Shirt', 'V-Neck Shirt', 'Jacket / Hoodie'];
 @endphp
 
@@ -12,8 +13,13 @@
 
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
-            <label class="label">Customer <span class="font-normal text-zinc-400">(optional)</span></label>
-            <input type="text" name="customer_name" value="{{ old('customer_name', $project->customer_name ?? '') }}" placeholder="Customer / team name" class="input">
+            <label class="label">Customer <span class="font-normal text-zinc-400">(from CRM, optional)</span></label>
+            <select name="customer_id" class="select">
+                <option value="">Walk-in / not in CRM</option>
+                @foreach($customers as $c)
+                    <option value="{{ $c->id }}" {{ (string) old('customer_id', $project->customer_id ?? '') === (string) $c->id ? 'selected' : '' }}>{{ $c->displayName() }}</option>
+                @endforeach
+            </select>
         </div>
         <div>
             <label class="label">Product type</label>
@@ -24,6 +30,11 @@
                 @endforeach
             </select>
         </div>
+    </div>
+
+    <div>
+        <label class="label">Customer name <span class="font-normal text-zinc-400">(for one-off jobs not in the CRM)</span></label>
+        <input type="text" name="customer_name" value="{{ old('customer_name', $project->customer_name ?? '') }}" placeholder="Customer / team name" class="input">
     </div>
 
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">

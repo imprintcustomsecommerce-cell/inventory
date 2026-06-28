@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
     protected $fillable = [
         'project_name',
+        'customer_id',
         'customer_name',
         'product_type',
         'quantity',
@@ -39,6 +41,11 @@ class Project extends Model
         'Completed',
         'Cancelled',
     ];
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
 
     public function materials(): HasMany
     {

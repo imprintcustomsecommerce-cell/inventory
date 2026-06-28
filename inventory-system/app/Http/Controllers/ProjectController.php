@@ -45,7 +45,9 @@ class ProjectController extends Controller
 
     public function create()
     {
-        return view('projects.create');
+        $customers = \App\Models\Customer::orderBy('name')->get();
+
+        return view('projects.create', compact('customers'));
     }
 
     public function store(StoreProjectRequest $request)
@@ -59,7 +61,7 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load('materials.inventoryItem', 'statusLogs.user');
+        $project->load('materials.inventoryItem', 'statusLogs.user', 'customer');
         $items = InventoryItem::query()->visibleTo(auth()->user())->orderBy('name')->get();
 
         return view('projects.show', compact('project', 'items'));
@@ -67,7 +69,9 @@ class ProjectController extends Controller
 
     public function edit(Project $project)
     {
-        return view('projects.edit', compact('project'));
+        $customers = \App\Models\Customer::orderBy('name')->get();
+
+        return view('projects.edit', compact('project', 'customers'));
     }
 
     public function update(UpdateProjectRequest $request, Project $project)

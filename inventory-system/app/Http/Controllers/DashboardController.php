@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Project;
+use App\Models\Quote;
 use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -61,6 +63,14 @@ class DashboardController extends Controller
         $recentSales = Sale::query()->visibleTo($user)->with(['warehouse', 'user'])
             ->latest()->limit(6)->get();
 
+        $crm = [
+            'customers' => Customer::count(),
+            'open_quotes' => Quote::whereIn('status', ['Draft', 'Sent'])->count(),
+            'pipeline' => (float) Quote::whereIn('status', ['Sent', 'Approved'])->sum('total'),
+        ];
+
+        $recentQuotes = Quote::with('customer')->latest()->limit(6)->get();
+
         return view('dashboard', compact(
             'inventory',
             'projects',
@@ -68,7 +78,9 @@ class DashboardController extends Controller
             'upcomingProjects',
             'recentMovements',
             'sales',
-            'recentSales'
+            'recentSales',
+            'crm',
+            'recentQuotes'
         ));
     }
 }

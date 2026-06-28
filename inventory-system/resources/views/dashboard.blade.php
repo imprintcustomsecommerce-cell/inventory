@@ -20,7 +20,8 @@
     $kpis[] = ['label' => 'Low stock', 'value' => $inventory['low_stock'], 'sub' => 'need restock', 'ring' => 'bg-amber-50 text-amber-600', 'icon' => 'M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z'];
     $kpis[] = ['label' => 'Active projects', 'value' => $projects['active'], 'sub' => $projects['in_production'] . ' in production', 'ring' => 'bg-zinc-100 text-zinc-600', 'icon' => 'M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z'];
     $kpis[] = ['label' => 'Overdue', 'value' => $projects['overdue'], 'sub' => 'past due date', 'ring' => 'bg-red-50 text-red-600', 'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z'];
-    $gridCols = $canSell ? 'lg:grid-cols-5' : 'lg:grid-cols-4';
+    $kpis[] = ['label' => 'Open quotes', 'value' => $crm['open_quotes'], 'sub' => '₱' . number_format($crm['pipeline'], 0) . ' in pipeline', 'ring' => 'bg-zinc-100 text-zinc-600', 'icon' => 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z'];
+    $gridCols = $canSell ? 'lg:grid-cols-6' : 'lg:grid-cols-5';
 @endphp
 <div class="mb-8 grid grid-cols-2 gap-4 {{ $gridCols }}">
     @foreach($kpis as $k)
@@ -117,6 +118,32 @@
     @endif
 </div>
 @endif
+
+<!-- Recent quotes -->
+<div class="card mt-6 overflow-hidden">
+    <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-3">
+        <h2 class="text-sm font-semibold text-zinc-900">Recent quotes</h2>
+        <a href="{{ route('quotes.index') }}" class="text-xs font-medium text-zinc-500 hover:text-zinc-900">View all</a>
+    </div>
+    @if($recentQuotes->count() > 0)
+        <table class="data-table">
+            <tbody>
+                @foreach($recentQuotes as $quote)
+                    <tr class="cursor-pointer hover:bg-zinc-50" onclick="window.location='{{ route('quotes.show', $quote) }}'">
+                        <td class="whitespace-nowrap text-zinc-400">{{ $quote->created_at->diffForHumans() }}</td>
+                        <td class="font-medium text-zinc-900">{{ $quote->quote_number }}</td>
+                        <td class="text-zinc-500">{{ $quote->title }}</td>
+                        <td class="text-zinc-500">{{ $quote->customer?->name ?? '—' }}</td>
+                        <td><span class="badge {{ $quote->getStatusBadgeClass() }}">{{ $quote->status }}</span></td>
+                        <td class="text-right font-semibold text-zinc-900">₱{{ number_format($quote->total, 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @else
+        <p class="px-5 py-10 text-center text-sm text-zinc-500">No quotes yet.</p>
+    @endif
+</div>
 
 <!-- Recent activity -->
 <div class="card mt-6 overflow-hidden">

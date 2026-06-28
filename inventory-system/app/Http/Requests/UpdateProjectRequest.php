@@ -17,6 +17,7 @@ class UpdateProjectRequest extends FormRequest
     {
         return [
             'project_name' => 'required|string|max:255',
+            'customer_id' => 'nullable|exists:customers,id',
             'customer_name' => 'nullable|string|max:255',
             'product_type' => 'nullable|string|max:255',
             'quantity' => 'required|integer|min:1',

@@ -2,11 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockRequestController;
 use App\Http\Controllers\ProfileController;
@@ -144,6 +146,33 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/projects/{project}/start-production', [ProjectController::class, 'startProduction'])->name('projects.startProduction');
     Route::post('/projects/{project}/complete', [ProjectController::class, 'markCompleted'])->name('projects.complete');
     Route::get('/projects/{project}/pdf', [ProjectController::class, 'pdf'])->name('projects.pdf');
+
+    // Customers (CRM)
+    Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+    Route::get('/customers-export', [CustomerController::class, 'export'])->name('customers.export');
+    Route::get('/customers/create', [CustomerController::class, 'create'])->name('customers.create');
+    Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+    Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
+    Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
+    Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
+    Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->middleware('admin')->name('customers.destroy');
+
+    // Quotes
+    Route::get('/quotes', [QuoteController::class, 'index'])->name('quotes.index');
+    Route::get('/quotes-export', [QuoteController::class, 'export'])->name('quotes.export');
+    Route::get('/quotes/create', [QuoteController::class, 'create'])->name('quotes.create');
+    Route::post('/quotes', [QuoteController::class, 'store'])->name('quotes.store');
+    Route::get('/quotes/{quote}', [QuoteController::class, 'show'])->name('quotes.show');
+    Route::get('/quotes/{quote}/edit', [QuoteController::class, 'edit'])->name('quotes.edit');
+    Route::put('/quotes/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
+    Route::delete('/quotes/{quote}', [QuoteController::class, 'destroy'])->middleware('admin')->name('quotes.destroy');
+
+    Route::post('/quotes/{quote}/items', [QuoteController::class, 'addItem'])->name('quotes.items.add');
+    Route::delete('/quotes/{quote}/items/{item}', [QuoteController::class, 'removeItem'])->name('quotes.items.remove');
+
+    Route::post('/quotes/{quote}/status', [QuoteController::class, 'changeStatus'])->name('quotes.status');
+    Route::post('/quotes/{quote}/convert', [QuoteController::class, 'convert'])->name('quotes.convert');
+    Route::get('/quotes/{quote}/pdf', [QuoteController::class, 'pdf'])->name('quotes.pdf');
 
     // Admin-only
     Route::middleware('admin')->group(function () {

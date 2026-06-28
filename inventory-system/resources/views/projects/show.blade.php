@@ -17,7 +17,12 @@
             <span class="badge {{ $project->getStatusBadgeClass() }}">{{ $project->status }}</span>
         </div>
         <p class="mt-1 text-sm text-zinc-500">
-            {{ $project->customer_name ?? 'No customer' }} · {{ $project->product_type ?? 'No product type' }} · Qty {{ $project->quantity }}
+            @if($project->customer)
+                <a href="{{ route('customers.show', $project->customer) }}" class="font-medium text-zinc-700 underline-offset-2 hover:underline">{{ $project->customer->name }}</a>
+            @else
+                {{ $project->customer_name ?? 'No customer' }}
+            @endif
+            · {{ $project->product_type ?? 'No product type' }} · Qty {{ $project->quantity }}
         </p>
     </div>
     <div class="flex flex-wrap gap-2">
