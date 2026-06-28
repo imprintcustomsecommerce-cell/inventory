@@ -44,6 +44,12 @@ class User extends Authenticatable
         return $this->isAdmin() || $this->department === 'materials';
     }
 
+    /** Selling is for store/event staff (and admins) — not the stockroom. */
+    public function canSell(): bool
+    {
+        return $this->isAdmin() || ($this->warehouse && $this->warehouse->sellsStock());
+    }
+
     public function warehouse(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Warehouse::class);

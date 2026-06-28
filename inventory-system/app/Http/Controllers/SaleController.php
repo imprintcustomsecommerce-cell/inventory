@@ -18,6 +18,7 @@ class SaleController extends Controller
 
     public function index(Request $request)
     {
+        abort_unless($request->user()->canSell(), 403);
         $user = $request->user();
         $query = Sale::query()->visibleTo($user)->with(['warehouse', 'user'])->latest();
 
@@ -80,6 +81,7 @@ class SaleController extends Controller
 
     public function export(Request $request)
     {
+        abort_unless($request->user()->canSell(), 403);
         $user = $request->user();
         $query = Sale::query()->visibleTo($user)->with(['warehouse', 'user'])->latest();
         if ($request->filled('date_from')) {
@@ -111,6 +113,10 @@ class SaleController extends Controller
         $user = auth()->user();
         if (!$user->isAdmin() && $user->warehouse_id && $item->warehouse_id !== $user->warehouse_id) {
             abort(403, 'This item belongs to another location.');
+        }
+        // Stock can only be sold from a store or event, never the stockroom.
+        if (!$item->warehouse || !$item->warehouse->sellsStock()) {
+            abort(403, 'This item is in the stockroom and cannot be sold here. Transfer it to a store first.');
         }
     }
 }
