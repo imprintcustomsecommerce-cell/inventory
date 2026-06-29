@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\ExportsCsv;
 use App\Http\Requests\StoreProjectLaborRequest;
 use App\Http\Requests\StoreProjectMaterialRequest;
+use App\Http\Requests\StoreProjectProofRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\InventoryItem;
 use App\Models\Project;
 use App\Models\ProjectLabor;
 use App\Models\ProjectMaterial;
+use App\Models\ProjectProof;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use App\Services\ProjectService;
 use Illuminate\Http\Request;
 
@@ -64,7 +67,7 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load('materials.inventoryItem', 'labor.user', 'statusLogs.user', 'customer');
+        $project->load('materials.inventoryItem', 'labor.user', 'proofs.uploader', 'proofs.decider', 'statusLogs.user', 'customer');
         $items = InventoryItem::query()->visibleTo(auth()->user())->orderBy('name')->get();
         $staff = User::orderBy('name')->get();
 
@@ -145,6 +148,74 @@ class ProjectController extends Controller
         $labor->delete();
 
         return back()->with('success', 'Labor entry removed.');
+    }
+
+    public function uploadProof(StoreProjectProofRequest $request, Project $project)
+    {
+        $file = $request->file('file');
+        $nextVersion = (int) $project->proofs()->max('version') + 1;
+
+        $project->proofs()->create([
+            'version' => $nextVersion,
+            'file_path' => $file->store('project-proofs', 'public'),
+            'original_name' => $file->getClientOriginalName(),
+            'mime' => $file->getMimeType(),
+            'size' => $file->getSize(),
+            'status' => 'Pending',
+            'uploaded_by' => auth()->id(),
+            'feedback' => $request->input('feedback'),
+        ]);
+
+        // Send the job to the approval stage if it isn't already further along.
+        if (!in_array($project->status, ['For Production', 'Completed', 'Cancelled'])) {
+            $this->projects->changeStatus($project, 'For Approval', "Proof v{$nextVersion} sent for approval");
+        }
+
+        return back()->with('success', "Proof v{$nextVersion} uploaded and sent for approval.");
+    }
+
+    public function approveProof(Request $request, Project $project, ProjectProof $proof)
+    {
+        $proof->update([
+            'status' => 'Approved',
+            'decided_by' => auth()->id(),
+            'decided_at' => now(),
+            'feedback' => $request->input('feedback') ?: $proof->feedback,
+        ]);
+
+        if (!in_array($project->status, ['For Production', 'Completed', 'Cancelled'])) {
+            $this->projects->changeStatus($project, 'For Production', "Proof v{$proof->version} approved");
+        }
+
+        return back()->with('success', "Proof v{$proof->version} approved — ready for production.");
+    }
+
+    public function rejectProof(Request $request, Project $project, ProjectProof $proof)
+    {
+        $request->validate(['feedback' => 'required|string|max:500'], [
+            'feedback.required' => 'Add a note describing the revision needed.',
+        ]);
+
+        $proof->update([
+            'status' => 'Revision Requested',
+            'decided_by' => auth()->id(),
+            'decided_at' => now(),
+            'feedback' => $request->input('feedback'),
+        ]);
+
+        if (!in_array($project->status, ['Completed', 'Cancelled'])) {
+            $this->projects->changeStatus($project, 'For Design', "Revision requested on proof v{$proof->version}");
+        }
+
+        return back()->with('success', "Revision requested on proof v{$proof->version}.");
+    }
+
+    public function deleteProof(Project $project, ProjectProof $proof)
+    {
+        Storage::disk('public')->delete($proof->file_path);
+        $proof->delete();
+
+        return back()->with('success', 'Proof deleted.');
     }
 
     public function startProduction(Project $project)

@@ -62,6 +62,21 @@ class Project extends Model
         return $this->hasMany(ProjectLabor::class)->latest('logged_at');
     }
 
+    public function proofs(): HasMany
+    {
+        return $this->hasMany(ProjectProof::class)->orderByDesc('version');
+    }
+
+    public function latestProof(): ?ProjectProof
+    {
+        return $this->proofs->first();
+    }
+
+    public function hasApprovedProof(): bool
+    {
+        return $this->proofs->contains(fn ($p) => $p->status === 'Approved');
+    }
+
     /**
      * Total material cost based on quantity needed × each item's unit cost.
      */

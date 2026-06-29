@@ -180,6 +180,11 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/projects/{project}/labor', [ProjectController::class, 'addLabor'])->name('projects.labor.add');
     Route::delete('/projects/{project}/labor/{labor}', [ProjectController::class, 'removeLabor'])->name('projects.labor.remove');
 
+    Route::post('/projects/{project}/proofs', [ProjectController::class, 'uploadProof'])->name('projects.proofs.upload');
+    Route::post('/projects/{project}/proofs/{proof}/approve', [ProjectController::class, 'approveProof'])->name('projects.proofs.approve');
+    Route::post('/projects/{project}/proofs/{proof}/reject', [ProjectController::class, 'rejectProof'])->name('projects.proofs.reject');
+    Route::delete('/projects/{project}/proofs/{proof}', [ProjectController::class, 'deleteProof'])->name('projects.proofs.delete');
+
     Route::post('/projects/{project}/start-production', [ProjectController::class, 'startProduction'])->name('projects.startProduction');
     Route::post('/projects/{project}/complete', [ProjectController::class, 'markCompleted'])->name('projects.complete');
     Route::get('/projects/{project}/pdf', [ProjectController::class, 'pdf'])->name('projects.pdf');

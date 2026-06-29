@@ -145,6 +145,104 @@
 
     <!-- Materials (Bill of materials) -->
     <div class="lg:col-span-2">
+        <!-- Design proofs -->
+        <div class="card mb-6 overflow-hidden">
+            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
+                <div>
+                    <h2 class="text-sm font-semibold text-zinc-900">Design proofs</h2>
+                    <p class="text-xs text-zinc-500">Upload artwork, send for approval, and track customer sign-off.</p>
+                </div>
+                @if($project->hasApprovedProof())
+                    <span class="badge badge-green">Approved</span>
+                @elseif($project->proofs->isNotEmpty() && $project->latestProof()->isPending())
+                    <span class="badge badge-amber">Awaiting approval</span>
+                @endif
+            </div>
+
+            <form action="{{ route('projects.proofs.upload', $project) }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-3 border-b border-zinc-200 bg-zinc-50 p-4 sm:flex-row sm:items-end">
+                @csrf
+                <div class="flex-1">
+                    <label class="label">Artwork / proof file</label>
+                    <input type="file" name="file" required class="input" accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.ai,.psd">
+                    <p class="mt-1 text-xs text-zinc-400">JPG, PNG, GIF, WEBP, SVG, PDF, AI, PSD · up to 20 MB</p>
+                </div>
+                <div class="flex-1">
+                    <label class="label">Note (optional)</label>
+                    <input type="text" name="feedback" value="{{ old('feedback') }}" class="input" placeholder="e.g. Front print, v2 with bigger logo">
+                </div>
+                <button type="submit" class="btn btn-primary">Upload proof</button>
+            </form>
+            @error('file')<p class="px-4 pt-3 text-xs text-red-600">{{ $message }}</p>@enderror
+
+            @if($project->proofs->count() > 0)
+                <ul class="divide-y divide-zinc-100">
+                    @foreach($project->proofs as $proof)
+                        <li class="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="flex items-start gap-3">
+                                @if($proof->isImage())
+                                    <a href="{{ $proof->url() }}" target="_blank">
+                                        <img src="{{ $proof->url() }}" alt="Proof v{{ $proof->version }}" class="h-16 w-16 rounded-lg border border-zinc-200 object-cover">
+                                    </a>
+                                @else
+                                    <span class="flex h-16 w-16 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500">FILE</span>
+                                @endif
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-zinc-900">v{{ $proof->version }}</span>
+                                        <span class="badge {{ $proof->getStatusBadgeClass() }}">{{ $proof->status }}</span>
+                                    </div>
+                                    <a href="{{ $proof->url() }}" target="_blank" class="block max-w-[16rem] truncate text-sm text-brand-600 underline-offset-2 hover:underline">{{ $proof->original_name }}</a>
+                                    <p class="text-xs text-zinc-400">
+                                        {{ $proof->humanSize() }} · {{ $proof->created_at->format('M d, Y') }}{{ $proof->uploader ? ' · ' . $proof->uploader->name : '' }}
+                                    </p>
+                                    @if($proof->feedback)
+                                        <p class="mt-1 text-xs text-zinc-600">“{{ $proof->feedback }}”</p>
+                                    @endif
+                                    @if($proof->decided_at)
+                                        <p class="text-xs text-zinc-400">{{ $proof->status }} {{ $proof->decided_at->format('M d, Y') }}{{ $proof->decider ? ' · ' . $proof->decider->name : '' }}</p>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="flex shrink-0 items-center gap-2">
+                                @if($proof->isPending())
+                                    <form action="{{ route('projects.proofs.approve', [$project, $proof]) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-primary btn-sm">Approve</button>
+                                    </form>
+                                    <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('reject-{{ $proof->id }}').classList.toggle('hidden')">Request revision</button>
+                                @endif
+                                <form action="{{ route('projects.proofs.delete', [$project, $proof]) }}" method="POST" onsubmit="return confirm('Delete this proof?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="rounded-lg p-2 text-zinc-400 transition hover:bg-red-50 hover:text-red-600" title="Delete">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                                    </button>
+                                </form>
+                            </div>
+
+                            @if($proof->isPending())
+                                <form id="reject-{{ $proof->id }}" action="{{ route('projects.proofs.reject', [$project, $proof]) }}" method="POST" class="hidden w-full basis-full sm:order-last">
+                                    @csrf
+                                    <div class="mt-2 flex flex-col gap-2 rounded-lg bg-red-50 p-3 sm:flex-row sm:items-end">
+                                        <div class="flex-1">
+                                            <label class="label">Revision feedback</label>
+                                            <input type="text" name="feedback" required class="input" placeholder="What needs to change?">
+                                        </div>
+                                        <button type="submit" class="btn btn-dark">Send back for revision</button>
+                                    </div>
+                                </form>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <div class="px-6 py-12 text-center text-sm text-zinc-500">
+                    No proofs uploaded yet. Upload the first artwork to start the approval flow.
+                </div>
+            @endif
+        </div>
+
         <div class="card overflow-hidden">
             <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
                 <div>
