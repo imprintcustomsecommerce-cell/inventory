@@ -77,6 +77,11 @@ class Project extends Model
         return $this->hasMany(ProjectIssue::class)->latest();
     }
 
+    public function feedback(): HasMany
+    {
+        return $this->hasMany(ProjectFeedback::class)->latest();
+    }
+
     public function openIssuesCount(): int
     {
         return $this->issues->whereIn('status', ['Open', 'In Progress'])->count();

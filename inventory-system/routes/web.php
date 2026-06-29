@@ -196,6 +196,9 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/online-orders/{onlineOrder}/ignore', [\App\Http\Controllers\OnlineOrderController::class, 'ignore'])->name('online-orders.ignore');
     Route::delete('/online-orders/{onlineOrder}', [\App\Http\Controllers\OnlineOrderController::class, 'destroy'])->name('online-orders.destroy');
     Route::get('/quality', [\App\Http\Controllers\QualityController::class, 'index'])->name('quality.index');
+    Route::get('/feedback', [\App\Http\Controllers\FeedbackController::class, 'index'])->name('feedback.index');
+    Route::post('/projects/{project}/feedback', [\App\Http\Controllers\FeedbackController::class, 'store'])->name('projects.feedback.store');
+    Route::delete('/projects/{project}/feedback/{feedback}', [\App\Http\Controllers\FeedbackController::class, 'destroy'])->name('projects.feedback.destroy');
     Route::post('/projects/{project}/issues', [\App\Http\Controllers\QualityController::class, 'store'])->name('projects.issues.store');
     Route::post('/projects/{project}/issues/{issue}/status', [\App\Http\Controllers\QualityController::class, 'updateStatus'])->name('projects.issues.status');
     Route::delete('/projects/{project}/issues/{issue}', [\App\Http\Controllers\QualityController::class, 'destroy'])->name('projects.issues.destroy');
