@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Marketplace integration. Points at the in-app mock API for now;
+    // swap mock_url for the real Shopee/Lazada/TikTok host to go live.
+    'marketplace' => [
+        'mock_url' => env('MARKETPLACE_MOCK_URL', 'http://127.0.0.1:8000'),
+    ],
+
 ];

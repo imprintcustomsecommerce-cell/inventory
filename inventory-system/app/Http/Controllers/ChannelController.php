@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\SalesChannel;
-use App\Support\MockOrderFactory;
+use App\Services\MarketplaceClient;
 
 class ChannelController extends Controller
 {
+    public function __construct(private MarketplaceClient $marketplace)
+    {
+    }
+
     public function index()
     {
         $channels = SalesChannel::withCount([
@@ -40,9 +44,13 @@ class ChannelController extends Controller
             return back()->with('error', "Connect {$channel->name} first.");
         }
 
-        $count = MockOrderFactory::generateForChannel($channel, random_int(1, 3));
+        $result = $this->marketplace->pullOrders($channel, random_int(1, 3));
         $channel->update(['last_synced_at' => now()]);
 
-        return back()->with('success', "Synced {$channel->name} — {$count} new order(s) pulled.");
+        if (!$result['ok']) {
+            return back()->with('error', $result['error'] ?? 'Sync failed.');
+        }
+
+        return back()->with('success', "Synced {$channel->name} — {$result['created']} new order(s) pulled.");
     }
 }

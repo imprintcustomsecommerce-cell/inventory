@@ -28,6 +28,10 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
+// Mock marketplace API — public, simulates an external Shopee/Lazada/TikTok host.
+Route::get('/mock-api/{platform}/orders', [\App\Http\Controllers\MockApiController::class, 'orders'])
+    ->name('mock-api.orders');
+
 // Redirect root to dashboard or login
 Route::get('/', function () {
     if (!auth()->check()) {

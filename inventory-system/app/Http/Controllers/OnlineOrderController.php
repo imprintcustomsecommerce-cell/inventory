@@ -7,11 +7,15 @@ use App\Models\OnlineOrder;
 use App\Models\Project;
 use App\Models\Sale;
 use App\Models\SalesChannel;
-use App\Support\MockOrderFactory;
+use App\Services\MarketplaceClient;
 use Illuminate\Http\Request;
 
 class OnlineOrderController extends Controller
 {
+    public function __construct(private MarketplaceClient $marketplace)
+    {
+    }
+
     public function index(Request $request)
     {
         $query = OnlineOrder::with('channel');
@@ -47,9 +51,13 @@ class OnlineOrderController extends Controller
             return back()->with('error', 'Connect a channel first to simulate an order.');
         }
 
-        MockOrderFactory::generateForChannel($channel, 1);
+        $result = $this->marketplace->pullOrders($channel, 1);
 
-        return back()->with('success', "New sample order received from {$channel->name}.");
+        if (!$result['ok']) {
+            return back()->with('error', $result['error'] ?? 'Could not fetch an order.');
+        }
+
+        return back()->with('success', "Fetched {$result['created']} order from {$channel->name} via API.");
     }
 
     /** Turn an online order into a Sale (stock) or Project (custom). */

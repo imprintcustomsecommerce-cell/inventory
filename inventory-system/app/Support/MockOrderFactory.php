@@ -2,12 +2,12 @@
 
 namespace App\Support;
 
-use App\Models\OnlineOrder;
-use App\Models\SalesChannel;
-
 /**
- * Generates believable sample marketplace orders for the mock integration.
- * Replace with real webhook ingestion when going live.
+ * Produces API-shaped sample order payloads, mimicking what each
+ * marketplace would return from its "get orders" endpoint. This is served
+ * by the in-app mock API; replace it with the real API response when going
+ * live. Field names are intentionally platform-flavoured so the client's
+ * mapper has something realistic to normalise.
  */
 class MockOrderFactory
 {
@@ -25,29 +25,35 @@ class MockOrderFactory
         'Custom Tarpaulin 3x5', 'Embroidered Cap - Company',
     ];
 
-    public static function generateForChannel(SalesChannel $channel, int $count = 1): int
+    /**
+     * Build a list of raw marketplace order rows for a platform.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function payload(string $platform, int $count = 1): array
     {
+        $rows = [];
+
         for ($i = 0; $i < $count; $i++) {
             $custom = (bool) random_int(0, 1);
             $qty = $custom ? random_int(10, 100) : random_int(1, 5);
             $unit = $custom ? random_int(120, 450) : random_int(150, 900);
+            $item = $custom
+                ? self::CUSTOM_ITEMS[array_rand(self::CUSTOM_ITEMS)]
+                : self::STOCK_ITEMS[array_rand(self::STOCK_ITEMS)];
 
-            OnlineOrder::create([
-                'sales_channel_id' => $channel->id,
-                'external_ref' => strtoupper($channel->platform) . '-' . random_int(100000, 999999),
-                'buyer_name' => self::BUYERS[array_rand(self::BUYERS)],
-                'buyer_contact' => '09' . random_int(100000000, 999999999),
-                'item_label' => $custom
-                    ? self::CUSTOM_ITEMS[array_rand(self::CUSTOM_ITEMS)]
-                    : self::STOCK_ITEMS[array_rand(self::STOCK_ITEMS)],
-                'quantity' => $qty,
-                'amount' => $qty * $unit,
-                'order_type' => $custom ? 'custom' : 'stock',
-                'status' => 'New',
-                'ordered_at' => now()->subMinutes(random_int(0, 2880)),
-            ]);
+            $rows[] = [
+                'order_sn' => strtoupper($platform) . '-' . random_int(100000, 999999),
+                'buyer_username' => self::BUYERS[array_rand(self::BUYERS)],
+                'buyer_phone' => '09' . random_int(100000000, 999999999),
+                'item_name' => $item,
+                'qty' => $qty,
+                'total_amount' => $qty * $unit,
+                'is_custom' => $custom,
+                'create_time' => now()->subMinutes(random_int(0, 2880))->toIso8601String(),
+            ];
         }
 
-        return $count;
+        return $rows;
     }
 }
