@@ -10,6 +10,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SupplierController;
@@ -227,6 +228,9 @@ Route::middleware(['auth', 'dept'])->group(function () {
 
     // Admin-only
     Route::middleware('admin')->group(function () {
+        // Reports & analytics
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
         // User management
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
