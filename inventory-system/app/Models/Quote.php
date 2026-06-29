@@ -21,6 +21,7 @@ class Quote extends Model
         'valid_until',
         'subtotal',
         'discount',
+        'promo_code',
         'total',
         'notes',
         'terms',

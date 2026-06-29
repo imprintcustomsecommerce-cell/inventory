@@ -7,6 +7,7 @@ use App\Http\Requests\StoreQuoteItemRequest;
 use App\Http\Requests\StoreQuoteRequest;
 use App\Http\Requests\UpdateQuoteRequest;
 use App\Models\Customer;
+use App\Models\PromoCode;
 use App\Models\Quote;
 use App\Models\QuoteItem;
 use App\Services\InvoiceService;
@@ -80,6 +81,44 @@ class QuoteController extends Controller
         $customers = Customer::orderBy('name')->get();
 
         return view('quotes.edit', compact('quote', 'customers'));
+    }
+
+    public function applyPromo(Request $request, Quote $quote)
+    {
+        $request->validate(['code' => 'required|string']);
+
+        $promo = PromoCode::where('code', strtoupper(trim($request->input('code'))))->first();
+
+        if (!$promo) {
+            return back()->with('error', 'That promo code does not exist.');
+        }
+
+        $subtotal = (float) $quote->items()->sum('total');
+
+        if ($reason = $promo->invalidReason($subtotal)) {
+            return back()->with('error', $reason);
+        }
+
+        // Count a fresh use only when switching to a different code.
+        if ($quote->promo_code !== $promo->code) {
+            $promo->increment('used_count');
+        }
+
+        $quote->update([
+            'discount' => $promo->discountFor($subtotal),
+            'promo_code' => $promo->code,
+        ]);
+        $this->quotes->recalcTotals($quote);
+
+        return back()->with('success', "Applied {$promo->code} — {$promo->label()}.");
+    }
+
+    public function removePromo(Quote $quote)
+    {
+        $quote->update(['discount' => 0, 'promo_code' => null]);
+        $this->quotes->recalcTotals($quote);
+
+        return back()->with('success', 'Promo code removed.');
     }
 
     public function update(UpdateQuoteRequest $request, Quote $quote)

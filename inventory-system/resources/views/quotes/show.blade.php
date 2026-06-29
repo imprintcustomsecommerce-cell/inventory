@@ -116,7 +116,7 @@
                     <dd class="font-medium text-zinc-900">₱{{ number_format($quote->subtotal, 2) }}</dd>
                 </div>
                 <div class="flex justify-between gap-4">
-                    <dt class="text-zinc-500">Discount</dt>
+                    <dt class="text-zinc-500">Discount @if($quote->promo_code)<span class="badge badge-green ml-1">{{ $quote->promo_code }}</span>@endif</dt>
                     <dd class="font-medium text-zinc-900">− ₱{{ number_format($quote->discount, 2) }}</dd>
                 </div>
                 <div class="flex justify-between gap-4 border-t border-zinc-100 pt-3">
@@ -124,6 +124,26 @@
                     <dd class="text-lg font-bold text-zinc-900">₱{{ number_format($quote->total, 2) }}</dd>
                 </div>
             </dl>
+
+            <!-- Promo code -->
+            <div class="mt-4 border-t border-zinc-100 pt-4">
+                @if($quote->promo_code)
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm text-zinc-600">Code <span class="font-semibold text-zinc-900">{{ $quote->promo_code }}</span> applied</p>
+                        <form action="{{ route('quotes.promo.remove', $quote) }}" method="POST" onsubmit="return confirm('Remove the promo code?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-xs font-medium text-red-600 hover:underline">Remove</button>
+                        </form>
+                    </div>
+                @else
+                    <form action="{{ route('quotes.promo.apply', $quote) }}" method="POST" class="flex gap-2">
+                        @csrf
+                        <input type="text" name="code" required class="input uppercase" placeholder="Promo code">
+                        <button type="submit" class="btn btn-dark">Apply</button>
+                    </form>
+                @endif
+            </div>
         </div>
     </div>
 

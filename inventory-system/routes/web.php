@@ -243,6 +243,8 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/quotes/{quote}/items', [QuoteController::class, 'addItem'])->name('quotes.items.add');
     Route::delete('/quotes/{quote}/items/{item}', [QuoteController::class, 'removeItem'])->name('quotes.items.remove');
 
+    Route::post('/quotes/{quote}/promo', [QuoteController::class, 'applyPromo'])->name('quotes.promo.apply');
+    Route::delete('/quotes/{quote}/promo', [QuoteController::class, 'removePromo'])->name('quotes.promo.remove');
     Route::post('/quotes/{quote}/status', [QuoteController::class, 'changeStatus'])->name('quotes.status');
     Route::post('/quotes/{quote}/convert', [QuoteController::class, 'convert'])->name('quotes.convert');
     Route::post('/quotes/{quote}/invoice', [QuoteController::class, 'createInvoice'])->name('quotes.invoice');
@@ -297,6 +299,12 @@ Route::middleware(['auth', 'dept'])->group(function () {
         Route::put('/payroll/{payroll}/payslips/{payslip}', [\App\Http\Controllers\PayrollController::class, 'updatePayslip'])->name('payroll.payslips.update');
         Route::post('/payroll/{payroll}/finalize', [\App\Http\Controllers\PayrollController::class, 'finalize'])->name('payroll.finalize');
         Route::delete('/payroll/{payroll}', [\App\Http\Controllers\PayrollController::class, 'destroy'])->name('payroll.destroy');
+
+        // Promo codes
+        Route::get('/promo-codes', [\App\Http\Controllers\PromoCodeController::class, 'index'])->name('promo-codes.index');
+        Route::post('/promo-codes', [\App\Http\Controllers\PromoCodeController::class, 'store'])->name('promo-codes.store');
+        Route::post('/promo-codes/{promoCode}/toggle', [\App\Http\Controllers\PromoCodeController::class, 'toggle'])->name('promo-codes.toggle');
+        Route::delete('/promo-codes/{promoCode}', [\App\Http\Controllers\PromoCodeController::class, 'destroy'])->name('promo-codes.destroy');
 
         // Commissions
         Route::get('/commissions', [\App\Http\Controllers\CommissionController::class, 'index'])->name('commissions.index');
