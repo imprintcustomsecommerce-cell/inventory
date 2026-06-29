@@ -31,7 +31,7 @@ class SaleController extends Controller
 
         $revenue = (float) (clone $query)->sum('total');
         $count = (clone $query)->count();
-        $profit = (float) (clone $query)->selectRaw('COALESCE(SUM(total - (unit_cost * quantity)), 0) as p')->value('p');
+        $profit = (float) (clone $query)->reorder()->selectRaw('COALESCE(SUM(total - (unit_cost * quantity)), 0) as p')->value('p');
         $showProfit = $user->isAdmin();
 
         $sales = $query->paginate(50)->withQueryString();
