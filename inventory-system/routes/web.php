@@ -28,6 +28,11 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
+// Public customer portal — token-authenticated, no login required.
+Route::get('/p/{token}', [\App\Http\Controllers\PortalController::class, 'show'])->name('portal.show');
+Route::post('/p/{token}/proofs/{proof}/approve', [\App\Http\Controllers\PortalController::class, 'approveProof'])->name('portal.proofs.approve');
+Route::post('/p/{token}/proofs/{proof}/reject', [\App\Http\Controllers\PortalController::class, 'rejectProof'])->name('portal.proofs.reject');
+
 // Mock marketplace API — public, simulates an external Shopee/Lazada/TikTok host.
 Route::get('/mock-api/{platform}/orders', [\App\Http\Controllers\MockApiController::class, 'orders'])
     ->name('mock-api.orders');
@@ -214,6 +219,7 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/projects/{project}/proofs/{proof}/reject', [ProjectController::class, 'rejectProof'])->name('projects.proofs.reject');
     Route::delete('/projects/{project}/proofs/{proof}', [ProjectController::class, 'deleteProof'])->name('projects.proofs.delete');
 
+    Route::post('/projects/{project}/share', [ProjectController::class, 'share'])->name('projects.share');
     Route::post('/projects/{project}/start-production', [ProjectController::class, 'startProduction'])->name('projects.startProduction');
     Route::post('/projects/{project}/complete', [ProjectController::class, 'markCompleted'])->name('projects.complete');
     Route::get('/projects/{project}/pdf', [ProjectController::class, 'pdf'])->name('projects.pdf');

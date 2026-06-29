@@ -145,6 +145,29 @@
 
     <!-- Materials (Bill of materials) -->
     <div class="lg:col-span-2">
+        <!-- Customer portal link -->
+        <div class="card mb-6 p-5">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm font-semibold text-zinc-900">Customer portal</h2>
+                    <p class="text-xs text-zinc-500">Share a private link so the customer can view and approve proofs — no login.</p>
+                </div>
+                <form action="{{ route('projects.share', $project) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn {{ $project->public_token ? 'btn-ghost' : 'btn-primary' }} btn-sm">
+                        {{ $project->public_token ? 'Regenerate' : 'Generate link' }}
+                    </button>
+                </form>
+            </div>
+            @if($project->public_token)
+                <div class="mt-3 flex items-center gap-2">
+                    <input type="text" readonly value="{{ $project->portalUrl() }}" onclick="this.select()" class="input text-xs">
+                    <a href="{{ $project->portalUrl() }}" target="_blank" class="btn btn-ghost btn-sm shrink-0">Open</a>
+                </div>
+                <p class="mt-2 text-xs text-zinc-400">Anyone with this link can view and approve. Regenerate to revoke the old one.</p>
+            @endif
+        </div>
+
         <!-- Design proofs -->
         <div class="card mb-6 overflow-hidden">
             <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4">

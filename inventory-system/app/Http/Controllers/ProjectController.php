@@ -240,6 +240,14 @@ class ProjectController extends Controller
         return back()->with('success', 'Production started — materials deducted from inventory.');
     }
 
+    public function share(Project $project)
+    {
+        // Regenerate if one exists, otherwise create the first token.
+        $project->update(['public_token' => \Illuminate\Support\Str::random(48)]);
+
+        return back()->with('success', 'Customer portal link ready.');
+    }
+
     public function markCompleted(Project $project)
     {
         $this->projects->markCompleted($project);

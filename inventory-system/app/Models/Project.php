@@ -21,6 +21,7 @@ class Project extends Model
         'materials_deducted',
         'started_production_at',
         'completed_at',
+        'public_token',
     ];
 
     protected $casts = [
@@ -80,6 +81,21 @@ class Project extends Model
     public function feedback(): HasMany
     {
         return $this->hasMany(ProjectFeedback::class)->latest();
+    }
+
+    /** Generate the public token if missing, then return it. */
+    public function ensurePublicToken(): string
+    {
+        if (!$this->public_token) {
+            $this->update(['public_token' => \Illuminate\Support\Str::random(48)]);
+        }
+
+        return $this->public_token;
+    }
+
+    public function portalUrl(): ?string
+    {
+        return $this->public_token ? route('portal.show', $this->public_token) : null;
     }
 
     public function openIssuesCount(): int
