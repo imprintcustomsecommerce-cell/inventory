@@ -9,8 +9,10 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\StockRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
@@ -78,6 +80,35 @@ Route::middleware(['auth', 'dept'])->group(function () {
         Route::get('/materials/{material}/movement', [MaterialController::class, 'movementForm'])->name('materials.movementForm');
         Route::post('/materials/{material}/movement', [MaterialController::class, 'recordMovement'])->name('materials.recordMovement');
         Route::get('/materials/{material}/movements', [MaterialController::class, 'movements'])->name('materials.movements');
+
+        // Suppliers
+        Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+        Route::get('/suppliers-export', [SupplierController::class, 'export'])->name('suppliers.export');
+        Route::get('/suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
+        Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+        Route::get('/suppliers/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
+        Route::get('/suppliers/{supplier}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
+        Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+        Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])->middleware('admin')->name('suppliers.destroy');
+
+        // Purchase orders
+        Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchases.index');
+        Route::get('/purchase-orders-export', [PurchaseOrderController::class, 'export'])->name('purchases.export');
+        Route::get('/purchase-orders/create', [PurchaseOrderController::class, 'create'])->name('purchases.create');
+        Route::post('/purchase-orders', [PurchaseOrderController::class, 'store'])->name('purchases.store');
+        Route::get('/purchase-orders/{purchase}', [PurchaseOrderController::class, 'show'])->name('purchases.show');
+        Route::get('/purchase-orders/{purchase}/edit', [PurchaseOrderController::class, 'edit'])->name('purchases.edit');
+        Route::put('/purchase-orders/{purchase}', [PurchaseOrderController::class, 'update'])->name('purchases.update');
+        Route::delete('/purchase-orders/{purchase}', [PurchaseOrderController::class, 'destroy'])->middleware('admin')->name('purchases.destroy');
+        Route::get('/purchase-orders/{purchase}/pdf', [PurchaseOrderController::class, 'pdf'])->name('purchases.pdf');
+
+        Route::post('/purchase-orders/{purchase}/items', [PurchaseOrderController::class, 'addItem'])->name('purchases.items.add');
+        Route::delete('/purchase-orders/{purchase}/items/{item}', [PurchaseOrderController::class, 'removeItem'])->name('purchases.items.remove');
+
+        Route::post('/purchase-orders/{purchase}/order', [PurchaseOrderController::class, 'markOrdered'])->name('purchases.markOrdered');
+        Route::post('/purchase-orders/{purchase}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchases.cancel');
+        Route::post('/purchase-orders/{purchase}/receive', [PurchaseOrderController::class, 'receiveAll'])->name('purchases.receiveAll');
+        Route::post('/purchase-orders/{purchase}/items/{item}/receive', [PurchaseOrderController::class, 'receiveItem'])->name('purchases.items.receive');
     });
 
     // Products (each groups its size variants)

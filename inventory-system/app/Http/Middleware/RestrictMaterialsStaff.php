@@ -19,6 +19,8 @@ class RestrictMaterialsStaff
         if ($user && $user->isMaterialsStaff()) {
             $name = $request->route()?->getName() ?? '';
             $allowed = str_starts_with($name, 'materials.')
+                || str_starts_with($name, 'suppliers.')
+                || str_starts_with($name, 'purchases.')
                 || str_starts_with($name, 'profile.')
                 || $name === 'logout';
 
