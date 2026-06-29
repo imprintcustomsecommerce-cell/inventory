@@ -70,7 +70,7 @@ class ReportController extends Controller
         ];
 
         // ── Projects: status mix + total margin on completed/active work ──
-        $projectList = Project::with('materials.inventoryItem')->get();
+        $projectList = Project::with('materials.inventoryItem', 'labor')->get();
         $projects = [
             'by_status' => collect(Project::STATUSES)->mapWithKeys(
                 fn ($s) => [$s => $projectList->where('status', $s)->count()]

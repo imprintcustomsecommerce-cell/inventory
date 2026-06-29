@@ -71,6 +71,7 @@
                         <th>Status</th>
                         <th>Due</th>
                         <th>Materials</th>
+                        <th>Labor</th>
                         <th class="text-right">Actions</th>
                     </tr>
                 </thead>
@@ -94,6 +95,14 @@
                                     <span class="badge badge-green">Deducted</span>
                                 @else
                                     <span class="badge badge-zinc">{{ $project->materials_count }} listed</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($project->labor->isNotEmpty())
+                                    <span class="text-zinc-700">{{ rtrim(rtrim(number_format($project->totalHours(), 2), '0'), '.') }} hrs</span>
+                                    <span class="text-zinc-400">· ₱{{ number_format($project->laborCost(), 2) }}</span>
+                                @else
+                                    <span class="text-zinc-300">—</span>
                                 @endif
                             </td>
                             <td class="text-right">

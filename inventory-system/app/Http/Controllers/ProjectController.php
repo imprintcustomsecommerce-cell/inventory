@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ExportsCsv;
+use App\Http\Requests\StoreProjectLaborRequest;
 use App\Http\Requests\StoreProjectMaterialRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\InventoryItem;
 use App\Models\Project;
+use App\Models\ProjectLabor;
 use App\Models\ProjectMaterial;
+use App\Models\User;
 use App\Services\ProjectService;
 use Illuminate\Http\Request;
 
@@ -37,7 +40,7 @@ class ProjectController extends Controller
             $query->where('status', $request->input('status'));
         }
 
-        $projects = $query->withCount('materials')->latest()->paginate(50);
+        $projects = $query->withCount('materials')->with('labor')->latest()->paginate(50);
         $stats = $this->projects->getStatistics();
 
         return view('projects.index', compact('projects', 'stats'));
@@ -61,10 +64,11 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load('materials.inventoryItem', 'statusLogs.user', 'customer');
+        $project->load('materials.inventoryItem', 'labor.user', 'statusLogs.user', 'customer');
         $items = InventoryItem::query()->visibleTo(auth()->user())->orderBy('name')->get();
+        $staff = User::orderBy('name')->get();
 
-        return view('projects.show', compact('project', 'items'));
+        return view('projects.show', compact('project', 'items', 'staff'));
     }
 
     public function edit(Project $project)
@@ -122,6 +126,27 @@ class ProjectController extends Controller
         return back()->with('success', 'Material removed.');
     }
 
+    public function addLabor(StoreProjectLaborRequest $request, Project $project)
+    {
+        $data = $request->validated();
+
+        // Snapshot the worker name from their account if one was selected.
+        if (!empty($data['user_id']) && empty($data['worker_name'])) {
+            $data['worker_name'] = User::find($data['user_id'])?->name;
+        }
+
+        $project->labor()->create($data);
+
+        return back()->with('success', 'Labor entry logged.');
+    }
+
+    public function removeLabor(Project $project, ProjectLabor $labor)
+    {
+        $labor->delete();
+
+        return back()->with('success', 'Labor entry removed.');
+    }
+
     public function startProduction(Project $project)
     {
         if ($project->materials->isEmpty() && $project->materials()->count() === 0) {
@@ -150,7 +175,7 @@ class ProjectController extends Controller
 
     public function export(Request $request)
     {
-        $query = Project::with('materials.inventoryItem');
+        $query = Project::with('materials.inventoryItem', 'labor');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -166,7 +191,8 @@ class ProjectController extends Controller
         }
 
         $rows = $query->latest()->get()->map(function (Project $p) {
-            $cost = $p->materialsCost();
+            $materialCost = $p->materialsCost();
+            $laborCost = $p->laborCost();
             $margin = $p->margin();
 
             return [
@@ -177,7 +203,10 @@ class ProjectController extends Controller
                 $p->status,
                 $p->due_date?->format('Y-m-d'),
                 $p->quoted_price !== null ? number_format((float) $p->quoted_price, 2, '.', '') : '',
-                number_format($cost, 2, '.', ''),
+                number_format($materialCost, 2, '.', ''),
+                number_format($p->totalHours(), 2, '.', ''),
+                number_format($laborCost, 2, '.', ''),
+                number_format($materialCost + $laborCost, 2, '.', ''),
                 $margin !== null ? number_format($margin, 2, '.', '') : '',
                 $p->materials_deducted ? 'Yes' : 'No',
             ];
@@ -185,14 +214,14 @@ class ProjectController extends Controller
 
         return $this->streamXlsx(
             'projects-' . now()->format('Y-m-d') . '.xlsx',
-            ['Project', 'Customer', 'Product', 'Quantity', 'Status', 'Due Date', 'Quoted Price', 'Material Cost', 'Margin', 'Materials Deducted'],
+            ['Project', 'Customer', 'Product', 'Quantity', 'Status', 'Due Date', 'Quoted Price', 'Material Cost', 'Labor Hours', 'Labor Cost', 'Total Cost', 'Margin', 'Materials Deducted'],
             $rows
         );
     }
 
     public function pdf(Project $project)
     {
-        $project->load('materials.inventoryItem');
+        $project->load('materials.inventoryItem', 'labor.user');
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('projects.pdf', compact('project'))
             ->setPaper('a4');

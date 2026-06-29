@@ -177,6 +177,9 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/projects/{project}/materials', [ProjectController::class, 'addMaterial'])->name('projects.materials.add');
     Route::delete('/projects/{project}/materials/{material}', [ProjectController::class, 'removeMaterial'])->name('projects.materials.remove');
 
+    Route::post('/projects/{project}/labor', [ProjectController::class, 'addLabor'])->name('projects.labor.add');
+    Route::delete('/projects/{project}/labor/{labor}', [ProjectController::class, 'removeLabor'])->name('projects.labor.remove');
+
     Route::post('/projects/{project}/start-production', [ProjectController::class, 'startProduction'])->name('projects.startProduction');
     Route::post('/projects/{project}/complete', [ProjectController::class, 'markCompleted'])->name('projects.complete');
     Route::get('/projects/{project}/pdf', [ProjectController::class, 'pdf'])->name('projects.pdf');
