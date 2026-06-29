@@ -25,6 +25,11 @@ class User extends Authenticatable
         'role',
         'department',
         'warehouse_id',
+        'position',
+        'phone',
+        'hourly_rate',
+        'hire_date',
+        'employment_status',
     ];
 
     public function isAdmin(): bool
@@ -88,6 +93,13 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'hourly_rate' => 'decimal:2',
+            'hire_date' => 'date',
         ];
+    }
+
+    public function isActive(): bool
+    {
+        return $this->employment_status === 'Active';
     }
 }

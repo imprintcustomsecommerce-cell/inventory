@@ -351,14 +351,15 @@
                 </span>
             </div>
 
-            <form action="{{ route('projects.labor.add', $project) }}" method="POST" class="grid grid-cols-1 gap-3 border-b border-zinc-200 bg-zinc-50 p-4 sm:grid-cols-2 lg:grid-cols-3">
+            <form action="{{ route('projects.labor.add', $project) }}" method="POST" x-data="{}" class="grid grid-cols-1 gap-3 border-b border-zinc-200 bg-zinc-50 p-4 sm:grid-cols-2 lg:grid-cols-3">
                 @csrf
                 <div>
                     <label class="label">Worker</label>
-                    <select name="user_id" class="select">
+                    <select name="user_id" class="select"
+                            x-on:change="$refs.rate.value = $event.target.selectedOptions[0].dataset.rate || $refs.rate.value">
                         <option value="">Other / subcontractor…</option>
                         @foreach($staff as $member)
-                            <option value="{{ $member->id }}">{{ $member->name }}</option>
+                            <option value="{{ $member->id }}" data-rate="{{ $member->hourly_rate }}">{{ $member->name }}@if($member->position) · {{ $member->position }}@endif</option>
                         @endforeach
                     </select>
                 </div>
@@ -380,7 +381,7 @@
                 </div>
                 <div>
                     <label class="label">Hourly rate (₱)</label>
-                    <input type="number" name="hourly_rate" min="0" step="0.01" value="{{ old('hourly_rate') }}" required class="input">
+                    <input type="number" name="hourly_rate" min="0" step="0.01" value="{{ old('hourly_rate') }}" required class="input" x-ref="rate">
                 </div>
                 <div class="sm:col-span-2 lg:col-span-3 flex justify-end">
                     <button type="submit" class="btn btn-primary">Log labor</button>
