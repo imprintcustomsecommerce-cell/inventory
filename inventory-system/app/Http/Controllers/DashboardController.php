@@ -7,7 +7,11 @@ use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Invoice;
 use App\Models\Material;
+use App\Models\OnlineOrder;
 use App\Models\Project;
+use App\Models\ProjectDelivery;
+use App\Models\ProjectFeedback;
+use App\Models\ProjectIssue;
 use App\Models\PurchaseOrder;
 use App\Models\Quote;
 use App\Models\Sale;
@@ -77,6 +81,15 @@ class DashboardController extends Controller
 
         $recentQuotes = Quote::with('customer')->latest()->limit(6)->get();
 
+        // ── Operations: the production/fulfilment modules ──
+        $operations = [
+            'new_orders' => OnlineOrder::where('status', 'New')->count(),
+            'in_transit' => ProjectDelivery::whereIn('status', ['Scheduled', 'Out for Delivery'])->count(),
+            'open_issues' => ProjectIssue::whereIn('status', ['Open', 'In Progress'])->count(),
+            'avg_rating' => round((float) ProjectFeedback::avg('rating'), 1),
+            'feedback_count' => ProjectFeedback::count(),
+        ];
+
         // ── "Needs attention" — actionable items slipping across the business ──
         $alerts = [];
 
@@ -88,6 +101,24 @@ class DashboardController extends Controller
                 'label' => $overdueInvoices->count() . ' overdue ' . str('invoice')->plural($overdueInvoices->count()),
                 'detail' => '₱' . number_format($overdueInvoices->sum(fn (Invoice $i) => $i->balance()), 2) . ' outstanding',
                 'route' => route('invoices.index', ['status' => 'Unpaid']),
+            ];
+        }
+
+        if ($operations['new_orders'] > 0) {
+            $alerts[] = [
+                'tone' => 'amber',
+                'label' => $operations['new_orders'] . ' new online ' . str('order')->plural($operations['new_orders']),
+                'detail' => 'Waiting to be routed to a project or sale',
+                'route' => route('online-orders.index'),
+            ];
+        }
+
+        if ($operations['open_issues'] > 0) {
+            $alerts[] = [
+                'tone' => 'red',
+                'label' => $operations['open_issues'] . ' open quality ' . str('issue')->plural($operations['open_issues']),
+                'detail' => 'Defects, reprints, or returns to resolve',
+                'route' => route('quality.index'),
             ];
         }
 
@@ -157,6 +188,7 @@ class DashboardController extends Controller
             'recentSales',
             'crm',
             'recentQuotes',
+            'operations',
             'alerts'
         ));
     }

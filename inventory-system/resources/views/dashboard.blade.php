@@ -62,6 +62,36 @@
     </div>
 @endif
 
+<!-- Operations -->
+<div class="mb-8">
+    <h2 class="mb-3 text-sm font-semibold text-zinc-900">Operations</h2>
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <a href="{{ route('online-orders.index') }}" class="card p-5 transition hover:border-zinc-300">
+            <p class="text-sm font-medium text-zinc-500">New online orders</p>
+            <p class="mt-2 text-2xl font-bold {{ $operations['new_orders'] > 0 ? 'text-amber-600' : 'text-zinc-900' }}">{{ $operations['new_orders'] }}</p>
+            <p class="mt-0.5 text-xs text-zinc-400">awaiting routing</p>
+        </a>
+        <a href="{{ route('deliveries.index') }}" class="card p-5 transition hover:border-zinc-300">
+            <p class="text-sm font-medium text-zinc-500">Deliveries in transit</p>
+            <p class="mt-2 text-2xl font-bold text-zinc-900">{{ $operations['in_transit'] }}</p>
+            <p class="mt-0.5 text-xs text-zinc-400">scheduled or out</p>
+        </a>
+        <a href="{{ route('quality.index') }}" class="card p-5 transition hover:border-zinc-300">
+            <p class="text-sm font-medium text-zinc-500">Open QC issues</p>
+            <p class="mt-2 text-2xl font-bold {{ $operations['open_issues'] > 0 ? 'text-red-600' : 'text-zinc-900' }}">{{ $operations['open_issues'] }}</p>
+            <p class="mt-0.5 text-xs text-zinc-400">defects / reprints</p>
+        </a>
+        <a href="{{ route('feedback.index') }}" class="card p-5 transition hover:border-zinc-300">
+            <p class="text-sm font-medium text-zinc-500">Avg. feedback</p>
+            <p class="mt-2 text-2xl font-bold text-zinc-900">
+                {{ $operations['feedback_count'] > 0 ? number_format($operations['avg_rating'], 1) : '—' }}
+                @if($operations['feedback_count'] > 0)<span class="text-base text-amber-500">★</span>@endif
+            </p>
+            <p class="mt-0.5 text-xs text-zinc-400">{{ $operations['feedback_count'] }} {{ Str::plural('review', $operations['feedback_count']) }}</p>
+        </a>
+    </div>
+</div>
+
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
     <!-- Low stock -->
     <div class="card overflow-hidden">
