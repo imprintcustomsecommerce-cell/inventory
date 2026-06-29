@@ -6,7 +6,9 @@ use App\Models\Customer;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Invoice;
+use App\Models\Material;
 use App\Models\Project;
+use App\Models\PurchaseOrder;
 use App\Models\Quote;
 use App\Models\Sale;
 use Illuminate\Http\Request;
@@ -75,6 +77,76 @@ class DashboardController extends Controller
 
         $recentQuotes = Quote::with('customer')->latest()->limit(6)->get();
 
+        // ── "Needs attention" — actionable items slipping across the business ──
+        $alerts = [];
+
+        $overdueInvoices = Invoice::whereIn('status', ['Unpaid', 'Partial'])
+            ->whereNotNull('due_date')->whereDate('due_date', '<', today())->get();
+        if ($overdueInvoices->count() > 0) {
+            $alerts[] = [
+                'tone' => 'red',
+                'label' => $overdueInvoices->count() . ' overdue ' . str('invoice')->plural($overdueInvoices->count()),
+                'detail' => '₱' . number_format($overdueInvoices->sum(fn (Invoice $i) => $i->balance()), 2) . ' outstanding',
+                'route' => route('invoices.index', ['status' => 'Unpaid']),
+            ];
+        }
+
+        $expiredQuotes = Quote::where('status', 'Sent')
+            ->whereNotNull('valid_until')->whereDate('valid_until', '<', today())->count();
+        if ($expiredQuotes > 0) {
+            $alerts[] = [
+                'tone' => 'amber',
+                'label' => $expiredQuotes . ' expired ' . str('quote')->plural($expiredQuotes),
+                'detail' => 'Sent but past their validity date',
+                'route' => route('quotes.index', ['status' => 'Sent']),
+            ];
+        }
+
+        $dueProjects = Project::whereIn('status', $active)
+            ->whereNotNull('due_date')->whereDate('due_date', '<=', today()->addDays(3))->count();
+        if ($dueProjects > 0) {
+            $alerts[] = [
+                'tone' => 'amber',
+                'label' => $dueProjects . ' ' . str('project')->plural($dueProjects) . ' due soon',
+                'detail' => 'Due within 3 days or already overdue',
+                'route' => route('projects.index'),
+            ];
+        }
+
+        if ($inventory['low_stock'] + $inventory['out_of_stock'] > 0) {
+            $alerts[] = [
+                'tone' => 'amber',
+                'label' => ($inventory['low_stock'] + $inventory['out_of_stock']) . ' items low or out of stock',
+                'detail' => $inventory['out_of_stock'] . ' out of stock',
+                'route' => route('inventory.lowStock'),
+            ];
+        }
+
+        // Materials & purchasing alerts are only relevant to the stockroom side.
+        if ($user->canSeeMaterials()) {
+            $overduePos = PurchaseOrder::whereIn('status', ['Ordered', 'Partially Received'])
+                ->whereNotNull('expected_date')->whereDate('expected_date', '<', today())->count();
+            if ($overduePos > 0) {
+                $alerts[] = [
+                    'tone' => 'amber',
+                    'label' => $overduePos . ' overdue purchase ' . str('order')->plural($overduePos),
+                    'detail' => 'Past expected delivery date',
+                    'route' => route('purchases.index'),
+                ];
+            }
+
+            $lowMaterials = Material::query()->visibleTo($user)
+                ->whereColumn('current_stock', '<=', 'minimum_stock')->count();
+            if ($lowMaterials > 0) {
+                $alerts[] = [
+                    'tone' => 'amber',
+                    'label' => $lowMaterials . ' ' . str('material')->plural($lowMaterials) . ' below minimum',
+                    'detail' => 'At or below minimum stock — consider a purchase order',
+                    'route' => route('materials.index', ['status' => 'low']),
+                ];
+            }
+        }
+
         return view('dashboard', compact(
             'inventory',
             'projects',
@@ -84,7 +156,8 @@ class DashboardController extends Controller
             'sales',
             'recentSales',
             'crm',
-            'recentQuotes'
+            'recentQuotes',
+            'alerts'
         ));
     }
 }

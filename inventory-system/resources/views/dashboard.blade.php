@@ -39,6 +39,29 @@
     @endforeach
 </div>
 
+@if(!empty($alerts))
+    <div class="card mb-6 overflow-hidden">
+        <div class="flex items-center gap-2 border-b border-zinc-200 px-5 py-3">
+            <svg class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+            <h2 class="text-sm font-semibold text-zinc-900">Needs attention</h2>
+        </div>
+        <ul class="divide-y divide-zinc-100">
+            @foreach($alerts as $alert)
+                <li>
+                    <a href="{{ $alert['route'] }}" class="flex items-center gap-3 px-5 py-3 transition hover:bg-zinc-50">
+                        <span class="flex h-2.5 w-2.5 shrink-0 rounded-full {{ $alert['tone'] === 'red' ? 'bg-red-500' : 'bg-amber-400' }}"></span>
+                        <span class="min-w-0 flex-1">
+                            <span class="text-sm font-medium text-zinc-900">{{ $alert['label'] }}</span>
+                            <span class="block text-xs text-zinc-500">{{ $alert['detail'] }}</span>
+                        </span>
+                        <svg class="h-4 w-4 shrink-0 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                    </a>
+                </li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
     <!-- Low stock -->
     <div class="card overflow-hidden">
