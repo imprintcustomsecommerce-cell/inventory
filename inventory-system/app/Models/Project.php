@@ -67,6 +67,16 @@ class Project extends Model
         return $this->hasMany(ProjectProof::class)->orderByDesc('version');
     }
 
+    public function deliveries(): HasMany
+    {
+        return $this->hasMany(ProjectDelivery::class)->latest();
+    }
+
+    public function latestDelivery(): ?ProjectDelivery
+    {
+        return $this->deliveries->first();
+    }
+
     public function latestProof(): ?ProjectProof
     {
         return $this->proofs->first();

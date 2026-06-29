@@ -435,6 +435,130 @@
                 </div>
             @endif
         </div>
+
+        <!-- Delivery & dispatch -->
+        <div class="card mt-6 overflow-hidden">
+            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
+                <div>
+                    <h2 class="text-sm font-semibold text-zinc-900">Delivery &amp; dispatch</h2>
+                    <p class="text-xs text-zinc-500">Schedule, dispatch, and confirm receipt of finished goods.</p>
+                </div>
+                @if($project->deliveries->isNotEmpty())
+                    <span class="badge {{ $project->latestDelivery()->getStatusBadgeClass() }}">{{ $project->latestDelivery()->status }}</span>
+                @endif
+            </div>
+
+            <form action="{{ route('projects.deliveries.store', $project) }}" method="POST" class="grid grid-cols-1 gap-3 border-b border-zinc-200 bg-zinc-50 p-4 sm:grid-cols-2 lg:grid-cols-3">
+                @csrf
+                <div>
+                    <label class="label">Method</label>
+                    <input type="text" name="method" value="{{ old('method') }}" class="input" placeholder="Pickup, Lalamove, J&T…">
+                </div>
+                <div>
+                    <label class="label">Courier (optional)</label>
+                    <input type="text" name="courier" value="{{ old('courier') }}" class="input">
+                </div>
+                <div>
+                    <label class="label">Tracking # (optional)</label>
+                    <input type="text" name="tracking_number" value="{{ old('tracking_number') }}" class="input">
+                </div>
+                <div>
+                    <label class="label">Recipient</label>
+                    <input type="text" name="recipient_name" value="{{ old('recipient_name', $project->customer->name ?? $project->customer_name) }}" class="input">
+                </div>
+                <div>
+                    <label class="label">Contact #</label>
+                    <input type="text" name="recipient_contact" value="{{ old('recipient_contact') }}" class="input">
+                </div>
+                <div>
+                    <label class="label">Scheduled date</label>
+                    <input type="date" name="scheduled_date" value="{{ old('scheduled_date') }}" class="input">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="label">Address</label>
+                    <input type="text" name="address" value="{{ old('address') }}" class="input" placeholder="Delivery address">
+                </div>
+                <div>
+                    <label class="label">Delivery fee (₱)</label>
+                    <input type="number" name="fee" min="0" step="0.01" value="{{ old('fee') }}" class="input">
+                </div>
+                <div class="sm:col-span-2 lg:col-span-3 flex justify-end">
+                    <button type="submit" class="btn btn-primary">Schedule delivery</button>
+                </div>
+            </form>
+
+            @if($project->deliveries->count() > 0)
+                <ul class="divide-y divide-zinc-100">
+                    @foreach($project->deliveries as $delivery)
+                        <li class="p-4">
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="badge {{ $delivery->getStatusBadgeClass() }}">{{ $delivery->status }}</span>
+                                        <span class="text-sm font-medium text-zinc-900">{{ $delivery->method ?? 'Delivery' }}</span>
+                                        @if($delivery->tracking_number)<span class="text-xs text-zinc-400">#{{ $delivery->tracking_number }}</span>@endif
+                                    </div>
+                                    <p class="mt-1 text-sm text-zinc-600">
+                                        {{ $delivery->recipient_name ?? '—' }}{{ $delivery->recipient_contact ? ' · ' . $delivery->recipient_contact : '' }}
+                                    </p>
+                                    @if($delivery->address)<p class="text-xs text-zinc-500">{{ $delivery->address }}</p>@endif
+                                    <p class="mt-1 text-xs text-zinc-400">
+                                        @if($delivery->scheduled_date)Scheduled {{ $delivery->scheduled_date->format('M d, Y') }} · @endif
+                                        @if($delivery->courier){{ $delivery->courier }} · @endif
+                                        @if((float) $delivery->fee > 0)Fee ₱{{ number_format($delivery->fee, 2) }} · @endif
+                                        @if($delivery->dispatched_at)Dispatched {{ $delivery->dispatched_at->format('M d, h:i A') }} · @endif
+                                        @if($delivery->delivered_at)Delivered {{ $delivery->delivered_at->format('M d, h:i A') }}{{ $delivery->received_by ? ' to ' . $delivery->received_by : '' }}@endif
+                                    </p>
+                                    @if($delivery->remarks)<p class="mt-1 text-xs text-zinc-600">“{{ $delivery->remarks }}”</p>@endif
+                                </div>
+                                <div class="flex shrink-0 items-center gap-2">
+                                    @if($delivery->status === 'Scheduled')
+                                        <form action="{{ route('projects.deliveries.status', [$project, $delivery]) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="status" value="Out for Delivery">
+                                            <button type="submit" class="btn btn-primary btn-sm">Dispatch</button>
+                                        </form>
+                                    @endif
+                                    @if($delivery->isOpen())
+                                        <button type="button" class="btn btn-dark btn-sm" onclick="document.getElementById('deliver-{{ $delivery->id }}').classList.toggle('hidden')">Mark delivered</button>
+                                        <form action="{{ route('projects.deliveries.status', [$project, $delivery]) }}" method="POST" onsubmit="return confirm('Mark this delivery as failed?');">
+                                            @csrf
+                                            <input type="hidden" name="status" value="Failed">
+                                            <button type="submit" class="btn btn-ghost btn-sm">Failed</button>
+                                        </form>
+                                    @endif
+                                    <form action="{{ route('projects.deliveries.destroy', [$project, $delivery]) }}" method="POST" onsubmit="return confirm('Remove this delivery?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="rounded-lg p-2 text-zinc-400 transition hover:bg-red-50 hover:text-red-600" title="Remove">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            @if($delivery->isOpen())
+                                <form id="deliver-{{ $delivery->id }}" action="{{ route('projects.deliveries.status', [$project, $delivery]) }}" method="POST" class="hidden">
+                                    @csrf
+                                    <input type="hidden" name="status" value="Delivered">
+                                    <div class="mt-3 flex flex-col gap-2 rounded-lg bg-emerald-50 p-3 sm:flex-row sm:items-end">
+                                        <div class="flex-1">
+                                            <label class="label">Received by</label>
+                                            <input type="text" name="received_by" class="input" placeholder="Name of person who received">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Confirm delivered</button>
+                                    </div>
+                                </form>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <div class="px-6 py-12 text-center text-sm text-zinc-500">
+                    No deliveries yet. Schedule one once the job is ready to ship.
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 

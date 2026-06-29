@@ -180,6 +180,11 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/projects/{project}/labor', [ProjectController::class, 'addLabor'])->name('projects.labor.add');
     Route::delete('/projects/{project}/labor/{labor}', [ProjectController::class, 'removeLabor'])->name('projects.labor.remove');
 
+    Route::get('/deliveries', [\App\Http\Controllers\DeliveryController::class, 'index'])->name('deliveries.index');
+    Route::post('/projects/{project}/deliveries', [\App\Http\Controllers\DeliveryController::class, 'store'])->name('projects.deliveries.store');
+    Route::post('/projects/{project}/deliveries/{delivery}/status', [\App\Http\Controllers\DeliveryController::class, 'updateStatus'])->name('projects.deliveries.status');
+    Route::delete('/projects/{project}/deliveries/{delivery}', [\App\Http\Controllers\DeliveryController::class, 'destroy'])->name('projects.deliveries.destroy');
+
     Route::post('/projects/{project}/proofs', [ProjectController::class, 'uploadProof'])->name('projects.proofs.upload');
     Route::post('/projects/{project}/proofs/{proof}/approve', [ProjectController::class, 'approveProof'])->name('projects.proofs.approve');
     Route::post('/projects/{project}/proofs/{proof}/reject', [ProjectController::class, 'rejectProof'])->name('projects.proofs.reject');
