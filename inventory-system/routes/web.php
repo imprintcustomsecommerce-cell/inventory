@@ -284,5 +284,13 @@ Route::middleware(['auth', 'dept'])->group(function () {
         // Employee (HR) management
         Route::get('/employees', [\App\Http\Controllers\EmployeeController::class, 'index'])->name('employees.index');
         Route::put('/employees/{user}', [\App\Http\Controllers\EmployeeController::class, 'update'])->name('employees.update');
+
+        // Payroll
+        Route::get('/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll.index');
+        Route::post('/payroll', [\App\Http\Controllers\PayrollController::class, 'store'])->name('payroll.store');
+        Route::get('/payroll/{payroll}', [\App\Http\Controllers\PayrollController::class, 'show'])->name('payroll.show');
+        Route::put('/payroll/{payroll}/payslips/{payslip}', [\App\Http\Controllers\PayrollController::class, 'updatePayslip'])->name('payroll.payslips.update');
+        Route::post('/payroll/{payroll}/finalize', [\App\Http\Controllers\PayrollController::class, 'finalize'])->name('payroll.finalize');
+        Route::delete('/payroll/{payroll}', [\App\Http\Controllers\PayrollController::class, 'destroy'])->name('payroll.destroy');
     });
 });
