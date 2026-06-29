@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MaterialController;
@@ -230,6 +231,15 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::middleware('admin')->group(function () {
         // Reports & analytics
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+        // Expenses & overhead
+        Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+        Route::get('/expenses-export', [ExpenseController::class, 'export'])->name('expenses.export');
+        Route::get('/expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
+        Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+        Route::get('/expenses/{expense}/edit', [ExpenseController::class, 'edit'])->name('expenses.edit');
+        Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
+        Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 
         // User management
         Route::get('/users', [UserController::class, 'index'])->name('users.index');

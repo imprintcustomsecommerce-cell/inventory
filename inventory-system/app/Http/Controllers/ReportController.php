@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\PurchaseOrder;
@@ -92,9 +93,21 @@ class ReportController extends Controller
                 ->get(),
         ];
 
+        // ── Expenses & net profit (gross sales profit − overhead this month) ──
+        $monthExpenses = Expense::whereMonth('expense_date', $now->month)
+            ->whereYear('expense_date', $now->year)->get();
+
+        $expenses = [
+            'total_month' => (float) $monthExpenses->sum('amount'),
+            'net_profit' => $sales['profit_month'] - (float) $monthExpenses->sum('amount'),
+            'by_category' => $monthExpenses->groupBy('category')
+                ->map(fn ($g) => (float) $g->sum('amount'))
+                ->sortDesc(),
+        ];
+
         return view('reports.index', compact(
             'sales', 'trend', 'trendMax', 'topProducts',
-            'quotes', 'invoices', 'projects', 'purchasing'
+            'quotes', 'invoices', 'projects', 'purchasing', 'expenses'
         ));
     }
 }

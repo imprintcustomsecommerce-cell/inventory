@@ -10,11 +10,13 @@
 </div>
 
 <!-- KPI row -->
-<div class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+<div class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-3">
     @php
         $kpis = [
             ['label' => 'Revenue (month)', 'value' => '₱' . number_format($sales['revenue_month'], 2), 'sub' => $sales['orders_month'] . ' sales', 'accent' => 'text-zinc-900'],
             ['label' => 'Gross profit (month)', 'value' => '₱' . number_format($sales['profit_month'], 2), 'sub' => 'sales margin', 'accent' => 'text-emerald-600'],
+            ['label' => 'Expenses (month)', 'value' => '₱' . number_format($expenses['total_month'], 2), 'sub' => 'overhead', 'accent' => 'text-zinc-900'],
+            ['label' => 'Net profit (month)', 'value' => '₱' . number_format($expenses['net_profit'], 2), 'sub' => 'gross profit − overhead', 'accent' => $expenses['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-600'],
             ['label' => 'Receivables', 'value' => '₱' . number_format($invoices['receivables'], 2), 'sub' => '₱' . number_format($invoices['overdue'], 0) . ' overdue', 'accent' => $invoices['overdue'] > 0 ? 'text-red-600' : 'text-zinc-900'],
             ['label' => 'Purchasing (month)', 'value' => '₱' . number_format($purchasing['spend_month'], 2), 'sub' => '₱' . number_format($purchasing['open_value'], 0) . ' open POs', 'accent' => 'text-zinc-900'],
         ];
@@ -141,6 +143,32 @@
             </table>
         @else
             <p class="px-6 py-10 text-center text-sm text-zinc-500">No purchase orders yet.</p>
+        @endif
+    </div>
+
+    <!-- Expenses by category -->
+    <div class="card p-6">
+        <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-zinc-900">Expenses this month</h2>
+            <span class="text-sm font-semibold text-zinc-900">₱{{ number_format($expenses['total_month'], 2) }}</span>
+        </div>
+        @if($expenses['by_category']->count() > 0)
+            <div class="mt-4 space-y-3">
+                @foreach($expenses['by_category'] as $category => $amount)
+                    @php $pct = $expenses['total_month'] > 0 ? round($amount / $expenses['total_month'] * 100) : 0; @endphp
+                    <div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-zinc-600">{{ $category }}</span>
+                            <span class="font-medium text-zinc-900">₱{{ number_format($amount, 2) }} <span class="text-zinc-400">({{ $pct }}%)</span></span>
+                        </div>
+                        <div class="mt-1 h-1.5 w-full rounded-full bg-zinc-100">
+                            <div class="h-1.5 rounded-full bg-brand-400" style="width: {{ $pct }}%;"></div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <p class="mt-3 text-sm text-zinc-500">No expenses logged this month.</p>
         @endif
     </div>
 </div>
