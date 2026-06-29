@@ -45,6 +45,8 @@ class FeedbackController extends Controller
 
         $project->feedback()->create($data);
 
+        \App\Models\Activity::log('feedback', "{$data['rating']}★ feedback received", $project->project_name, route('projects.show', $project));
+
         return back()->with('success', 'Feedback recorded.');
     }
 

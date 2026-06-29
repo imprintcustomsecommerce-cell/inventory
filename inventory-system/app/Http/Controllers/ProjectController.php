@@ -60,6 +60,7 @@ class ProjectController extends Controller
     {
         $project = Project::create($request->validated());
         $this->projects->logCreated($project);
+        \App\Models\Activity::log('project', 'New project created', $project->project_name, route('projects.show', $project));
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Project created. Add the materials it needs below.');
@@ -186,6 +187,8 @@ class ProjectController extends Controller
         if (!in_array($project->status, ['For Production', 'Completed', 'Cancelled'])) {
             $this->projects->changeStatus($project, 'For Production', "Proof v{$proof->version} approved");
         }
+
+        \App\Models\Activity::log('proof', "Proof v{$proof->version} approved", $project->project_name, route('projects.show', $project));
 
         return back()->with('success', "Proof v{$proof->version} approved — ready for production.");
     }

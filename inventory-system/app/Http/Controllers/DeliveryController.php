@@ -86,6 +86,10 @@ class DeliveryController extends Controller
 
         $delivery->update($updates);
 
+        if ($validated['status'] === 'Delivered') {
+            \App\Models\Activity::log('delivery', 'Order delivered', $project->project_name, route('projects.show', $project));
+        }
+
         return back()->with('success', "Delivery marked as {$validated['status']}.");
     }
 

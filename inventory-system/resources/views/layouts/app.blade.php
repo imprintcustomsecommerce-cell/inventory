@@ -48,6 +48,17 @@
                     <span>Dashboard</span>
                 </a>
 
+                @php
+                    $unreadActivity = \App\Models\Activity::where('created_at', '>', $u->activity_seen_at ?? '1970-01-01')
+                        ->where(fn ($q) => $q->where('user_id', '!=', $u->id)->orWhereNull('user_id'))
+                        ->count();
+                @endphp
+                <a href="{{ route('activity.index') }}" class="nav-link {{ request()->routeIs('activity.*') ? 'nav-link-active' : '' }}">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+                    <span class="flex-1">Activity</span>
+                    @if($unreadActivity > 0)<span class="rounded-full bg-brand-400 px-2 py-0.5 text-xs font-bold text-zinc-900">{{ $unreadActivity > 99 ? '99+' : $unreadActivity }}</span>@endif
+                </a>
+
                 <p class="px-3 pb-2 pt-5 text-xs font-semibold uppercase tracking-wider text-zinc-600">Manage</p>
 
                 <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'nav-link-active' : '' }}">

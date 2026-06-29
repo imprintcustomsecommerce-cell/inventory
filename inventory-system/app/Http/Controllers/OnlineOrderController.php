@@ -93,6 +93,8 @@ class OnlineOrderController extends Controller
                 'routed_id' => $project->id,
             ]);
 
+            \App\Models\Activity::log('order', "Online order → project", "{$tag} · {$onlineOrder->item_label}", route('projects.show', $project));
+
             return redirect()->route('projects.show', $project)
                 ->with('success', "Created project from {$tag}.");
         }
@@ -112,6 +114,8 @@ class OnlineOrderController extends Controller
             'routed_type' => 'sale',
             'routed_id' => $sale->id,
         ]);
+
+        \App\Models\Activity::log('order', "Online order → sale", "{$tag} · {$onlineOrder->item_label}", route('sales.index'));
 
         return back()->with('success', "Recorded sale from {$tag}.");
     }

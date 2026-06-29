@@ -52,7 +52,9 @@ class QualityController extends Controller
         $data['reported_by'] = auth()->id();
         $data['status'] = 'Open';
 
-        $project->issues()->create($data);
+        $issue = $project->issues()->create($data);
+
+        \App\Models\Activity::log('quality', "{$issue->type} logged", "{$project->project_name}" . ($issue->reason ? " · {$issue->reason}" : ''), route('projects.show', $project));
 
         return back()->with('success', 'Issue logged.');
     }

@@ -31,6 +31,7 @@ class User extends Authenticatable
         'commission_rate',
         'hire_date',
         'employment_status',
+        'activity_seen_at',
     ];
 
     public function isAdmin(): bool
@@ -97,6 +98,7 @@ class User extends Authenticatable
             'hourly_rate' => 'decimal:2',
             'commission_rate' => 'decimal:2',
             'hire_date' => 'date',
+            'activity_seen_at' => 'datetime',
         ];
     }
 

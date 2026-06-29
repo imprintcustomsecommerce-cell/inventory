@@ -184,6 +184,7 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/projects/{project}/labor', [ProjectController::class, 'addLabor'])->name('projects.labor.add');
     Route::delete('/projects/{project}/labor/{labor}', [ProjectController::class, 'removeLabor'])->name('projects.labor.remove');
 
+    Route::get('/activity', [\App\Http\Controllers\ActivityController::class, 'index'])->name('activity.index');
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])->name('calendar.index');
 
     // Online store (mock marketplace integration)
