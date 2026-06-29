@@ -292,5 +292,12 @@ Route::middleware(['auth', 'dept'])->group(function () {
         Route::put('/payroll/{payroll}/payslips/{payslip}', [\App\Http\Controllers\PayrollController::class, 'updatePayslip'])->name('payroll.payslips.update');
         Route::post('/payroll/{payroll}/finalize', [\App\Http\Controllers\PayrollController::class, 'finalize'])->name('payroll.finalize');
         Route::delete('/payroll/{payroll}', [\App\Http\Controllers\PayrollController::class, 'destroy'])->name('payroll.destroy');
+
+        // Commissions
+        Route::get('/commissions', [\App\Http\Controllers\CommissionController::class, 'index'])->name('commissions.index');
+        Route::post('/commissions', [\App\Http\Controllers\CommissionController::class, 'store'])->name('commissions.store');
+        Route::get('/commissions/{commission}', [\App\Http\Controllers\CommissionController::class, 'show'])->name('commissions.show');
+        Route::post('/commissions/{commission}/finalize', [\App\Http\Controllers\CommissionController::class, 'finalize'])->name('commissions.finalize');
+        Route::delete('/commissions/{commission}', [\App\Http\Controllers\CommissionController::class, 'destroy'])->name('commissions.destroy');
     });
 });

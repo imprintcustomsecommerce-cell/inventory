@@ -74,6 +74,10 @@
                                         <input type="number" name="hourly_rate" min="0" step="0.01" value="{{ $employee->hourly_rate }}" class="input">
                                     </div>
                                     <div>
+                                        <label class="label">Commission rate (%)</label>
+                                        <input type="number" name="commission_rate" min="0" max="100" step="0.01" value="{{ $employee->commission_rate }}" class="input">
+                                    </div>
+                                    <div>
                                         <label class="label">Hire date</label>
                                         <input type="date" name="hire_date" value="{{ $employee->hire_date?->format('Y-m-d') }}" class="input">
                                     </div>

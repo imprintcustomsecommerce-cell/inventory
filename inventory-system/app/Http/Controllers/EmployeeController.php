@@ -33,6 +33,7 @@ class EmployeeController extends Controller
             'position' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
             'hourly_rate' => 'nullable|numeric|min:0',
+            'commission_rate' => 'nullable|numeric|min:0|max:100',
             'hire_date' => 'nullable|date',
             'employment_status' => 'required|in:' . implode(',', self::STATUSES),
         ]);

@@ -28,6 +28,7 @@ class User extends Authenticatable
         'position',
         'phone',
         'hourly_rate',
+        'commission_rate',
         'hire_date',
         'employment_status',
     ];
@@ -94,6 +95,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'hourly_rate' => 'decimal:2',
+            'commission_rate' => 'decimal:2',
             'hire_date' => 'date',
         ];
     }
