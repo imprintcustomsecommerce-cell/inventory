@@ -181,6 +181,10 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::delete('/projects/{project}/labor/{labor}', [ProjectController::class, 'removeLabor'])->name('projects.labor.remove');
 
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])->name('calendar.index');
+    Route::get('/quality', [\App\Http\Controllers\QualityController::class, 'index'])->name('quality.index');
+    Route::post('/projects/{project}/issues', [\App\Http\Controllers\QualityController::class, 'store'])->name('projects.issues.store');
+    Route::post('/projects/{project}/issues/{issue}/status', [\App\Http\Controllers\QualityController::class, 'updateStatus'])->name('projects.issues.status');
+    Route::delete('/projects/{project}/issues/{issue}', [\App\Http\Controllers\QualityController::class, 'destroy'])->name('projects.issues.destroy');
     Route::get('/deliveries', [\App\Http\Controllers\DeliveryController::class, 'index'])->name('deliveries.index');
     Route::post('/projects/{project}/deliveries', [\App\Http\Controllers\DeliveryController::class, 'store'])->name('projects.deliveries.store');
     Route::post('/projects/{project}/deliveries/{delivery}/status', [\App\Http\Controllers\DeliveryController::class, 'updateStatus'])->name('projects.deliveries.status');

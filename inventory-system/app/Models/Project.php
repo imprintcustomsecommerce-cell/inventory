@@ -72,6 +72,16 @@ class Project extends Model
         return $this->hasMany(ProjectDelivery::class)->latest();
     }
 
+    public function issues(): HasMany
+    {
+        return $this->hasMany(ProjectIssue::class)->latest();
+    }
+
+    public function openIssuesCount(): int
+    {
+        return $this->issues->whereIn('status', ['Open', 'In Progress'])->count();
+    }
+
     public function latestDelivery(): ?ProjectDelivery
     {
         return $this->deliveries->first();
