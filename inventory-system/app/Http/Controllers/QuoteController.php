@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateQuoteRequest;
 use App\Models\Customer;
 use App\Models\Quote;
 use App\Models\QuoteItem;
+use App\Services\InvoiceService;
 use App\Services\QuoteService;
 use Illuminate\Http\Request;
 
@@ -153,6 +154,22 @@ class QuoteController extends Controller
 
         return redirect()->route('projects.show', $project)
             ->with('success', "Quote {$quote->quote_number} converted to a project.");
+    }
+
+    public function createInvoice(Quote $quote, InvoiceService $invoices)
+    {
+        if (!in_array($quote->status, ['Approved', 'Converted'], true)) {
+            return back()->with('error', 'Only an approved quote can be invoiced.');
+        }
+
+        if ($quote->items()->count() === 0) {
+            return back()->with('error', 'Add at least one line item before invoicing.');
+        }
+
+        $invoice = $invoices->createFromQuote($quote);
+
+        return redirect()->route('invoices.show', $invoice)
+            ->with('success', "Invoice {$invoice->invoice_number} created from {$quote->quote_number}.");
     }
 
     public function pdf(Quote $quote)

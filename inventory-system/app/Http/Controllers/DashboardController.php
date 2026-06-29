@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
+use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\Quote;
 use App\Models\Sale;
@@ -67,6 +68,9 @@ class DashboardController extends Controller
             'customers' => Customer::count(),
             'open_quotes' => Quote::whereIn('status', ['Draft', 'Sent'])->count(),
             'pipeline' => (float) Quote::whereIn('status', ['Sent', 'Approved'])->sum('total'),
+            'receivables' => (float) Invoice::whereIn('status', ['Unpaid', 'Partial'])->sum(DB::raw('total - amount_paid')),
+            'overdue_invoices' => Invoice::whereIn('status', ['Unpaid', 'Partial'])
+                ->whereNotNull('due_date')->whereDate('due_date', '<', today())->count(),
         ];
 
         $recentQuotes = Quote::with('customer')->latest()->limit(6)->get();
