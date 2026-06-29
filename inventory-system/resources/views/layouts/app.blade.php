@@ -147,6 +147,20 @@
                 </a>
 
                 @if($u->isAdmin())
+                    <p class="px-3 pb-2 pt-5 text-xs font-semibold uppercase tracking-wider text-zinc-600">Online Store</p>
+
+                    @php $newOnlineOrders = \App\Models\OnlineOrder::where('status', 'New')->count(); @endphp
+                    <a href="{{ route('online-orders.index') }}" class="nav-link {{ request()->routeIs('online-orders.*') ? 'nav-link-active' : '' }}">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
+                        <span class="flex-1">Online Orders</span>
+                        @if($newOnlineOrders > 0)<span class="rounded-full bg-brand-400 px-2 py-0.5 text-xs font-bold text-zinc-900">{{ $newOnlineOrders }}</span>@endif
+                    </a>
+
+                    <a href="{{ route('channels.index') }}" class="nav-link {{ request()->routeIs('channels.*') ? 'nav-link-active' : '' }}">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>
+                        <span>Channels</span>
+                    </a>
+
                     <p class="px-3 pb-2 pt-5 text-xs font-semibold uppercase tracking-wider text-zinc-600">Admin</p>
 
                     <a href="{{ route('reports.index') }}" class="nav-link {{ request()->routeIs('reports.*') ? 'nav-link-active' : '' }}">

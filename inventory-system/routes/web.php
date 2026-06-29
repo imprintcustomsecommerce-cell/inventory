@@ -181,6 +181,16 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::delete('/projects/{project}/labor/{labor}', [ProjectController::class, 'removeLabor'])->name('projects.labor.remove');
 
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])->name('calendar.index');
+
+    // Online store (mock marketplace integration)
+    Route::get('/channels', [\App\Http\Controllers\ChannelController::class, 'index'])->name('channels.index');
+    Route::post('/channels/{channel}/toggle', [\App\Http\Controllers\ChannelController::class, 'toggle'])->name('channels.toggle');
+    Route::post('/channels/{channel}/sync', [\App\Http\Controllers\ChannelController::class, 'sync'])->name('channels.sync');
+    Route::get('/online-orders', [\App\Http\Controllers\OnlineOrderController::class, 'index'])->name('online-orders.index');
+    Route::post('/online-orders/simulate', [\App\Http\Controllers\OnlineOrderController::class, 'simulate'])->name('online-orders.simulate');
+    Route::post('/online-orders/{onlineOrder}/route', [\App\Http\Controllers\OnlineOrderController::class, 'route'])->name('online-orders.route');
+    Route::post('/online-orders/{onlineOrder}/ignore', [\App\Http\Controllers\OnlineOrderController::class, 'ignore'])->name('online-orders.ignore');
+    Route::delete('/online-orders/{onlineOrder}', [\App\Http\Controllers\OnlineOrderController::class, 'destroy'])->name('online-orders.destroy');
     Route::get('/quality', [\App\Http\Controllers\QualityController::class, 'index'])->name('quality.index');
     Route::post('/projects/{project}/issues', [\App\Http\Controllers\QualityController::class, 'store'])->name('projects.issues.store');
     Route::post('/projects/{project}/issues/{issue}/status', [\App\Http\Controllers\QualityController::class, 'updateStatus'])->name('projects.issues.status');
