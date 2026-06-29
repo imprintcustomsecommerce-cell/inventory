@@ -29,6 +29,11 @@ class Customer extends Model
         return $this->hasMany(Project::class)->latest();
     }
 
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class)->latest();
+    }
+
     /** Customer name with company shown when present. */
     public function displayName(): string
     {

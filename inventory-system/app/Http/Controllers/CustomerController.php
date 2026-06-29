@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ExportsCsv;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 use App\Models\Customer;
+use App\Models\Invoice;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -76,6 +77,83 @@ class CustomerController extends Controller
 
         return redirect()->route('customers.index')
             ->with('success', 'Customer deleted.');
+    }
+
+    public function statement(Customer $customer)
+    {
+        return view('customers.statement', $this->buildStatement($customer));
+    }
+
+    public function statementPdf(Customer $customer)
+    {
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('customers.statement-pdf', $this->buildStatement($customer))
+            ->setPaper('a4');
+
+        return $pdf->stream("statement-{$customer->id}.pdf");
+    }
+
+    /**
+     * Assemble a statement of account: every invoice (a charge) and payment
+     * (a credit) on a single timeline with a running balance, plus totals.
+     *
+     * @return array{customer: Customer, ledger: \Illuminate\Support\Collection, summary: array}
+     */
+    private function buildStatement(Customer $customer): array
+    {
+        $invoices = $customer->invoices()
+            ->where('status', '!=', 'Cancelled')
+            ->with('payments')
+            ->get();
+
+        $entries = collect();
+
+        foreach ($invoices as $invoice) {
+            $entries->push([
+                'date' => $invoice->issue_date,
+                'type' => 'Invoice',
+                'reference' => $invoice->invoice_number,
+                'detail' => $invoice->title,
+                'charge' => (float) $invoice->total,
+                'payment' => 0.0,
+            ]);
+
+            foreach ($invoice->payments as $payment) {
+                $entries->push([
+                    'date' => $payment->paid_at,
+                    'type' => 'Payment',
+                    'reference' => $invoice->invoice_number,
+                    'detail' => $payment->method . ($payment->reference ? " · {$payment->reference}" : ''),
+                    'charge' => 0.0,
+                    'payment' => (float) $payment->amount,
+                ]);
+            }
+        }
+
+        // Oldest first, with a running balance carried down the ledger.
+        $balance = 0.0;
+        $ledger = $entries
+            ->sortBy([['date', 'asc'], ['type', 'desc']])
+            ->values()
+            ->map(function ($entry) use (&$balance) {
+                $balance += $entry['charge'] - $entry['payment'];
+                $entry['balance'] = $balance;
+
+                return $entry;
+            });
+
+        $billed = (float) $invoices->sum('total');
+        $paid = (float) $invoices->sum(fn (Invoice $i) => (float) $i->amount_paid);
+
+        $summary = [
+            'billed' => $billed,
+            'paid' => $paid,
+            'outstanding' => $billed - $paid,
+            'overdue' => (float) $invoices->filter(fn (Invoice $i) => $i->isOverdue())
+                ->sum(fn (Invoice $i) => $i->balance()),
+            'invoice_count' => $invoices->count(),
+        ];
+
+        return compact('customer', 'ledger', 'summary');
     }
 
     public function export(Request $request)

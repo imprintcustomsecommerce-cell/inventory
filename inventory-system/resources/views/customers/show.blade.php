@@ -16,6 +16,7 @@
     </div>
     <div class="flex flex-wrap gap-2">
         <a href="{{ route('quotes.create', ['customer_id' => $customer->id]) }}" class="btn btn-primary">New quote</a>
+        <a href="{{ route('customers.statement', $customer) }}" class="btn btn-ghost">Statement</a>
         <a href="{{ route('customers.edit', $customer) }}" class="btn btn-ghost">Edit</a>
     </div>
 </div>
