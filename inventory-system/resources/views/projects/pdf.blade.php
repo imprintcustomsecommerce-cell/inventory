@@ -104,47 +104,11 @@
         </tbody>
     </table>
 
-    @if($project->labor->count() > 0)
-        <div class="section-title">Labor</div>
-        <table class="items">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Worker</th>
-                    <th>Task</th>
-                    <th class="text-right">Hours</th>
-                    <th class="text-right">Rate</th>
-                    <th class="text-right">Cost</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($project->labor as $l)
-                    <tr>
-                        <td>{{ $l->logged_at?->format('M d, Y') }}</td>
-                        <td>{{ $l->workerLabel() }}</td>
-                        <td>{{ $l->task }}</td>
-                        <td class="text-right">{{ rtrim(rtrim(number_format($l->hours, 2), '0'), '.') }}</td>
-                        <td class="text-right">₱{{ number_format($l->hourly_rate, 2) }}</td>
-                        <td class="text-right">₱{{ number_format($l->cost(), 2) }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
-
-    @php $cost = $project->materialsCost(); $labor = $project->laborCost(); $margin = $project->margin(); @endphp
+    @php $cost = $project->materialsCost(); $margin = $project->margin(); @endphp
     <table class="totals">
         <tr>
             <td class="muted">Material cost</td>
             <td class="text-right">₱{{ number_format($cost, 2) }}</td>
-        </tr>
-        <tr>
-            <td class="muted">Labor cost</td>
-            <td class="text-right">₱{{ number_format($labor, 2) }}</td>
-        </tr>
-        <tr>
-            <td class="muted">Total cost</td>
-            <td class="text-right">₱{{ number_format($cost + $labor, 2) }}</td>
         </tr>
         @if($project->quoted_price !== null)
             <tr>

@@ -58,11 +58,6 @@ class Project extends Model
         return $this->hasMany(ProjectStatusLog::class)->latest();
     }
 
-    public function labor(): HasMany
-    {
-        return $this->hasMany(ProjectLabor::class)->latest('logged_at');
-    }
-
     public function proofs(): HasMany
     {
         return $this->hasMany(ProjectProof::class)->orderByDesc('version');
@@ -128,39 +123,13 @@ class Project extends Model
         );
     }
 
-    /**
-     * Total labor cost: hours × hourly rate across all logged entries.
-     */
-    public function laborCost(): float
-    {
-        return (float) $this->labor->sum(
-            fn ($l) => (float) $l->hours * (float) $l->hourly_rate
-        );
-    }
-
-    /**
-     * Total hours logged against this project.
-     */
-    public function totalHours(): float
-    {
-        return (float) $this->labor->sum(fn ($l) => (float) $l->hours);
-    }
-
-    /**
-     * Full production cost: materials + labor.
-     */
-    public function totalCost(): float
-    {
-        return $this->materialsCost() + $this->laborCost();
-    }
-
     public function margin(): ?float
     {
         if ($this->quoted_price === null) {
             return null;
         }
 
-        return (float) $this->quoted_price - $this->totalCost();
+        return (float) $this->quoted_price - $this->materialsCost();
     }
 
     public function getStatusBadgeClass(): string

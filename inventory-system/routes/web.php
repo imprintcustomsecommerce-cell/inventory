@@ -18,7 +18,6 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\StockRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\UserController;
 
 // Authentication (accounts are created by an admin, not self-service)
 Route::middleware('guest')->group(function () {
@@ -186,9 +185,6 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/projects/{project}/materials', [ProjectController::class, 'addMaterial'])->name('projects.materials.add');
     Route::delete('/projects/{project}/materials/{material}', [ProjectController::class, 'removeMaterial'])->name('projects.materials.remove');
 
-    Route::post('/projects/{project}/labor', [ProjectController::class, 'addLabor'])->name('projects.labor.add');
-    Route::delete('/projects/{project}/labor/{labor}', [ProjectController::class, 'removeLabor'])->name('projects.labor.remove');
-
     Route::get('/search', [\App\Http\Controllers\SearchController::class, 'index'])->name('search.index');
     Route::get('/activity', [\App\Http\Controllers\ActivityController::class, 'index'])->name('activity.index');
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])->name('calendar.index');
@@ -288,35 +284,11 @@ Route::middleware(['auth', 'dept'])->group(function () {
         Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
         Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 
-        // User management
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-
-        // Employee (HR) management
-        Route::get('/employees', [\App\Http\Controllers\EmployeeController::class, 'index'])->name('employees.index');
-        Route::put('/employees/{user}', [\App\Http\Controllers\EmployeeController::class, 'update'])->name('employees.update');
-
-        // Payroll
-        Route::get('/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll.index');
-        Route::post('/payroll', [\App\Http\Controllers\PayrollController::class, 'store'])->name('payroll.store');
-        Route::get('/payroll/{payroll}', [\App\Http\Controllers\PayrollController::class, 'show'])->name('payroll.show');
-        Route::put('/payroll/{payroll}/payslips/{payslip}', [\App\Http\Controllers\PayrollController::class, 'updatePayslip'])->name('payroll.payslips.update');
-        Route::post('/payroll/{payroll}/finalize', [\App\Http\Controllers\PayrollController::class, 'finalize'])->name('payroll.finalize');
-        Route::delete('/payroll/{payroll}', [\App\Http\Controllers\PayrollController::class, 'destroy'])->name('payroll.destroy');
-
         // Promo codes
         Route::get('/promo-codes', [\App\Http\Controllers\PromoCodeController::class, 'index'])->name('promo-codes.index');
         Route::post('/promo-codes', [\App\Http\Controllers\PromoCodeController::class, 'store'])->name('promo-codes.store');
         Route::post('/promo-codes/{promoCode}/toggle', [\App\Http\Controllers\PromoCodeController::class, 'toggle'])->name('promo-codes.toggle');
         Route::delete('/promo-codes/{promoCode}', [\App\Http\Controllers\PromoCodeController::class, 'destroy'])->name('promo-codes.destroy');
 
-        // Commissions
-        Route::get('/commissions', [\App\Http\Controllers\CommissionController::class, 'index'])->name('commissions.index');
-        Route::post('/commissions', [\App\Http\Controllers\CommissionController::class, 'store'])->name('commissions.store');
-        Route::get('/commissions/{commission}', [\App\Http\Controllers\CommissionController::class, 'show'])->name('commissions.show');
-        Route::post('/commissions/{commission}/finalize', [\App\Http\Controllers\CommissionController::class, 'finalize'])->name('commissions.finalize');
-        Route::delete('/commissions/{commission}', [\App\Http\Controllers\CommissionController::class, 'destroy'])->name('commissions.destroy');
     });
 });

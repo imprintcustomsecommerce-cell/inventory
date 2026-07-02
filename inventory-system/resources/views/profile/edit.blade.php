@@ -19,7 +19,7 @@
                 <span class="flex h-12 w-12 items-center justify-center rounded-full bg-brand-400 text-lg font-bold text-zinc-900">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
                 <div>
                     <p class="text-sm font-semibold text-zinc-900">{{ $user->name }}</p>
-                    <span class="badge {{ $user->isAdmin() ? 'badge-amber' : 'badge-zinc' }}">{{ ucfirst($user->role) }}</span>
+                    <p class="text-xs text-zinc-500">{{ $user->email }}</p>
                 </div>
             </div>
             <div>

@@ -22,57 +22,42 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
-        'department',
         'warehouse_id',
-        'position',
-        'phone',
-        'hourly_rate',
-        'commission_rate',
-        'hire_date',
-        'employment_status',
         'activity_seen_at',
     ];
 
+    // Staff roles, departments, and HR were removed. The app now runs on a
+    // single login with full access; these helpers stay permissive so the
+    // permission checks scattered across the app keep working.
+
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return true;
     }
 
-    /** A staff member in the materials department (sees only Materials). */
     public function isMaterialsStaff(): bool
     {
-        return !$this->isAdmin() && $this->department === 'materials';
+        return false;
     }
 
-    /** Who may view the Materials department: admins and materials staff. */
     public function canSeeMaterials(): bool
     {
-        return $this->isAdmin() || $this->department === 'materials';
+        return true;
     }
 
-    /** Selling is for store/event staff (and admins) — not the stockroom. */
     public function canSell(): bool
     {
-        return $this->isAdmin() || ($this->warehouse && $this->warehouse->sellsStock());
+        return true;
+    }
+
+    public function canCreateItems(): bool
+    {
+        return true;
     }
 
     public function warehouse(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
-    }
-
-    /**
-     * Whether this user may create new items/products. Admins always can;
-     * staff only if their warehouse is a stockroom (not a receive-only store).
-     */
-    public function canCreateItems(): bool
-    {
-        if ($this->isAdmin()) {
-            return true;
-        }
-
-        return $this->warehouse && $this->warehouse->can_create_items;
     }
 
     /**
@@ -95,15 +80,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'hourly_rate' => 'decimal:2',
-            'commission_rate' => 'decimal:2',
-            'hire_date' => 'date',
             'activity_seen_at' => 'datetime',
         ];
-    }
-
-    public function isActive(): bool
-    {
-        return $this->employment_status === 'Active';
     }
 }

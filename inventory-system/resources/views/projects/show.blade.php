@@ -85,21 +85,13 @@
         </div>
 
         <!-- Costing -->
-        @php $cost = $project->materialsCost(); $labor = $project->laborCost(); $total = $project->totalCost(); $margin = $project->margin(); @endphp
+        @php $cost = $project->materialsCost(); $margin = $project->margin(); @endphp
         <div class="card p-6">
             <h2 class="text-sm font-semibold text-zinc-900">Costing</h2>
             <dl class="mt-4 space-y-3 text-sm">
                 <div class="flex justify-between gap-4">
                     <dt class="text-zinc-500">Material cost</dt>
                     <dd class="font-medium text-zinc-900">₱{{ number_format($cost, 2) }}</dd>
-                </div>
-                <div class="flex justify-between gap-4">
-                    <dt class="text-zinc-500">Labor cost</dt>
-                    <dd class="font-medium text-zinc-900">₱{{ number_format($labor, 2) }}</dd>
-                </div>
-                <div class="flex justify-between gap-4 border-t border-zinc-100 pt-3">
-                    <dt class="text-zinc-500">Total cost</dt>
-                    <dd class="font-medium text-zinc-900">₱{{ number_format($total, 2) }}</dd>
                 </div>
                 <div class="flex justify-between gap-4">
                     <dt class="text-zinc-500">Quoted price</dt>
@@ -112,7 +104,7 @@
                     </div>
                 @endif
             </dl>
-            <p class="mt-3 text-xs text-zinc-400">Margin = quoted price − materials − labor.</p>
+            <p class="mt-3 text-xs text-zinc-400">Margin = quoted price − material cost.</p>
         </div>
 
         <!-- Status history -->
@@ -358,104 +350,6 @@
             @else
                 <div class="px-6 py-12 text-center text-sm text-zinc-500">
                     No materials listed yet. Add the items this project consumes above.
-                </div>
-            @endif
-        </div>
-
-        <!-- Labor & time -->
-        <div class="card mt-6 overflow-hidden">
-            <div class="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
-                <div>
-                    <h2 class="text-sm font-semibold text-zinc-900">Labor &amp; time</h2>
-                    <p class="text-xs text-zinc-500">Hours and rates logged here feed the project margin.</p>
-                </div>
-                <span class="text-xs text-zinc-500">
-                    {{ rtrim(rtrim(number_format($project->totalHours(), 2), '0'), '.') }} hrs · ₱{{ number_format($project->laborCost(), 2) }}
-                </span>
-            </div>
-
-            <form action="{{ route('projects.labor.add', $project) }}" method="POST" x-data="{}" class="grid grid-cols-1 gap-3 border-b border-zinc-200 bg-zinc-50 p-4 sm:grid-cols-2 lg:grid-cols-3">
-                @csrf
-                <div>
-                    <label class="label">Worker</label>
-                    <select name="user_id" class="select"
-                            x-on:change="$refs.rate.value = $event.target.selectedOptions[0].dataset.rate || $refs.rate.value">
-                        <option value="">Other / subcontractor…</option>
-                        @foreach($staff as $member)
-                            <option value="{{ $member->id }}" data-rate="{{ $member->hourly_rate }}">{{ $member->name }}@if($member->position) · {{ $member->position }}@endif</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="label">Name (if not in list)</label>
-                    <input type="text" name="worker_name" value="{{ old('worker_name') }}" class="input" placeholder="Optional">
-                </div>
-                <div>
-                    <label class="label">Date</label>
-                    <input type="date" name="logged_at" value="{{ old('logged_at', now()->toDateString()) }}" required class="input">
-                </div>
-                <div class="sm:col-span-2 lg:col-span-1">
-                    <label class="label">Task</label>
-                    <input type="text" name="task" value="{{ old('task') }}" required class="input" placeholder="e.g. Heat press, cutting">
-                </div>
-                <div>
-                    <label class="label">Hours</label>
-                    <input type="number" name="hours" min="0.01" step="0.25" value="{{ old('hours') }}" required class="input">
-                </div>
-                <div>
-                    <label class="label">Hourly rate (₱)</label>
-                    <input type="number" name="hourly_rate" min="0" step="0.01" value="{{ old('hourly_rate') }}" required class="input" x-ref="rate">
-                </div>
-                <div class="sm:col-span-2 lg:col-span-3 flex justify-end">
-                    <button type="submit" class="btn btn-primary">Log labor</button>
-                </div>
-                @error('task')<p class="text-xs text-red-600 sm:col-span-2 lg:col-span-3">{{ $message }}</p>@enderror
-                @error('hours')<p class="text-xs text-red-600 sm:col-span-2 lg:col-span-3">{{ $message }}</p>@enderror
-            </form>
-
-            @if($project->labor->count() > 0)
-                <div class="overflow-x-auto">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Worker</th>
-                                <th>Task</th>
-                                <th class="text-right">Hours</th>
-                                <th class="text-right">Rate</th>
-                                <th class="text-right">Cost</th>
-                                <th class="text-right">Remove</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($project->labor as $entry)
-                                <tr>
-                                    <td class="text-zinc-700">{{ $entry->logged_at?->format('M d, Y') }}</td>
-                                    <td class="font-medium text-zinc-900">{{ $entry->workerLabel() }}</td>
-                                    <td class="text-zinc-700">
-                                        {{ $entry->task }}
-                                        @if($entry->remarks)<div class="text-xs text-zinc-400">{{ $entry->remarks }}</div>@endif
-                                    </td>
-                                    <td class="text-right text-zinc-700">{{ rtrim(rtrim(number_format($entry->hours, 2), '0'), '.') }}</td>
-                                    <td class="text-right text-zinc-700">₱{{ number_format($entry->hourly_rate, 2) }}</td>
-                                    <td class="text-right font-medium text-zinc-900">₱{{ number_format($entry->cost(), 2) }}</td>
-                                    <td class="text-right">
-                                        <form action="{{ route('projects.labor.remove', [$project, $entry]) }}" method="POST" onsubmit="return confirm('Remove this labor entry?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="rounded-lg p-2 text-zinc-400 transition hover:bg-red-50 hover:text-red-600" title="Remove">
-                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <div class="px-6 py-12 text-center text-sm text-zinc-500">
-                    No labor logged yet. Record hours as work gets done so margins stay accurate.
                 </div>
             @endif
         </div>
