@@ -30,10 +30,10 @@
             ['label' => 'Open value', 'value' => '₱' . number_format($stats['open_value'], 0), 'accent' => 'text-zinc-900'],
         ];
     @endphp
-    @foreach($cards as $c)
-        <div class="card p-5">
-            <p class="text-sm font-medium text-zinc-500">{{ $c['label'] }}</p>
-            <p class="mt-2 text-3xl font-bold {{ $c['accent'] }}">{{ $c['value'] }}</p>
+    @foreach($cards as $i => $c)
+        <div class="rounded-xl border p-5 shadow-sm transition hover:shadow-md {{ $i === 0 ? 'bg-brand-400 border-brand-400' : 'bg-white border-zinc-200' }}">
+            <p class="text-sm font-medium {{ $i === 0 ? 'text-zinc-800' : 'text-zinc-500' }}">{{ $c['label'] }}</p>
+            <p class="mt-2 text-3xl font-bold {{ $i === 0 ? 'text-zinc-900' : $c['accent'] }}">{{ $c['value'] }}</p>
         </div>
     @endforeach
 </div>
