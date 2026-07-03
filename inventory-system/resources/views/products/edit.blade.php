@@ -62,9 +62,18 @@
                 </div>
             </div>
 
-            <div>
-                <label class="label">Material</label>
-                <input type="text" name="material" value="{{ old('material', $product->material) }}" class="input">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div>
+                    <label class="label">Material</label>
+                    <input type="text" name="material" value="{{ old('material', $product->material) }}" class="input">
+                </div>
+                <div>
+                    <label class="label">Status</label>
+                    <select name="status" class="select">
+                        <option value="active" {{ old('status', $product->status ?? 'active') == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ old('status', $product->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                    </select>
+                </div>
             </div>
 
             <div>

@@ -16,6 +16,8 @@ class InventoryItem extends Model
         'name',
         'category',
         'size',
+        'color',
+        'sku',
         'unit',
         'current_stock',
         'minimum_stock',
@@ -44,7 +46,15 @@ class InventoryItem extends Model
 
     public function displayName(): string
     {
-        return $this->size ? "{$this->name} ({$this->size})" : $this->name;
+        $variant = trim(implode(' / ', array_filter([$this->size, $this->color])));
+
+        return $variant !== '' ? "{$this->name} ({$variant})" : $this->name;
+    }
+
+    /** Short size/color label for tables, e.g. "M / Navy". */
+    public function variantLabel(): string
+    {
+        return trim(implode(' / ', array_filter([$this->size, $this->color]))) ?: '—';
     }
 
     public function imageUrl(): ?string

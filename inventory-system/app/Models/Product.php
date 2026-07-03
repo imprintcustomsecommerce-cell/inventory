@@ -15,6 +15,7 @@ class Product extends Model
         'warehouse_id',
         'sku',
         'name',
+        'status',
         'category',
         'brand',
         'material',
@@ -23,6 +24,16 @@ class Product extends Model
         'description',
         'image_path',
     ];
+
+    public function isActive(): bool
+    {
+        return ($this->status ?? 'active') === 'active';
+    }
+
+    public function scopeStatus($query, ?string $status)
+    {
+        return $status ? $query->where('status', $status) : $query;
+    }
 
     protected $casts = [
         'retail_price' => 'decimal:2',

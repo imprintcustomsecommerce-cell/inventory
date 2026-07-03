@@ -70,7 +70,8 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Size</th>
+                                <th>Variation</th>
+                                <th>SKU</th>
                                 <th>Warehouse</th>
                                 <th>In stock</th>
                                 <th>Minimum</th>
@@ -81,7 +82,8 @@
                         <tbody>
                             @foreach($product->variants as $v)
                                 <tr>
-                                    <td class="font-semibold text-zinc-900">{{ $v->size ?? '—' }}</td>
+                                    <td class="font-semibold text-zinc-900">{{ $v->variantLabel() }}</td>
+                                    <td class="text-zinc-500">{{ $v->sku ?? '—' }}</td>
                                     <td><span class="badge {{ $v->warehouse?->name === 'Store' ? 'badge-amber' : 'badge-green' }}">{{ $v->warehouse?->name ?? '—' }}</span></td>
                                     <td class="text-zinc-900">{{ $v->current_stock }} {{ $v->unit }}</td>
                                     <td class="text-zinc-500">{{ $v->minimum_stock }}</td>
@@ -109,30 +111,39 @@
                 <p class="px-5 py-8 text-center text-sm text-zinc-500">No sizes yet. Add one below.</p>
             @endif
 
-            <!-- Add size -->
+            <!-- Add variation -->
             @if(auth()->user()->canCreateItems())
-            <form action="{{ route('products.addSize', $product) }}" method="POST" class="flex flex-col gap-3 border-t border-zinc-200 bg-zinc-50 p-4 sm:flex-row sm:items-end">
+            <form action="{{ route('products.addSize', $product) }}" method="POST" class="border-t border-zinc-200 bg-zinc-50 p-4">
                 @csrf
-                <div class="flex-1">
-                    <label class="label">Add a size</label>
-                    <select name="size" required class="select">
-                        <option value="">Select size</option>
-                        @foreach($allSizes as $s)
-                            @unless($product->variants->contains('size', $s))
+                <p class="label mb-2">Add a variation</p>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 lg:items-end">
+                    <div>
+                        <label class="label">Size</label>
+                        <select name="size" required class="select">
+                            <option value="">Select</option>
+                            @foreach($allSizes as $s)
                                 <option value="{{ $s }}">{{ $s }}</option>
-                            @endunless
-                        @endforeach
-                    </select>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label">Color</label>
+                        <input type="text" name="color" placeholder="e.g. Navy" class="input">
+                    </div>
+                    <div>
+                        <label class="label">Variation SKU</label>
+                        <input type="text" name="sku" placeholder="optional" class="input">
+                    </div>
+                    <div>
+                        <label class="label">Start qty</label>
+                        <input type="number" name="current_stock" min="0" step="1" value="0" class="input">
+                    </div>
+                    <div>
+                        <label class="label">Min</label>
+                        <input type="number" name="minimum_stock" min="0" step="1" value="0" class="input">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add</button>
                 </div>
-                <div class="w-full sm:w-28">
-                    <label class="label">Start qty</label>
-                    <input type="number" name="current_stock" min="0" step="1" value="0" class="input">
-                </div>
-                <div class="w-full sm:w-28">
-                    <label class="label">Min</label>
-                    <input type="number" name="minimum_stock" min="0" step="1" value="0" class="input">
-                </div>
-                <button type="submit" class="btn btn-primary">Add</button>
             </form>
             @endif
         </div>

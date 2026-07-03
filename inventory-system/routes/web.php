@@ -127,6 +127,7 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::get('/products-export', [ProductController::class, 'export'])->name('products.export');
     Route::get('/products-import', [ProductController::class, 'importForm'])->middleware('admin')->name('products.importForm');
     Route::post('/products-import', [ProductController::class, 'import'])->middleware('admin')->name('products.import');
+    Route::post('/products-bulk', [ProductController::class, 'bulk'])->middleware('admin')->name('products.bulk');
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');

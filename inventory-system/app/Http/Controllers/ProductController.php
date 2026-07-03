@@ -37,6 +37,7 @@ class ProductController extends Controller
         if ($request->filled('search')) {
             $s = $request->input('search');
             $query->where(fn ($q) => $q->where('name', 'like', "%{$s}%")
+                ->orWhere('sku', 'like', "%{$s}%")
                 ->orWhere('category', 'like', "%{$s}%")
                 ->orWhere('brand', 'like', "%{$s}%"));
         }
@@ -45,26 +46,63 @@ class ProductController extends Controller
             $query->where('category', $request->input('category'));
         }
 
-        // Filter by the warehouse that holds the product (any of its sizes).
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Filter by the warehouse that holds the product (any of its variants).
         if ($user->isAdmin() && $request->filled('warehouse')) {
             $query->whereHas('variants', fn ($q) => $q->where('warehouse_id', $request->input('warehouse')));
         }
 
-        // Only show products that have a photo. Admins can flip to the
-        // missing-image list to fix them.
-        $showMissing = $user->isAdmin() && $request->boolean('no_image');
-        $query->{$showMissing ? 'whereNull' : 'whereNotNull'}('image_path');
+        // Stock-level filter across a product's variants.
+        if ($request->input('stock') === 'low') {
+            $query->whereHas('variants', fn ($q) => $q->whereColumn('current_stock', '<=', 'minimum_stock')->where('current_stock', '>', 0));
+        } elseif ($request->input('stock') === 'out') {
+            $query->whereDoesntHave('variants', fn ($q) => $q->where('current_stock', '>', 0));
+        }
+
+        // Optional: products still missing a photo.
+        if ($request->boolean('no_image')) {
+            $query->whereNull('image_path');
+        }
 
         $missingCount = $user->isAdmin()
             ? Product::query()->visibleTo($user)->whereNull('image_path')->count()
             : 0;
 
-        $products = $query->orderBy('name')->paginate(24)->withQueryString();
+        $products = $query->orderBy('name')->paginate(30)->withQueryString();
         $categories = Product::query()->visibleTo($user)->whereNotNull('category')->distinct()->pluck('category')->sort();
-        // All warehouses for the filter (admins); creation is still stockroom-only.
         $warehouses = $user->isAdmin() ? Warehouse::orderBy('name')->get() : collect();
 
-        return view('products.index', compact('products', 'categories', 'warehouses', 'missingCount', 'showMissing'));
+        return view('products.index', compact('products', 'categories', 'warehouses', 'missingCount'));
+    }
+
+    /** Bulk activate / deactivate / trash selected products (admin only). */
+    public function bulk(Request $request)
+    {
+        $data = $request->validate([
+            'action' => 'required|in:activate,deactivate,delete',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $products = Product::query()->visibleTo($request->user())->whereIn('id', $data['ids'])->get();
+
+        foreach ($products as $product) {
+            match ($data['action']) {
+                'activate' => $product->update(['status' => 'active']),
+                'deactivate' => $product->update(['status' => 'inactive']),
+                'delete' => tap($product, function ($p) {
+                    $p->variants()->delete();
+                    $p->delete();
+                }),
+            };
+        }
+
+        $verb = ['activate' => 'activated', 'deactivate' => 'deactivated', 'delete' => 'moved to trash'][$data['action']];
+
+        return back()->with('success', $products->count() . ' product(s) ' . $verb . '.');
     }
 
     public function create(Request $request)
@@ -89,6 +127,7 @@ class ProductController extends Controller
             'cost_price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string|max:2000',
             'sku' => 'nullable|string|max:255',
+            'status' => ['nullable', Rule::in(['active', 'inactive'])],
             'image' => 'nullable|image|max:4096',
             'sizes' => 'array',
             'sizes.*' => 'string|max:20',
@@ -112,6 +151,7 @@ class ProductController extends Controller
                 'warehouse_id' => $warehouseId,
                 'sku' => $data['sku'] ?? null,
                 'name' => $data['name'],
+                'status' => $data['status'] ?? 'active',
                 'category' => $data['category'] ?? null,
                 'brand' => $data['brand'] ?? null,
                 'material' => $data['material'] ?? null,
@@ -159,6 +199,7 @@ class ProductController extends Controller
             'cost_price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string|max:2000',
             'sku' => 'nullable|string|max:255',
+            'status' => ['nullable', Rule::in(['active', 'inactive'])],
             'image' => 'nullable|image|max:4096',
         ]);
 
@@ -197,13 +238,20 @@ class ProductController extends Controller
 
         $data = $request->validate([
             'size' => ['required', 'string', 'max:20'],
+            'color' => ['nullable', 'string', 'max:50'],
+            'sku' => ['nullable', 'string', 'max:255'],
             'current_stock' => 'nullable|numeric|min:0',
             'minimum_stock' => 'nullable|numeric|min:0',
         ]);
 
-        $exists = $product->variants()->where('size', $data['size'])->exists();
+        // A variation is unique by its size + color combination.
+        $exists = $product->variants()
+            ->where('size', $data['size'])
+            ->where('color', $data['color'] ?? null)
+            ->exists();
         if ($exists) {
-            return back()->with('error', "Size {$data['size']} already exists for this product.");
+            $label = trim($data['size'] . ' ' . ($data['color'] ?? ''));
+            return back()->with('error', "Variation {$label} already exists for this product.");
         }
 
         $product->variants()->create([
@@ -211,6 +259,8 @@ class ProductController extends Controller
             'name' => $product->name,
             'category' => $product->category,
             'size' => $data['size'],
+            'color' => $data['color'] ?? null,
+            'sku' => $data['sku'] ?? null,
             'unit' => 'pcs',
             'current_stock' => $data['current_stock'] ?? 0,
             'minimum_stock' => $data['minimum_stock'] ?? 0,
@@ -218,7 +268,7 @@ class ProductController extends Controller
             'status' => 'active',
         ]);
 
-        return back()->with('success', "Size {$data['size']} added.");
+        return back()->with('success', 'Variation added.');
     }
 
     public function export(Request $request)
@@ -241,14 +291,15 @@ class ProductController extends Controller
 
         $rows = [];
         foreach ($query->orderBy('name')->get() as $p) {
+            $status = $p->isActive() ? 'Active' : 'Inactive';
             if ($p->variants->isEmpty()) {
-                $rows[] = [$p->name, $p->sku, $p->category, $p->brand, '', '', 0, number_format((float) $p->retail_price, 2, '.', ''), number_format((float) $p->cost_price, 2, '.', '')];
+                $rows[] = [$p->name, $p->sku, $status, $p->category, $p->brand, '', '', '', '', 0, number_format((float) $p->retail_price, 2, '.', ''), number_format((float) $p->cost_price, 2, '.', '')];
                 continue;
             }
             foreach ($p->variants as $v) {
                 $rows[] = [
-                    $p->name, $p->sku, $p->category, $p->brand,
-                    $v->size, $v->warehouse?->name, $v->current_stock,
+                    $p->name, $p->sku, $status, $p->category, $p->brand,
+                    $v->size, $v->color, $v->sku, $v->warehouse?->name, $v->current_stock,
                     number_format((float) $p->retail_price, 2, '.', ''),
                     number_format((float) $p->cost_price, 2, '.', ''),
                 ];
@@ -257,7 +308,7 @@ class ProductController extends Controller
 
         return $this->streamXlsx(
             'products-' . now()->format('Y-m-d') . '.xlsx',
-            ['Product', 'SKU', 'Category', 'Brand', 'Size', 'Warehouse', 'Stock', 'Retail Price', 'Cost Price'],
+            ['Product', 'SKU', 'Status', 'Category', 'Brand', 'Size', 'Color', 'Variation SKU', 'Warehouse', 'Stock', 'Retail Price', 'Cost Price'],
             $rows
         );
     }
