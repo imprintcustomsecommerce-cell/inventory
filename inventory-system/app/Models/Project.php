@@ -73,11 +73,6 @@ class Project extends Model
         return $this->hasMany(ProjectIssue::class)->latest();
     }
 
-    public function feedback(): HasMany
-    {
-        return $this->hasMany(ProjectFeedback::class)->latest();
-    }
-
     /** Generate the public token if missing, then return it. */
     public function ensurePublicToken(): string
     {

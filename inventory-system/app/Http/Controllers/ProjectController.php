@@ -66,7 +66,7 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load('materials.inventoryItem', 'proofs.uploader', 'proofs.decider', 'deliveries.creator', 'issues.reporter', 'issues.resolver', 'feedback', 'statusLogs.user', 'customer');
+        $project->load('materials.inventoryItem', 'proofs.uploader', 'proofs.decider', 'deliveries.creator', 'issues.reporter', 'issues.resolver', 'statusLogs.user', 'customer');
         $items = InventoryItem::query()->visibleTo(auth()->user())->orderBy('name')->get();
 
         return view('projects.show', compact('project', 'items'));

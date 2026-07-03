@@ -65,6 +65,7 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::get('/requests', [StockRequestController::class, 'index'])->name('requests.index');
     Route::post('/requests', [StockRequestController::class, 'store'])->name('requests.store');
     Route::post('/requests-restock-low', [StockRequestController::class, 'restockLow'])->name('requests.restockLow');
+    Route::post('/inventory/request-stock/{item}', [StockRequestController::class, 'restockItem'])->name('requests.restockItem');
     Route::get('/requests/{stockRequest}', [StockRequestController::class, 'show'])->name('requests.show');
     Route::post('/requests/{stockRequest}/items', [StockRequestController::class, 'addItem'])->name('requests.items.add');
     Route::delete('/requests/{stockRequest}/items/{item}', [StockRequestController::class, 'removeItem'])->name('requests.items.remove');
@@ -200,9 +201,6 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/online-orders/{onlineOrder}/ignore', [\App\Http\Controllers\OnlineOrderController::class, 'ignore'])->name('online-orders.ignore');
     Route::delete('/online-orders/{onlineOrder}', [\App\Http\Controllers\OnlineOrderController::class, 'destroy'])->name('online-orders.destroy');
     Route::get('/quality', [\App\Http\Controllers\QualityController::class, 'index'])->name('quality.index');
-    Route::get('/feedback', [\App\Http\Controllers\FeedbackController::class, 'index'])->name('feedback.index');
-    Route::post('/projects/{project}/feedback', [\App\Http\Controllers\FeedbackController::class, 'store'])->name('projects.feedback.store');
-    Route::delete('/projects/{project}/feedback/{feedback}', [\App\Http\Controllers\FeedbackController::class, 'destroy'])->name('projects.feedback.destroy');
     Route::post('/projects/{project}/issues', [\App\Http\Controllers\QualityController::class, 'store'])->name('projects.issues.store');
     Route::post('/projects/{project}/issues/{issue}/status', [\App\Http\Controllers\QualityController::class, 'updateStatus'])->name('projects.issues.status');
     Route::delete('/projects/{project}/issues/{issue}', [\App\Http\Controllers\QualityController::class, 'destroy'])->name('projects.issues.destroy');
@@ -293,6 +291,5 @@ Route::middleware(['auth', 'dept'])->group(function () {
         Route::post('/promo-codes', [\App\Http\Controllers\PromoCodeController::class, 'store'])->name('promo-codes.store');
         Route::post('/promo-codes/{promoCode}/toggle', [\App\Http\Controllers\PromoCodeController::class, 'toggle'])->name('promo-codes.toggle');
         Route::delete('/promo-codes/{promoCode}', [\App\Http\Controllers\PromoCodeController::class, 'destroy'])->name('promo-codes.destroy');
-
     });
 });

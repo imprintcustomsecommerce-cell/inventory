@@ -11,7 +11,6 @@ use App\Models\Material;
 use App\Models\OnlineOrder;
 use App\Models\Project;
 use App\Models\ProjectDelivery;
-use App\Models\ProjectFeedback;
 use App\Models\ProjectIssue;
 use App\Models\PurchaseOrder;
 use App\Models\Quote;
@@ -87,8 +86,6 @@ class DashboardController extends Controller
             'new_orders' => OnlineOrder::where('status', 'New')->count(),
             'in_transit' => ProjectDelivery::whereIn('status', ['Scheduled', 'Out for Delivery'])->count(),
             'open_issues' => ProjectIssue::whereIn('status', ['Open', 'In Progress'])->count(),
-            'avg_rating' => round((float) ProjectFeedback::avg('rating'), 1),
-            'feedback_count' => ProjectFeedback::count(),
         ];
 
         // ── "Needs attention" — actionable items slipping across the business ──

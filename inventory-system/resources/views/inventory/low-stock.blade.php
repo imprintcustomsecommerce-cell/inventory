@@ -14,7 +14,7 @@
             @csrf
             <button type="submit" class="btn btn-primary">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0l-3.75-3.75M17.25 21L21 17.25"/></svg>
-                Request restock
+                Request all
             </button>
         </form>
     @endif
@@ -72,7 +72,14 @@
                                 </span>
                             </td>
                             <td class="text-right">
-                                <a href="{{ route('inventory.stockInForm', $item->id) }}" class="btn btn-primary btn-sm">Restock</a>
+                                @if(auth()->user()->canCreateItems())
+                                    <a href="{{ route('inventory.stockInForm', $item->id) }}" class="btn btn-primary btn-sm">Restock</a>
+                                @elseif(auth()->user()->warehouse_id)
+                                    <form action="{{ route('requests.restockItem', $item->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Request stock for {{ $item->name }}?');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-primary btn-sm">Request stock</button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

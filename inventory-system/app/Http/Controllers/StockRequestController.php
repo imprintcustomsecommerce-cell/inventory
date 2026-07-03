@@ -105,6 +105,54 @@ class StockRequestController extends Controller
             ->with('success', "Draft request created for {$added} low item(s) — review and submit.");
     }
 
+    /**
+     * The per-item action on the low-stock list. Stockroom/warehouse staff
+     * restock directly (they hold the stock); store/event staff raise a
+     * request to pull it from the stockroom.
+     */
+    public function restockItem(InventoryItem $item)
+    {
+        $user = auth()->user();
+
+        // Warehouse/stockroom side: restock in place instead of requesting.
+        if ($user->canCreateItems()) {
+            return redirect()->route('inventory.stockInForm', $item->id)
+                ->with('success', 'Restock ' . $item->displayName() . ' below.');
+        }
+
+        if (!$user->warehouse_id) {
+            return back()->with('error', 'You must belong to a location to request stock.');
+        }
+
+        // Find matching stock held in a stockroom to pull from.
+        $source = InventoryItem::whereHas('warehouse', fn ($q) => $q->where('can_create_items', true))
+            ->where('name', $item->name)
+            ->where(fn ($q) => $item->size ? $q->where('size', $item->size) : $q->whereNull('size'))
+            ->where('current_stock', '>', 0)
+            ->first();
+
+        // Append to an open pending request for this location, or start one.
+        $req = StockRequest::where('warehouse_id', $user->warehouse_id)
+            ->where('status', 'pending')->latest()->first()
+            ?? StockRequest::create([
+                'warehouse_id' => $user->warehouse_id,
+                'requested_by_id' => $user->id,
+                'status' => 'pending',
+                'note' => 'Low-stock restock',
+            ]);
+
+        $need = max(1, (int) ceil((float) $item->minimum_stock - (float) $item->current_stock));
+
+        $req->items()->create([
+            'inventory_item_id' => $source?->id ?? $item->id,
+            'item_label' => trim($item->name . ($item->size ? " ({$item->size})" : '')),
+            'quantity' => $need,
+        ]);
+
+        return redirect()->route('requests.show', $req)
+            ->with('success', $item->displayName() . ' added to your stock request.');
+    }
+
     public function show(StockRequest $stockRequest)
     {
         $this->guard($stockRequest);
