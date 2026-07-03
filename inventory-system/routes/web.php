@@ -11,7 +11,6 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseOrderController;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StaffController;
@@ -279,9 +278,6 @@ Route::middleware(['auth', 'dept'])->group(function () {
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
         Route::put('/staff/{user}', [StaffController::class, 'update'])->name('staff.update');
         Route::delete('/staff/{user}', [StaffController::class, 'destroy'])->name('staff.destroy');
-
-        // Reports & analytics
-        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
         // Expenses & overhead
         Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Expense;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Invoice;
@@ -178,6 +179,9 @@ class DashboardController extends Controller
             }
         }
 
+        // Business analytics (owner view) — only computed for admins.
+        $analytics = $user->isAdmin() ? $this->analytics() : null;
+
         return view('dashboard', compact(
             'inventory',
             'projects',
@@ -189,7 +193,68 @@ class DashboardController extends Controller
             'crm',
             'recentQuotes',
             'operations',
-            'alerts'
+            'alerts',
+            'analytics'
         ));
+    }
+
+    /**
+     * Owner-level analytics: profit, trends, pipeline, receivables, spend.
+     * Folded in from the old standalone Reports page.
+     */
+    private function analytics(): array
+    {
+        $now = now();
+
+        $monthSales = Sale::whereMonth('created_at', $now->month)
+            ->whereYear('created_at', $now->year)->get();
+
+        $profitMonth = (float) $monthSales->sum(fn (Sale $s) => $s->profit());
+
+        $trend = collect(range(5, 0))->map(function ($back) use ($now) {
+            $month = $now->copy()->subMonths($back);
+
+            return [
+                'label' => $month->format('M'),
+                'revenue' => (float) Sale::whereMonth('created_at', $month->month)
+                    ->whereYear('created_at', $month->year)->sum('total'),
+            ];
+        });
+
+        $topProducts = Sale::query()
+            ->selectRaw('item_label, SUM(total) as revenue, SUM(quantity) as qty')
+            ->groupBy('item_label')->orderByDesc('revenue')->limit(5)->get();
+
+        $quoteTotal = Quote::count();
+
+        $openInvoices = Invoice::whereIn('status', ['Unpaid', 'Partial'])->get();
+
+        $projectList = Project::with('materials.inventoryItem')->get();
+
+        $monthExpenses = Expense::whereMonth('expense_date', $now->month)
+            ->whereYear('expense_date', $now->year)->get();
+        $expensesTotal = (float) $monthExpenses->sum('amount');
+
+        return [
+            'revenue_month' => (float) $monthSales->sum('total'),
+            'profit_month' => $profitMonth,
+            'expenses_month' => $expensesTotal,
+            'net_profit' => $profitMonth - $expensesTotal,
+            'expenses_by_category' => $monthExpenses->groupBy('category')->map(fn ($g) => (float) $g->sum('amount'))->sortDesc(),
+            'trend' => $trend,
+            'trend_max' => max(1, $trend->max('revenue')),
+            'top_products' => $topProducts,
+            'quotes_conversion' => $quoteTotal > 0
+                ? round(Quote::whereIn('status', ['Approved', 'Converted'])->count() / $quoteTotal * 100)
+                : 0,
+            'quotes_pipeline' => (float) Quote::whereIn('status', ['Sent', 'Approved'])->sum('total'),
+            'receivables' => (float) $openInvoices->sum(fn (Invoice $i) => $i->balance()),
+            'receivables_overdue' => (float) $openInvoices->filter(fn (Invoice $i) => $i->isOverdue())->sum(fn (Invoice $i) => $i->balance()),
+            'collected_month' => (float) \App\Models\Payment::whereMonth('paid_at', $now->month)->whereYear('paid_at', $now->year)->sum('amount'),
+            'projects_margin' => (float) $projectList->sum(fn (Project $p) => $p->margin() ?? 0),
+            'purchasing_spend_month' => (float) PurchaseOrder::whereMonth('order_date', $now->month)->whereYear('order_date', $now->year)->sum('total'),
+            'purchasing_by_supplier' => PurchaseOrder::query()->with('supplier')
+                ->selectRaw('supplier_id, SUM(total) as spend')->groupBy('supplier_id')->orderByDesc('spend')->limit(5)->get(),
+        ];
     }
 }

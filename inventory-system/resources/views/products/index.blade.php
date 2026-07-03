@@ -38,43 +38,41 @@
         </div>
     </div>
 
-    <!-- Sticky filter bar -->
-    <div class="sticky top-0 z-10 mb-4 rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm backdrop-blur">
-        <form method="GET" action="{{ route('products.index') }}" class="flex flex-col gap-2 lg:flex-row lg:items-center">
-            <div class="relative flex-1">
+    <!-- Sticky filter toolbar -->
+    <div class="sticky top-0 z-10 mb-4 rounded-xl border border-zinc-200 bg-white p-2.5 shadow-sm">
+        <form method="GET" action="{{ route('products.index') }}" class="flex flex-wrap items-center gap-2">
+            <div class="relative min-w-[200px] flex-1">
                 <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, SKU, category, brand…" class="input pl-9">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, SKU, category…" class="input !py-2 pl-9">
             </div>
-            <select name="category" onchange="this.form.submit()" class="select lg:w-40">
+            <select name="category" onchange="this.form.submit()" class="select !w-40 !py-2">
                 <option value="">All categories</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                 @endforeach
             </select>
             @if($warehouses->isNotEmpty())
-                <select name="warehouse" onchange="this.form.submit()" class="select lg:w-40">
+                <select name="warehouse" onchange="this.form.submit()" class="select !w-40 !py-2">
                     <option value="">All warehouses</option>
                     @foreach($warehouses as $w)
                         <option value="{{ $w->id }}" {{ request('warehouse') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
                     @endforeach
                 </select>
             @endif
-            <select name="status" onchange="this.form.submit()" class="select lg:w-36">
+            <select name="status" onchange="this.form.submit()" class="select !w-32 !py-2">
                 <option value="">Any status</option>
                 <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
                 <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
             </select>
-            <select name="stock" onchange="this.form.submit()" class="select lg:w-36">
+            <select name="stock" onchange="this.form.submit()" class="select !w-32 !py-2">
                 <option value="">Any stock</option>
                 <option value="low" {{ request('stock') == 'low' ? 'selected' : '' }}>Low stock</option>
                 <option value="out" {{ request('stock') == 'out' ? 'selected' : '' }}>Out of stock</option>
             </select>
-            <div class="flex gap-2">
-                <button type="submit" class="btn btn-dark">Filter</button>
-                @if(request()->hasAny(['search','category','warehouse','status','stock','no_image']))
-                    <a href="{{ route('products.index') }}" class="btn btn-ghost">Clear</a>
-                @endif
-            </div>
+            <button type="submit" class="btn btn-dark !py-2">Filter</button>
+            @if(request()->hasAny(['search','category','warehouse','status','stock','no_image']))
+                <a href="{{ route('products.index') }}" class="btn btn-ghost !py-2">Clear</a>
+            @endif
         </form>
     </div>
 

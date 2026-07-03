@@ -226,4 +226,108 @@
     @endif
 </div>
 
+@if(!empty($analytics))
+    @php $a = $analytics; @endphp
+
+    <div class="mt-10 mb-4 flex items-center gap-3">
+        <h2 class="text-lg font-bold tracking-tight text-zinc-900">Analytics</h2>
+        <span class="text-sm text-zinc-400">{{ now()->format('F Y') }}</span>
+    </div>
+
+    <!-- Money KPIs -->
+    <div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        @php
+            $money = [
+                ['label' => 'Revenue', 'value' => '₱' . number_format($a['revenue_month'], 0), 'accent' => 'text-zinc-900'],
+                ['label' => 'Gross profit', 'value' => '₱' . number_format($a['profit_month'], 0), 'accent' => 'text-emerald-600'],
+                ['label' => 'Expenses', 'value' => '₱' . number_format($a['expenses_month'], 0), 'accent' => 'text-zinc-900'],
+                ['label' => 'Net profit', 'value' => '₱' . number_format($a['net_profit'], 0), 'accent' => $a['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-600'],
+                ['label' => 'Receivables', 'value' => '₱' . number_format($a['receivables'], 0), 'accent' => $a['receivables_overdue'] > 0 ? 'text-red-600' : 'text-zinc-900'],
+                ['label' => 'Purchasing', 'value' => '₱' . number_format($a['purchasing_spend_month'], 0), 'accent' => 'text-zinc-900'],
+            ];
+        @endphp
+        @foreach($money as $m)
+            <div class="card p-4">
+                <p class="text-xs font-medium text-zinc-500">{{ $m['label'] }}</p>
+                <p class="mt-1 text-xl font-bold {{ $m['accent'] }}">{{ $m['value'] }}</p>
+            </div>
+        @endforeach
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- Revenue trend -->
+        <div class="card p-6">
+            <h3 class="text-sm font-semibold text-zinc-900">Revenue — last 6 months</h3>
+            <div class="mt-6 flex items-end gap-3" style="height: 160px;">
+                @foreach($a['trend'] as $t)
+                    <div class="flex flex-1 flex-col items-center justify-end gap-2">
+                        <span class="text-xs font-medium text-zinc-500">₱{{ number_format($t['revenue'] / 1000, 1) }}k</span>
+                        <div class="w-full rounded-t bg-brand-400" style="height: {{ max(2, round($t['revenue'] / $a['trend_max'] * 120)) }}px;"></div>
+                        <span class="text-xs text-zinc-400">{{ $t['label'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        <!-- Top products -->
+        <div class="card overflow-hidden">
+            <div class="border-b border-zinc-200 px-6 py-4"><h3 class="text-sm font-semibold text-zinc-900">Top products</h3></div>
+            @if($a['top_products']->count() > 0)
+                <table class="data-table">
+                    <tbody>
+                        @foreach($a['top_products'] as $p)
+                            <tr>
+                                <td class="font-medium text-zinc-900">{{ $p->item_label ?? '—' }}</td>
+                                <td class="text-right text-zinc-500">{{ rtrim(rtrim(number_format($p->qty, 2), '0'), '.') }} sold</td>
+                                <td class="text-right font-medium text-zinc-900">₱{{ number_format($p->revenue, 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <p class="px-6 py-8 text-center text-sm text-zinc-500">No sales yet.</p>
+            @endif
+        </div>
+
+        <!-- Collections -->
+        <div class="card p-6">
+            <h3 class="text-sm font-semibold text-zinc-900">Invoices &amp; collections</h3>
+            <dl class="mt-4 space-y-3 text-sm">
+                <div class="flex justify-between"><dt class="text-zinc-500">Collected this month</dt><dd class="font-medium text-emerald-600">₱{{ number_format($a['collected_month'], 2) }}</dd></div>
+                <div class="flex justify-between"><dt class="text-zinc-500">Outstanding</dt><dd class="font-medium text-zinc-900">₱{{ number_format($a['receivables'], 2) }}</dd></div>
+                <div class="flex justify-between border-t border-zinc-100 pt-3"><dt class="text-zinc-500">Overdue</dt><dd class="font-semibold {{ $a['receivables_overdue'] > 0 ? 'text-red-600' : 'text-zinc-900' }}">₱{{ number_format($a['receivables_overdue'], 2) }}</dd></div>
+                <div class="flex justify-between border-t border-zinc-100 pt-3"><dt class="text-zinc-500">Quote pipeline</dt><dd class="font-medium text-zinc-900">₱{{ number_format($a['quotes_pipeline'], 2) }} <span class="text-zinc-400">({{ $a['quotes_conversion'] }}% won)</span></dd></div>
+                <div class="flex justify-between"><dt class="text-zinc-500">Project margin</dt><dd class="font-semibold {{ $a['projects_margin'] >= 0 ? 'text-emerald-600' : 'text-red-600' }}">₱{{ number_format($a['projects_margin'], 2) }}</dd></div>
+            </dl>
+        </div>
+
+        <!-- Spend by supplier + expenses -->
+        <div class="card p-6">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-zinc-900">Spend</h3>
+                <span class="text-xs text-zinc-400">this month</span>
+            </div>
+            <p class="mt-2 text-xs font-medium uppercase tracking-wide text-zinc-400">By supplier</p>
+            @forelse($a['purchasing_by_supplier'] as $row)
+                <div class="mt-1 flex items-center justify-between text-sm">
+                    <span class="text-zinc-600">{{ $row->supplier?->name ?? 'Unassigned' }}</span>
+                    <span class="font-medium text-zinc-900">₱{{ number_format($row->spend, 2) }}</span>
+                </div>
+            @empty
+                <p class="mt-1 text-sm text-zinc-400">No purchase orders.</p>
+            @endforelse
+
+            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-zinc-400">Expenses by category</p>
+            @forelse($a['expenses_by_category'] as $cat => $amt)
+                <div class="mt-1 flex items-center justify-between text-sm">
+                    <span class="text-zinc-600">{{ $cat }}</span>
+                    <span class="font-medium text-zinc-900">₱{{ number_format($amt, 2) }}</span>
+                </div>
+            @empty
+                <p class="mt-1 text-sm text-zinc-400">No expenses logged.</p>
+            @endforelse
+        </div>
+    </div>
+@endif
+
 @endsection
