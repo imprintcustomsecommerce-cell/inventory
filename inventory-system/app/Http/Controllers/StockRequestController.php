@@ -78,31 +78,25 @@ class StockRequestController extends Controller
 
         $added = 0;
         foreach ($low as $it) {
+            // Prefer a matching stockroom item to pull from; fall back to the
+            // item itself so EVERY low item is requested (not just ones the
+            // stockroom currently has in stock).
             $source = InventoryItem::whereHas('warehouse', fn ($q) => $q->where('can_create_items', true))
                 ->where('name', $it->name)
                 ->where(fn ($q) => $it->size ? $q->where('size', $it->size) : $q->whereNull('size'))
-                ->where('current_stock', '>', 0)->first();
-
-            if (!$source) {
-                continue;
-            }
+                ->orderByDesc('current_stock')->first();
 
             $need = max(1, (int) ceil((float) $it->minimum_stock - (float) $it->current_stock));
             $req->items()->create([
-                'inventory_item_id' => $source->id,
+                'inventory_item_id' => $source?->id ?? $it->id,
                 'item_label' => trim($it->name . ($it->size ? " ({$it->size})" : '')),
                 'quantity' => $need,
             ]);
             $added++;
         }
 
-        if ($added === 0) {
-            $req->delete();
-            return back()->with('error', 'No matching stockroom items found to restock.');
-        }
-
         return redirect()->route('requests.show', $req)
-            ->with('success', "Draft request created for {$added} low item(s) — review and submit.");
+            ->with('success', "Draft request created for {$added} low item(s) — review the quantities and submit.");
     }
 
     /**
@@ -128,7 +122,7 @@ class StockRequestController extends Controller
         $source = InventoryItem::whereHas('warehouse', fn ($q) => $q->where('can_create_items', true))
             ->where('name', $item->name)
             ->where(fn ($q) => $item->size ? $q->where('size', $item->size) : $q->whereNull('size'))
-            ->where('current_stock', '>', 0)
+            ->orderByDesc('current_stock')
             ->first();
 
         // Append to an open pending request for this location, or start one.
