@@ -4,9 +4,15 @@
 
 @section('content')
 
-<div class="mb-8">
-    <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Welcome back, {{ explode(' ', auth()->user()->name)[0] }}</h1>
-    <p class="mt-1 text-sm text-zinc-500">Here's what's happening across your shop today.</p>
+<div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Welcome back, {{ explode(' ', auth()->user()->name)[0] }}</h1>
+        <p class="mt-1 text-sm text-zinc-500">Here's what's happening across your shop today.</p>
+    </div>
+    <div class="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-600">
+        <svg class="h-4 w-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+        {{ now()->format('D, M d, Y') }}
+    </div>
 </div>
 
 <!-- KPI row -->
@@ -25,16 +31,29 @@
     $gridCols = 'sm:grid-cols-3 lg:grid-cols-4';
 @endphp
 <div class="mb-8 grid grid-cols-2 gap-4 {{ $gridCols }}">
-    @foreach($kpis as $k)
-        <div class="card p-5">
+    @foreach($kpis as $i => $k)
+        @php
+            // First two cards are "hero" cards (yellow, then dark) for a POS-dashboard feel.
+            $tone = $i === 0 ? 'yellow' : ($i === 1 ? 'dark' : 'plain');
+            $cardCls = match ($tone) {
+                'yellow' => 'bg-brand-400 border-brand-400',
+                'dark' => 'bg-zinc-900 border-zinc-900',
+                default => 'bg-white border-zinc-200',
+            };
+            $labelCls = match ($tone) { 'dark' => 'text-zinc-400', 'yellow' => 'text-zinc-800', default => 'text-zinc-500' };
+            $valueCls = $tone === 'dark' ? 'text-white' : 'text-zinc-900';
+            $subCls = match ($tone) { 'dark' => 'text-zinc-500', 'yellow' => 'text-zinc-700', default => 'text-zinc-400' };
+            $chipCls = match ($tone) { 'dark' => 'bg-white/10 text-brand-400', 'yellow' => 'bg-zinc-900/10 text-zinc-900', default => $k['ring'] };
+        @endphp
+        <div class="rounded-xl border p-5 shadow-sm transition hover:shadow-md {{ $cardCls }}">
             <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-zinc-500">{{ $k['label'] }}</span>
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg {{ $k['ring'] }}">
+                <span class="text-sm font-medium {{ $labelCls }}">{{ $k['label'] }}</span>
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg {{ $chipCls }}">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $k['icon'] }}"/></svg>
                 </span>
             </div>
-            <p class="mt-3 text-2xl font-bold text-zinc-900">{{ $k['value'] }}</p>
-            <p class="mt-0.5 text-xs text-zinc-400">{{ $k['sub'] }}</p>
+            <p class="mt-3 text-2xl font-bold {{ $valueCls }}">{{ $k['value'] }}</p>
+            <p class="mt-0.5 text-xs {{ $subCls }}">{{ $k['sub'] }}</p>
         </div>
     @endforeach
 </div>
@@ -255,17 +274,51 @@
     </div>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <!-- Revenue trend -->
+        <!-- Revenue trend (line chart) -->
+        @php
+            $tr = collect($a['trend'])->values();
+            $max = max(1, $a['trend_max']);
+            $n = $tr->count();
+            $W = 600; $H = 180; $pad = 8;
+            $step = $n > 1 ? $W / ($n - 1) : $W;
+            $coords = [];
+            foreach ($tr as $idx => $t) {
+                $x = round($idx * $step, 1);
+                $y = round($H - $pad - ($t['revenue'] / $max) * ($H - 2 * $pad), 1);
+                $coords[] = ['x' => $x, 'y' => $y, 'label' => $t['label'], 'rev' => $t['revenue']];
+            }
+            $line = collect($coords)->map(fn ($c) => "{$c['x']},{$c['y']}")->implode(' ');
+            $area = "0,{$H} {$line} " . round(($n - 1) * $step, 1) . ",{$H}";
+            $lastIdx = $n - 1;
+        @endphp
         <div class="card p-6">
-            <h3 class="text-sm font-semibold text-zinc-900">Revenue — last 6 months</h3>
-            <div class="mt-6 flex items-end gap-3" style="height: 160px;">
-                @foreach($a['trend'] as $t)
-                    <div class="flex flex-1 flex-col items-center justify-end gap-2">
-                        <span class="text-xs font-medium text-zinc-500">₱{{ number_format($t['revenue'] / 1000, 1) }}k</span>
-                        <div class="w-full rounded-t bg-brand-400" style="height: {{ max(2, round($t['revenue'] / $a['trend_max'] * 120)) }}px;"></div>
-                        <span class="text-xs text-zinc-400">{{ $t['label'] }}</span>
-                    </div>
-                @endforeach
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-semibold text-zinc-900">Revenue</h3>
+                    <p class="text-2xl font-bold text-zinc-900">₱{{ number_format($a['revenue_month'], 2) }}</p>
+                    <p class="text-xs text-zinc-400">This month · last 6 months trend</p>
+                </div>
+                <span class="badge badge-green">Net ₱{{ number_format($a['net_profit'], 0) }}</span>
+            </div>
+            <div class="mt-4">
+                <svg viewBox="0 0 {{ $W }} {{ $H }}" class="w-full" role="img" aria-label="Revenue trend">
+                    <defs>
+                        <linearGradient id="revfill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#facc15" stop-opacity="0.35"/>
+                            <stop offset="100%" stop-color="#facc15" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <polygon points="{{ $area }}" fill="url(#revfill)"/>
+                    <polyline points="{{ $line }}" fill="none" stroke="#eab308" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                    @foreach($coords as $ci => $c)
+                        <circle cx="{{ $c['x'] }}" cy="{{ $c['y'] }}" r="{{ $ci === $lastIdx ? 5 : 3.5 }}" fill="{{ $ci === $lastIdx ? '#eab308' : '#ffffff' }}" stroke="#eab308" stroke-width="2" vector-effect="non-scaling-stroke"/>
+                    @endforeach
+                </svg>
+                <div class="mt-1 flex justify-between">
+                    @foreach($coords as $c)
+                        <span class="text-xs text-zinc-400">{{ $c['label'] }}</span>
+                    @endforeach
+                </div>
             </div>
         </div>
 
