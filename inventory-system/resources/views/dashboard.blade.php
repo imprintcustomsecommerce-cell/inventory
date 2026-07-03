@@ -58,6 +58,76 @@
     @endforeach
 </div>
 
+@if(!empty($analytics))
+    @php
+        $a = $analytics;
+        $tr = collect($a['trend'])->values();
+        $max = max(1, $a['trend_max']);
+        $n = $tr->count();
+        $W = 600; $H = 180; $pad = 8;
+        $step = $n > 1 ? $W / ($n - 1) : $W;
+        $coords = [];
+        foreach ($tr as $idx => $t) {
+            $x = round($idx * $step, 1);
+            $y = round($H - $pad - ($t['revenue'] / $max) * ($H - 2 * $pad), 1);
+            $coords[] = ['x' => $x, 'y' => $y, 'label' => $t['label']];
+        }
+        $line = collect($coords)->map(fn ($c) => "{$c['x']},{$c['y']}")->implode(' ');
+        $area = "0,{$H} {$line} " . round(($n - 1) * $step, 1) . ",{$H}";
+        $lastIdx = $n - 1;
+        $rating = $operations['avg_rating'] ?? 0;
+        $satPct = $rating > 0 ? round($rating / 5 * 100) : 0;
+        $gArc = round(pi() * 70, 1);
+        $gOff = round($gArc * (1 - $satPct / 100), 1);
+    @endphp
+    <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <!-- Analytics tracking: revenue line chart -->
+        <div class="card p-6 lg:col-span-2">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-semibold text-zinc-500">Analytics tracking</h2>
+                    <p class="mt-1 text-3xl font-bold text-zinc-900">₱{{ number_format($a['revenue_month'], 2) }}</p>
+                    <p class="text-xs text-zinc-400">Revenue this month · last 6 months</p>
+                </div>
+                <span class="badge badge-green">Net ₱{{ number_format($a['net_profit'], 0) }}</span>
+            </div>
+            <div class="mt-4">
+                <svg viewBox="0 0 {{ $W }} {{ $H }}" class="w-full" role="img" aria-label="Revenue trend">
+                    <defs>
+                        <linearGradient id="revfillTop" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#facc15" stop-opacity="0.35"/>
+                            <stop offset="100%" stop-color="#facc15" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <polygon points="{{ $area }}" fill="url(#revfillTop)"/>
+                    <polyline points="{{ $line }}" fill="none" stroke="#eab308" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                    @foreach($coords as $ci => $c)
+                        <circle cx="{{ $c['x'] }}" cy="{{ $c['y'] }}" r="{{ $ci === $lastIdx ? 5 : 3.5 }}" fill="{{ $ci === $lastIdx ? '#eab308' : '#ffffff' }}" stroke="#eab308" stroke-width="2" vector-effect="non-scaling-stroke"/>
+                    @endforeach
+                </svg>
+                <div class="mt-1 flex justify-between">
+                    @foreach($coords as $c)
+                        <span class="text-xs text-zinc-400">{{ $c['label'] }}</span>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer satisfaction gauge -->
+        <div class="card flex flex-col p-6">
+            <h2 class="text-sm font-semibold text-zinc-900">Customer satisfaction</h2>
+            <div class="flex flex-1 flex-col items-center justify-center">
+                <svg viewBox="0 0 180 108" class="mt-2 w-full max-w-[240px]">
+                    <path d="M20 92 A70 70 0 0 1 160 92" fill="none" stroke="#e4e4e7" stroke-width="16" stroke-linecap="round"/>
+                    <path d="M20 92 A70 70 0 0 1 160 92" fill="none" stroke="#facc15" stroke-width="16" stroke-linecap="round" stroke-dasharray="{{ $gArc }}" stroke-dashoffset="{{ $gOff }}"/>
+                </svg>
+                <p class="-mt-8 text-3xl font-bold text-zinc-900">{{ $satPct }}%</p>
+                <p class="mt-1 text-xs text-zinc-400">Based on {{ $operations['feedback_count'] }} review{{ $operations['feedback_count'] == 1 ? '' : 's' }}</p>
+            </div>
+        </div>
+    </div>
+@endif
+
 @if(!empty($alerts))
     <div class="card mb-6 overflow-hidden">
         <div class="flex items-center gap-2 border-b border-zinc-200 px-5 py-3">
@@ -273,55 +343,7 @@
         @endforeach
     </div>
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <!-- Revenue trend (line chart) -->
-        @php
-            $tr = collect($a['trend'])->values();
-            $max = max(1, $a['trend_max']);
-            $n = $tr->count();
-            $W = 600; $H = 180; $pad = 8;
-            $step = $n > 1 ? $W / ($n - 1) : $W;
-            $coords = [];
-            foreach ($tr as $idx => $t) {
-                $x = round($idx * $step, 1);
-                $y = round($H - $pad - ($t['revenue'] / $max) * ($H - 2 * $pad), 1);
-                $coords[] = ['x' => $x, 'y' => $y, 'label' => $t['label'], 'rev' => $t['revenue']];
-            }
-            $line = collect($coords)->map(fn ($c) => "{$c['x']},{$c['y']}")->implode(' ');
-            $area = "0,{$H} {$line} " . round(($n - 1) * $step, 1) . ",{$H}";
-            $lastIdx = $n - 1;
-        @endphp
-        <div class="card p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-sm font-semibold text-zinc-900">Revenue</h3>
-                    <p class="text-2xl font-bold text-zinc-900">₱{{ number_format($a['revenue_month'], 2) }}</p>
-                    <p class="text-xs text-zinc-400">This month · last 6 months trend</p>
-                </div>
-                <span class="badge badge-green">Net ₱{{ number_format($a['net_profit'], 0) }}</span>
-            </div>
-            <div class="mt-4">
-                <svg viewBox="0 0 {{ $W }} {{ $H }}" class="w-full" role="img" aria-label="Revenue trend">
-                    <defs>
-                        <linearGradient id="revfill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#facc15" stop-opacity="0.35"/>
-                            <stop offset="100%" stop-color="#facc15" stop-opacity="0"/>
-                        </linearGradient>
-                    </defs>
-                    <polygon points="{{ $area }}" fill="url(#revfill)"/>
-                    <polyline points="{{ $line }}" fill="none" stroke="#eab308" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-                    @foreach($coords as $ci => $c)
-                        <circle cx="{{ $c['x'] }}" cy="{{ $c['y'] }}" r="{{ $ci === $lastIdx ? 5 : 3.5 }}" fill="{{ $ci === $lastIdx ? '#eab308' : '#ffffff' }}" stroke="#eab308" stroke-width="2" vector-effect="non-scaling-stroke"/>
-                    @endforeach
-                </svg>
-                <div class="mt-1 flex justify-between">
-                    @foreach($coords as $c)
-                        <span class="text-xs text-zinc-400">{{ $c['label'] }}</span>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <!-- Top products -->
         <div class="card overflow-hidden">
             <div class="border-b border-zinc-200 px-6 py-4"><h3 class="text-sm font-semibold text-zinc-900">Top products</h3></div>
