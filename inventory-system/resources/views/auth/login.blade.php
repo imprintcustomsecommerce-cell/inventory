@@ -15,8 +15,8 @@
         <div class="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-brand-400/5 blur-3xl"></div>
 
         <div class="relative flex items-center gap-3">
-            @include('partials.logo')
-            <span class="text-lg font-semibold text-white">Imprint Inventory</span>
+            @include('partials.logo', ['box' => 'h-12 w-12'])
+            <span class="text-xl font-semibold text-white">Imprint Inventory</span>
         </div>
 
         <div class="relative">
@@ -40,22 +40,20 @@
     <!-- Form panel -->
     <div class="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-20">
         <div class="mx-auto w-full max-w-sm">
-            <!-- Mobile logo -->
-            <div class="mb-8 flex items-center gap-3 lg:hidden">
-                @include('partials.logo')
-                <span class="text-lg font-semibold text-zinc-900">Imprint Inventory</span>
+            <!-- Prominent centered logo -->
+            <div class="mb-8 flex flex-col items-center text-center">
+                @include('partials.logo', ['box' => 'h-24 w-24'])
+                <h1 class="mt-5 text-2xl font-bold tracking-tight text-zinc-900">Welcome back</h1>
+                <p class="mt-1.5 text-sm text-zinc-500">Sign in to Imprint Inventory to continue.</p>
             </div>
 
-            <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Welcome back</h1>
-            <p class="mt-2 text-sm text-zinc-500">Sign in to your account to continue.</p>
-
             @if ($errors->any())
-                <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {{ $errors->first() }}
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}" class="mt-8 space-y-5">
+            <form method="POST" action="{{ route('login') }}" class="space-y-5">
                 @csrf
                 <div>
                     <label class="label">Email address</label>
