@@ -22,37 +22,77 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
         'warehouse_id',
         'activity_seen_at',
     ];
 
-    // Staff roles, departments, and HR were removed. The app now runs on a
-    // single login with full access; these helpers stay permissive so the
-    // permission checks scattered across the app keep working.
+    /**
+     * The five staff roles. Everyone except admin is scoped to their assigned
+     * warehouse.
+     *   admin     — full access to every warehouse and module
+     *   store     — sell/POS + receive at their Store warehouse
+     *   inventory — the stockroom: products, inventory, import/transfer/purchasing
+     *   materials — the Materials (raw materials) module only
+     *   events    — sell/POS + receive-only at their event warehouse
+     */
+    public const ROLES = ['admin', 'store', 'inventory', 'materials', 'events'];
+
+    public const ROLE_LABELS = [
+        'admin' => 'Admin',
+        'store' => 'Store',
+        'inventory' => 'Inventory',
+        'materials' => 'Raw Materials',
+        'events' => 'Events',
+    ];
 
     public function isAdmin(): bool
     {
-        return true;
+        return $this->role === 'admin';
     }
 
+    public function isStore(): bool
+    {
+        return $this->role === 'store';
+    }
+
+    public function isInventory(): bool
+    {
+        return $this->role === 'inventory';
+    }
+
+    public function isEvents(): bool
+    {
+        return $this->role === 'events';
+    }
+
+    /** Materials-department staff (sees only the Materials module). */
     public function isMaterialsStaff(): bool
     {
-        return false;
+        return $this->role === 'materials';
     }
 
+    public function roleLabel(): string
+    {
+        return self::ROLE_LABELS[$this->role] ?? ucfirst((string) $this->role);
+    }
+
+    /** Who may view the Materials module: admins and materials staff. */
     public function canSeeMaterials(): bool
     {
-        return true;
+        return $this->isAdmin() || $this->isMaterialsStaff();
     }
 
+    /** Selling happens at stores and events (and for admins). */
     public function canSell(): bool
     {
-        return true;
+        return $this->isAdmin() || $this->isStore() || $this->isEvents();
     }
 
+    /** Only the stockroom (inventory) role and admins create products/items. */
     public function canCreateItems(): bool
     {
-        return true;
+        return $this->isAdmin() || $this->isInventory();
     }
 
     public function warehouse(): \Illuminate\Database\Eloquent\Relations\BelongsTo

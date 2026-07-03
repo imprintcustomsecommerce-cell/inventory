@@ -25,7 +25,11 @@ class DatabaseSeeder extends Seeder
         );
         $store = Warehouse::updateOrCreate(
             ['name' => 'Store'],
-            ['location' => 'Retail front', 'can_create_items' => false]
+            ['type' => 'store', 'location' => 'Retail front', 'can_create_items' => false]
+        );
+        $events = Warehouse::updateOrCreate(
+            ['name' => 'Events'],
+            ['type' => 'event', 'location' => 'Pop-up / event booth', 'can_create_items' => false]
         );
 
         // Admin — spans all warehouses.
@@ -39,12 +43,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // One staff member per warehouse.
+        // One staff member per role, scoped to their warehouse.
         User::updateOrCreate(
             ['email' => 'store@imprint.ph'],
             [
                 'name' => 'Store Staff',
-                'role' => 'staff',
+                'role' => 'store',
                 'warehouse_id' => $store->id,
                 'password' => Hash::make('password'),
             ]
@@ -53,21 +57,29 @@ class DatabaseSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'warehouse@imprint.ph'],
             [
-                'name' => 'Warehouse Staff',
-                'role' => 'staff',
+                'name' => 'Inventory Staff',
+                'role' => 'inventory',
                 'warehouse_id' => $stockroom->id,
                 'password' => Hash::make('password'),
             ]
         );
 
-        // Materials-department staff (sees only Materials).
         User::updateOrCreate(
             ['email' => 'materials@imprint.ph'],
             [
                 'name' => 'Materials Staff',
-                'role' => 'staff',
-                'department' => 'materials',
+                'role' => 'materials',
                 'warehouse_id' => $stockroom->id,
+                'password' => Hash::make('password'),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'events@imprint.ph'],
+            [
+                'name' => 'Events Staff',
+                'role' => 'events',
+                'warehouse_id' => $events->id,
                 'password' => Hash::make('password'),
             ]
         );
