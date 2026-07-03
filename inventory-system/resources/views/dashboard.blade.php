@@ -36,13 +36,8 @@
         $line = collect($coords)->map(fn ($c) => "{$c['x']},{$c['y']}")->implode(' ');
         $area = "0,{$H} {$line} " . round(($n - 1) * $step, 1) . ",{$H}";
         $lastIdx = $n - 1;
-        
-        $satPct = $operations['feedback_count'] > 0 ? round($a['satisfaction'] ?? 0) : 0;
-        $gCircumference = 2 * pi() * 70;
-        $gArc = ($satPct / 100) * $gCircumference;
-        $gOff = $gCircumference - $gArc;
     @endphp
-    <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div class="mb-8">
         <!-- Analytics tracking: revenue line chart -->
         <div class="card p-6">
             <div class="flex items-center justify-between">
