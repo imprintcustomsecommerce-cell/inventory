@@ -32,28 +32,16 @@
 @endphp
 <div class="mb-8 grid grid-cols-2 gap-4 {{ $gridCols }}">
     @foreach($kpis as $i => $k)
-        @php
-            // First two cards are "hero" cards (yellow, then dark) for a POS-dashboard feel.
-            $tone = $i === 0 ? 'yellow' : ($i === 1 ? 'dark' : 'plain');
-            $cardCls = match ($tone) {
-                'yellow' => 'bg-brand-400 border-brand-400',
-                'dark' => 'bg-zinc-900 border-zinc-900',
-                default => 'bg-white border-zinc-200',
-            };
-            $labelCls = match ($tone) { 'dark' => 'text-zinc-400', 'yellow' => 'text-zinc-800', default => 'text-zinc-500' };
-            $valueCls = $tone === 'dark' ? 'text-white' : 'text-zinc-900';
-            $subCls = match ($tone) { 'dark' => 'text-zinc-500', 'yellow' => 'text-zinc-700', default => 'text-zinc-400' };
-            $chipCls = match ($tone) { 'dark' => 'bg-white/10 text-brand-400', 'yellow' => 'bg-zinc-900/10 text-zinc-900', default => $k['ring'] };
-        @endphp
-        <div class="rounded-xl border p-5 shadow-sm transition hover:shadow-md {{ $cardCls }}">
+        @php $c = \App\Support\CardPalette::at($i); @endphp
+        <div class="rounded-xl p-5 shadow-sm transition hover:shadow-md {{ $c['bg'] }}">
             <div class="flex items-center justify-between">
-                <span class="text-sm font-medium {{ $labelCls }}">{{ $k['label'] }}</span>
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg {{ $chipCls }}">
+                <span class="text-sm font-medium {{ $c['label'] }}">{{ $k['label'] }}</span>
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg {{ $c['chip'] }}">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $k['icon'] }}"/></svg>
                 </span>
             </div>
-            <p class="mt-3 text-2xl font-bold {{ $valueCls }}">{{ $k['value'] }}</p>
-            <p class="mt-0.5 text-xs {{ $subCls }}">{{ $k['sub'] }}</p>
+            <p class="mt-3 text-2xl font-bold {{ $c['value'] }}">{{ $k['value'] }}</p>
+            <p class="mt-0.5 text-xs {{ $c['sub'] }}">{{ $k['sub'] }}</p>
         </div>
     @endforeach
 </div>
@@ -335,10 +323,11 @@
                 ['label' => 'Purchasing', 'value' => '₱' . number_format($a['purchasing_spend_month'], 0), 'accent' => 'text-zinc-900'],
             ];
         @endphp
-        @foreach($money as $m)
-            <div class="card p-4">
-                <p class="text-xs font-medium text-zinc-500">{{ $m['label'] }}</p>
-                <p class="mt-1 text-xl font-bold {{ $m['accent'] }}">{{ $m['value'] }}</p>
+        @foreach($money as $mi => $m)
+            @php $cp = \App\Support\CardPalette::at($mi); @endphp
+            <div class="rounded-xl p-4 shadow-sm {{ $cp['bg'] }}">
+                <p class="text-xs font-medium {{ $cp['label'] }}">{{ $m['label'] }}</p>
+                <p class="mt-1 text-xl font-bold {{ $cp['value'] }}">{{ $m['value'] }}</p>
             </div>
         @endforeach
     </div>

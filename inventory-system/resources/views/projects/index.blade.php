@@ -32,9 +32,10 @@
         ];
     @endphp
     @foreach($cards as $i => $c)
-        <div class="rounded-xl border p-5 shadow-sm transition hover:shadow-md {{ $i === 0 ? 'bg-brand-400 border-brand-400' : 'bg-white border-zinc-200' }}">
-            <p class="text-sm font-medium {{ $i === 0 ? 'text-zinc-800' : 'text-zinc-500' }}">{{ $c['label'] }}</p>
-            <p class="mt-2 text-3xl font-bold {{ $i === 0 ? 'text-zinc-900' : $c['accent'] }}">{{ $c['value'] }}</p>
+        @php $cp = \App\Support\CardPalette::at($i); @endphp
+        <div class="rounded-xl p-5 shadow-sm transition hover:shadow-md {{ $cp['bg'] }}">
+            <p class="text-sm font-medium {{ $cp['label'] }}">{{ $c['label'] }}</p>
+            <p class="mt-2 text-3xl font-bold {{ $cp['value'] }}">{{ $c['value'] }}</p>
         </div>
     @endforeach
 </div>
