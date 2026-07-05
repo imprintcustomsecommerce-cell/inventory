@@ -1,23 +1,45 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\ExpenseController;
-use App\Http\Controllers\InventoryController;
-use App\Http\Controllers\InvoiceController;
-use App\Http\Controllers\MaterialController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\PurchaseOrderController;
-use App\Http\Controllers\QuoteController;
-use App\Http\Controllers\SaleController;
-use App\Http\Controllers\StaffController;
-use App\Http\Controllers\SupplierController;
-use App\Http\Controllers\StockRequestController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProjectController;
+
+// Shared
+use App\Http\Controllers\Shared\ActivityController;
+use App\Http\Controllers\Shared\AuthController;
+use App\Http\Controllers\Shared\CalendarController;
+use App\Http\Controllers\Shared\DashboardController;
+use App\Http\Controllers\Shared\DeliveryController;
+use App\Http\Controllers\Shared\ProfileController;
+use App\Http\Controllers\Shared\ProjectController;
+use App\Http\Controllers\Shared\SearchController;
+
+// Admin
+use App\Http\Controllers\Admin\ChannelController;
+use App\Http\Controllers\Admin\ExpenseController;
+use App\Http\Controllers\Admin\OnlineOrderController;
+use App\Http\Controllers\Admin\PromoCodeController;
+use App\Http\Controllers\Admin\StaffController;
+
+// Store
+use App\Http\Controllers\Store\CustomerController;
+use App\Http\Controllers\Store\InvoiceController;
+use App\Http\Controllers\Store\PortalController;
+use App\Http\Controllers\Store\QuoteController;
+use App\Http\Controllers\Store\SaleController;
+
+// Warehouse
+use App\Http\Controllers\Warehouse\InventoryController;
+use App\Http\Controllers\Warehouse\ProductController;
+use App\Http\Controllers\Warehouse\PurchaseOrderController;
+use App\Http\Controllers\Warehouse\QualityController;
+use App\Http\Controllers\Warehouse\StockRequestController;
+use App\Http\Controllers\Warehouse\SupplierController;
+
+// Materials
+use App\Http\Controllers\Materials\MaterialController;
+
+// Events
+use App\Http\Controllers\Events\EventController;
+use App\Http\Controllers\Events\MockApiController;
 
 // Authentication (accounts are created by an admin, not self-service)
 Route::middleware('guest')->group(function () {
@@ -28,12 +50,12 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Public customer portal — token-authenticated, no login required.
-Route::get('/p/{token}', [\App\Http\Controllers\PortalController::class, 'show'])->name('portal.show');
-Route::post('/p/{token}/proofs/{proof}/approve', [\App\Http\Controllers\PortalController::class, 'approveProof'])->name('portal.proofs.approve');
-Route::post('/p/{token}/proofs/{proof}/reject', [\App\Http\Controllers\PortalController::class, 'rejectProof'])->name('portal.proofs.reject');
+Route::get('/p/{token}', [PortalController::class, 'show'])->name('portal.show');
+Route::post('/p/{token}/proofs/{proof}/approve', [PortalController::class, 'approveProof'])->name('portal.proofs.approve');
+Route::post('/p/{token}/proofs/{proof}/reject', [PortalController::class, 'rejectProof'])->name('portal.proofs.reject');
 
 // Mock marketplace API — public, simulates an external Shopee/Lazada/TikTok host.
-Route::get('/mock-api/{platform}/orders', [\App\Http\Controllers\MockApiController::class, 'orders'])
+Route::get('/mock-api/{platform}/orders', [MockApiController::class, 'orders'])
     ->name('mock-api.orders');
 
 // Redirect root to dashboard or login
@@ -187,27 +209,27 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::post('/projects/{project}/materials', [ProjectController::class, 'addMaterial'])->name('projects.materials.add');
     Route::delete('/projects/{project}/materials/{material}', [ProjectController::class, 'removeMaterial'])->name('projects.materials.remove');
 
-    Route::get('/search', [\App\Http\Controllers\SearchController::class, 'index'])->name('search.index');
-    Route::get('/activity', [\App\Http\Controllers\ActivityController::class, 'index'])->name('activity.index');
-    Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])->name('calendar.index');
+    Route::get('/search', [SearchController::class, 'index'])->name('search.index');
+    Route::get('/activity', [ActivityController::class, 'index'])->name('activity.index');
+    Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
 
     // Online store (mock marketplace integration)
-    Route::get('/channels', [\App\Http\Controllers\ChannelController::class, 'index'])->name('channels.index');
-    Route::post('/channels/{channel}/toggle', [\App\Http\Controllers\ChannelController::class, 'toggle'])->name('channels.toggle');
-    Route::post('/channels/{channel}/sync', [\App\Http\Controllers\ChannelController::class, 'sync'])->name('channels.sync');
-    Route::get('/online-orders', [\App\Http\Controllers\OnlineOrderController::class, 'index'])->name('online-orders.index');
-    Route::post('/online-orders/simulate', [\App\Http\Controllers\OnlineOrderController::class, 'simulate'])->name('online-orders.simulate');
-    Route::post('/online-orders/{onlineOrder}/route', [\App\Http\Controllers\OnlineOrderController::class, 'route'])->name('online-orders.route');
-    Route::post('/online-orders/{onlineOrder}/ignore', [\App\Http\Controllers\OnlineOrderController::class, 'ignore'])->name('online-orders.ignore');
-    Route::delete('/online-orders/{onlineOrder}', [\App\Http\Controllers\OnlineOrderController::class, 'destroy'])->name('online-orders.destroy');
-    Route::get('/quality', [\App\Http\Controllers\QualityController::class, 'index'])->name('quality.index');
-    Route::post('/projects/{project}/issues', [\App\Http\Controllers\QualityController::class, 'store'])->name('projects.issues.store');
-    Route::post('/projects/{project}/issues/{issue}/status', [\App\Http\Controllers\QualityController::class, 'updateStatus'])->name('projects.issues.status');
-    Route::delete('/projects/{project}/issues/{issue}', [\App\Http\Controllers\QualityController::class, 'destroy'])->name('projects.issues.destroy');
-    Route::get('/deliveries', [\App\Http\Controllers\DeliveryController::class, 'index'])->name('deliveries.index');
-    Route::post('/projects/{project}/deliveries', [\App\Http\Controllers\DeliveryController::class, 'store'])->name('projects.deliveries.store');
-    Route::post('/projects/{project}/deliveries/{delivery}/status', [\App\Http\Controllers\DeliveryController::class, 'updateStatus'])->name('projects.deliveries.status');
-    Route::delete('/projects/{project}/deliveries/{delivery}', [\App\Http\Controllers\DeliveryController::class, 'destroy'])->name('projects.deliveries.destroy');
+    Route::get('/channels', [ChannelController::class, 'index'])->name('channels.index');
+    Route::post('/channels/{channel}/toggle', [ChannelController::class, 'toggle'])->name('channels.toggle');
+    Route::post('/channels/{channel}/sync', [ChannelController::class, 'sync'])->name('channels.sync');
+    Route::get('/online-orders', [OnlineOrderController::class, 'index'])->name('online-orders.index');
+    Route::post('/online-orders/simulate', [OnlineOrderController::class, 'simulate'])->name('online-orders.simulate');
+    Route::post('/online-orders/{onlineOrder}/route', [OnlineOrderController::class, 'route'])->name('online-orders.route');
+    Route::post('/online-orders/{onlineOrder}/ignore', [OnlineOrderController::class, 'ignore'])->name('online-orders.ignore');
+    Route::delete('/online-orders/{onlineOrder}', [OnlineOrderController::class, 'destroy'])->name('online-orders.destroy');
+    Route::get('/quality', [QualityController::class, 'index'])->name('quality.index');
+    Route::post('/projects/{project}/issues', [QualityController::class, 'store'])->name('projects.issues.store');
+    Route::post('/projects/{project}/issues/{issue}/status', [QualityController::class, 'updateStatus'])->name('projects.issues.status');
+    Route::delete('/projects/{project}/issues/{issue}', [QualityController::class, 'destroy'])->name('projects.issues.destroy');
+    Route::get('/deliveries', [DeliveryController::class, 'index'])->name('deliveries.index');
+    Route::post('/projects/{project}/deliveries', [DeliveryController::class, 'store'])->name('projects.deliveries.store');
+    Route::post('/projects/{project}/deliveries/{delivery}/status', [DeliveryController::class, 'updateStatus'])->name('projects.deliveries.status');
+    Route::delete('/projects/{project}/deliveries/{delivery}', [DeliveryController::class, 'destroy'])->name('projects.deliveries.destroy');
 
     Route::post('/projects/{project}/proofs', [ProjectController::class, 'uploadProof'])->name('projects.proofs.upload');
     Route::post('/projects/{project}/proofs/{proof}/approve', [ProjectController::class, 'approveProof'])->name('projects.proofs.approve');
@@ -287,9 +309,9 @@ Route::middleware(['auth', 'dept'])->group(function () {
         Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 
         // Promo codes
-        Route::get('/promo-codes', [\App\Http\Controllers\PromoCodeController::class, 'index'])->name('promo-codes.index');
-        Route::post('/promo-codes', [\App\Http\Controllers\PromoCodeController::class, 'store'])->name('promo-codes.store');
-        Route::post('/promo-codes/{promoCode}/toggle', [\App\Http\Controllers\PromoCodeController::class, 'toggle'])->name('promo-codes.toggle');
-        Route::delete('/promo-codes/{promoCode}', [\App\Http\Controllers\PromoCodeController::class, 'destroy'])->name('promo-codes.destroy');
+        Route::get('/promo-codes', [PromoCodeController::class, 'index'])->name('promo-codes.index');
+        Route::post('/promo-codes', [PromoCodeController::class, 'store'])->name('promo-codes.store');
+        Route::post('/promo-codes/{promoCode}/toggle', [PromoCodeController::class, 'toggle'])->name('promo-codes.toggle');
+        Route::delete('/promo-codes/{promoCode}', [PromoCodeController::class, 'destroy'])->name('promo-codes.destroy');
     });
 });

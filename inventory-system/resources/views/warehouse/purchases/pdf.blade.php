@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        * { font-family: DejaVu Sans, sans-serif; }
+        body { color: #111; font-size: 12px; margin: 0; }
+        .header { border-bottom: 3px solid #facc15; padding-bottom: 14px; margin-bottom: 20px; }
+        .header table { width: 100%; }
+        .logo { width: 54px; height: 54px; background: #facc15; color: #111; border-radius: 8px; text-align: center; font-weight: bold; font-size: 22px; line-height: 54px; }
+        .company { font-size: 18px; font-weight: bold; }
+        .muted { color: #777; }
+        .title { font-size: 22px; font-weight: bold; margin: 0; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 10px; background: #f3f4f6; font-size: 11px; font-weight: bold; }
+        .grid { width: 100%; margin: 18px 0; }
+        .grid td { vertical-align: top; padding: 4px 0; }
+        .label { color: #777; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
+        .value { font-size: 13px; font-weight: bold; }
+        table.items { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        table.items th { background: #111; color: #fff; text-align: left; padding: 8px 10px; font-size: 11px; }
+        table.items td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        table.items tr:last-child td { border-bottom: none; }
+        .text-right { text-align: right; }
+        .totals { width: 40%; margin-left: 60%; margin-top: 10px; }
+        .totals td { padding: 5px 10px; }
+        .totals .grand { border-top: 2px solid #111; font-weight: bold; font-size: 14px; }
+        .section-title { font-size: 13px; font-weight: bold; margin: 22px 0 6px; }
+        .footer { margin-top: 40px; color: #999; font-size: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <table>
+            <tr>
+                <td style="width:70px;">
+                    <div class="logo">IC</div>
+                </td>
+                <td>
+                    <div class="company">Imprint Customs</div>
+                    <div class="muted">Custom Apparel · Established 2013</div>
+                </td>
+                <td class="text-right">
+                    <p class="title">PURCHASE ORDER</p>
+                    <div class="muted">{{ $order->po_number }}</div>
+                    <div class="muted">{{ $order->order_date?->format('M d, Y') }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="grid">
+        <tr>
+            <td style="width:50%;">
+                <div class="label">Supplier</div>
+                <div class="value">{{ $order->supplier?->name ?? '—' }}</div>
+                @if($order->supplier?->contact_person)<div class="muted">{{ $order->supplier->contact_person }}</div>@endif
+                @if($order->supplier?->email)<div class="muted">{{ $order->supplier->email }}</div>@endif
+                @if($order->supplier?->phone)<div class="muted">{{ $order->supplier->phone }}</div>@endif
+            </td>
+            <td style="width:25%;">
+                <div class="label">Deliver to</div>
+                <div class="value">{{ $order->warehouse?->name ?? '—' }}</div>
+            </td>
+            <td style="width:25%;">
+                <div class="label">Expected</div>
+                <div class="value">{{ $order->expected_date ? $order->expected_date->format('M d, Y') : '—' }}</div>
+                <div class="label" style="margin-top:8px;">Status</div>
+                <div><span class="badge">{{ $order->status }}</span></div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="section-title">Items ordered</div>
+    <table class="items">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Unit cost</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($order->items as $item)
+                <tr>
+                    <td>{{ $item->description }}</td>
+                    <td class="text-right">{{ rtrim(rtrim(number_format($item->quantity_ordered, 2), '0'), '.') }}</td>
+                    <td class="text-right">₱{{ number_format($item->unit_cost, 2) }}</td>
+                    <td class="text-right">₱{{ number_format($item->total, 2) }}</td>
+                </tr>
+            @empty
+                <tr><td colspan="4" class="muted">No items listed.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr class="grand">
+            <td>Total</td>
+            <td class="text-right">₱{{ number_format($order->total, 2) }}</td>
+        </tr>
+    </table>
+
+    @if($order->notes)
+        <div class="section-title">Notes</div>
+        <div>{{ $order->notes }}</div>
+    @endif
+
+    <div class="footer">Generated by Imprint Inventory System · {{ now()->format('M d, Y h:i A') }}</div>
+</body>
+</html>

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\OnlineOrder;
 use App\Models\SalesChannel;
+use App\Support\MockOrderFactory;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -22,25 +23,35 @@ class MarketplaceClient
     public function pullOrders(SalesChannel $channel, int $limit = 2): array
     {
         $baseUrl = rtrim((string) config('services.marketplace.mock_url'), '/');
-        $url = "{$baseUrl}/mock-api/{$channel->platform}/orders";
 
-        try {
-            $response = Http::timeout(10)
-                ->acceptJson()
-                ->get($url, ['limit' => $limit]);
-        } catch (\Throwable $e) {
-            Log::warning("Marketplace pull failed for {$channel->platform}: {$e->getMessage()}");
+        if ($this->isSelf($baseUrl)) {
+            // The mock marketplace lives inside this app. Calling ourselves
+            // over HTTP deadlocks under `php artisan serve` (single worker)
+            // and breaks whenever the port changes — generate in-process.
+            $rows = MockOrderFactory::payload($channel->platform, $limit);
+        } else {
+            $url = "{$baseUrl}/mock-api/{$channel->platform}/orders";
 
-            return ['ok' => false, 'created' => 0, 'error' => 'Could not reach the marketplace API.'];
-        }
+            try {
+                $response = Http::timeout(10)
+                    ->acceptJson()
+                    ->get($url, ['limit' => $limit]);
+            } catch (\Throwable $e) {
+                Log::warning("Marketplace pull failed for {$channel->platform}: {$e->getMessage()}");
 
-        if ($response->failed()) {
-            return ['ok' => false, 'created' => 0, 'error' => "Marketplace API returned {$response->status()}."];
+                return ['ok' => false, 'created' => 0, 'error' => 'Could not reach the marketplace API.'];
+            }
+
+            if ($response->failed()) {
+                return ['ok' => false, 'created' => 0, 'error' => "Marketplace API returned {$response->status()}."];
+            }
+
+            $rows = $response->json('orders', []);
         }
 
         $created = 0;
 
-        foreach ($response->json('orders', []) as $row) {
+        foreach ($rows as $row) {
             $mapped = $this->mapOrder($channel, $row);
 
             // Skip orders already ingested (idempotent on the marketplace ref).
@@ -57,6 +68,22 @@ class MarketplaceClient
         }
 
         return ['ok' => true, 'created' => $created];
+    }
+
+    /**
+     * True when the configured marketplace URL is this app itself (or unset),
+     * i.e. we are in mock mode rather than talking to a real remote host.
+     */
+    private function isSelf(string $baseUrl): bool
+    {
+        if ($baseUrl === '') {
+            return true;
+        }
+
+        $host = (string) parse_url($baseUrl, PHP_URL_HOST);
+
+        return in_array($host, ['127.0.0.1', 'localhost', '::1'], true)
+            || $host === (string) parse_url((string) config('app.url'), PHP_URL_HOST);
     }
 
     /**
