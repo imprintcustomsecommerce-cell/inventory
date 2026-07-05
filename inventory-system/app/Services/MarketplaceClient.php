@@ -4,14 +4,12 @@ namespace App\Services;
 
 use App\Models\OnlineOrder;
 use App\Models\SalesChannel;
-use App\Support\MockOrderFactory;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * HTTP client for marketplace order ingestion. Today it talks to the in-app
- * mock API; to go live, point services.marketplace.mock_url at the real
- * host and add the platform's auth headers / request signing below.
+ * Marketplace order ingestion. Orders come ONLY from the real platform APIs —
+ * a channel must have API credentials saved and its shop authorized before
+ * anything appears in Online Orders.
  */
 class MarketplaceClient
 {
@@ -20,41 +18,47 @@ class MarketplaceClient
      *
      * @return array{ok: bool, created: int, error?: string}
      */
-    public function pullOrders(SalesChannel $channel, int $limit = 2): array
+    public function pullOrders(SalesChannel $channel, int $limit = 50): array
     {
-        $baseUrl = rtrim((string) config('services.marketplace.mock_url'), '/');
-
-        if ($this->isSelf($baseUrl)) {
-            // The mock marketplace lives inside this app. Calling ourselves
-            // over HTTP deadlocks under `php artisan serve` (single worker)
-            // and breaks whenever the port changes — generate in-process.
-            $rows = MockOrderFactory::payload($channel->platform, $limit);
-        } else {
-            $url = "{$baseUrl}/mock-api/{$channel->platform}/orders";
-
-            try {
-                $response = Http::timeout(10)
-                    ->acceptJson()
-                    ->get($url, ['limit' => $limit]);
-            } catch (\Throwable $e) {
-                Log::warning("Marketplace pull failed for {$channel->platform}: {$e->getMessage()}");
-
-                return ['ok' => false, 'created' => 0, 'error' => 'Could not reach the marketplace API.'];
-            }
-
-            if ($response->failed()) {
-                return ['ok' => false, 'created' => 0, 'error' => "Marketplace API returned {$response->status()}."];
-            }
-
-            $rows = $response->json('orders', []);
+        if (!$channel->isLive()) {
+            return [
+                'ok' => false,
+                'created' => 0,
+                'error' => "{$channel->name} is not live yet — save your API keys and authorize the shop first. Orders only sync from the real marketplace.",
+            ];
         }
 
+        try {
+            $rows = match ($channel->platform) {
+                'shopee' => (new Marketplaces\ShopeeClient($channel))->pullOrders(),
+                'lazada' => (new Marketplaces\LazadaClient($channel))->pullOrders(),
+                'tiktok' => (new Marketplaces\TikTokClient($channel))->pullOrders(),
+                default => throw new \RuntimeException(
+                    ucfirst($channel->platform) . ' live API is not integrated yet.'
+                ),
+            };
+        } catch (\Throwable $e) {
+            Log::warning("Live marketplace pull failed for {$channel->platform}: {$e->getMessage()}");
+
+            return ['ok' => false, 'created' => 0, 'error' => $e->getMessage()];
+        }
+
+        return ['ok' => true, 'created' => $this->ingest($channel, $rows)];
+    }
+
+    /**
+     * Persist raw marketplace rows as OnlineOrders, skipping ones already
+     * ingested (idempotent on the marketplace ref). Returns created count.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function ingest(SalesChannel $channel, array $rows): int
+    {
         $created = 0;
 
         foreach ($rows as $row) {
             $mapped = $this->mapOrder($channel, $row);
 
-            // Skip orders already ingested (idempotent on the marketplace ref).
             $exists = OnlineOrder::where('sales_channel_id', $channel->id)
                 ->where('external_ref', $mapped['external_ref'])
                 ->exists();
@@ -67,23 +71,7 @@ class MarketplaceClient
             $created++;
         }
 
-        return ['ok' => true, 'created' => $created];
-    }
-
-    /**
-     * True when the configured marketplace URL is this app itself (or unset),
-     * i.e. we are in mock mode rather than talking to a real remote host.
-     */
-    private function isSelf(string $baseUrl): bool
-    {
-        if ($baseUrl === '') {
-            return true;
-        }
-
-        $host = (string) parse_url($baseUrl, PHP_URL_HOST);
-
-        return in_array($host, ['127.0.0.1', 'localhost', '::1'], true)
-            || $host === (string) parse_url((string) config('app.url'), PHP_URL_HOST);
+        return $created;
     }
 
     /**

@@ -45,26 +45,47 @@
                 <thead>
                     <tr>
                         <th>Item</th>
-                        <th>Category</th>
                         <th>Size</th>
-                        <th>Stock</th>
+                        <th>Your Stock</th>
                         <th>Minimum</th>
+                        @if(!auth()->user()->canCreateItems() && auth()->user()->warehouse_id)
+                            <th>Available in Warehouse</th>
+                        @endif
                         <th>Status</th>
                         <th class="text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($items as $item)
+                        @php
+                            $key = $item->name . '|' . ($item->size ?? '');
+                            $stockroomItem = isset($warehouseStock) ? $warehouseStock->get($key) : null;
+                            $suggestedQty = max(1, (int) ceil((float) $item->minimum_stock - (float) $item->current_stock));
+                        @endphp
                         <tr>
-                            <td class="font-medium text-zinc-900">{{ $item->name }}</td>
-                            <td>
-                                @if($item->category)<span class="badge badge-zinc">{{ $item->category }}</span>@else <span class="text-zinc-300">—</span> @endif
+                            <td class="font-medium text-zinc-900">
+                                {{ $item->name }}
+                                @if($item->category)<div class="text-xs text-zinc-400">{{ $item->category }}</div>@endif
                             </td>
                             <td>
                                 @if($item->size)<span class="badge badge-zinc">{{ $item->size }}</span>@else <span class="text-zinc-300">—</span> @endif
                             </td>
-                            <td class="font-semibold text-zinc-900">{{ $item->current_stock }} <span class="text-xs font-normal text-zinc-400">{{ $item->unit }}</span></td>
+                            <td>
+                                <span class="font-semibold {{ $item->current_stock <= 0 ? 'text-red-600' : 'text-zinc-900' }}">{{ $item->current_stock }}</span>
+                                <span class="text-xs text-zinc-400">{{ $item->unit }}</span>
+                            </td>
                             <td class="text-zinc-500">{{ $item->minimum_stock }} {{ $item->unit }}</td>
+                            @if(!auth()->user()->canCreateItems() && auth()->user()->warehouse_id)
+                                <td>
+                                    @if($stockroomItem)
+                                        <span class="font-semibold {{ $stockroomItem->current_stock > 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ $stockroomItem->current_stock }}</span>
+                                        <span class="text-xs text-zinc-400">{{ $stockroomItem->unit }}</span>
+                                        <div class="text-xs text-zinc-400">{{ $stockroomItem->warehouse?->name }}</div>
+                                    @else
+                                        <span class="text-xs text-zinc-400">Not in warehouse</span>
+                                    @endif
+                                </td>
+                            @endif
                             <td>
                                 <span class="badge {{ $item->isOutOfStock() ? 'badge-red' : 'badge-amber' }}">
                                     <span class="h-1.5 w-1.5 rounded-full {{ $item->isOutOfStock() ? 'bg-red-500' : 'bg-amber-500' }}"></span>
@@ -73,17 +94,19 @@
                             </td>
                             <td class="text-right">
                                 @if(auth()->user()->canCreateItems() && !auth()->user()->isAdmin())
-    <a href="{{ route('inventory.stockInForm', $item->id) }}" class="btn btn-primary btn-sm">
-        Restock
-    </a>
-@elseif(!auth()->user()->isAdmin() && auth()->user()->warehouse_id)
-    <form action="{{ route('requests.restockItem', $item->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Request stock for {{ $item->name }}?');">
-        @csrf
-        <button type="submit" class="btn btn-primary btn-sm">
-            Request stock
-        </button>
-    </form>
-@endif
+                                    <a href="{{ route('inventory.stockInForm', $item->id) }}" class="btn btn-primary btn-sm">
+                                        Restock
+                                    </a>
+                                @elseif(!auth()->user()->isAdmin() && auth()->user()->warehouse_id)
+                                    <form action="{{ route('requests.restockItem', $item->id) }}" method="POST" class="inline-flex items-center gap-2">
+                                        @csrf
+                                        <input type="number" name="quantity" min="1" step="1" value="{{ $suggestedQty }}" required
+                                            class="input w-20 py-1.5 text-center text-sm" title="How many do you need?">
+                                        <button type="submit" class="btn btn-primary btn-sm whitespace-nowrap">
+                                            Request
+                                        </button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

@@ -44,24 +44,6 @@ class OnlineOrderController extends Controller
         return role_view('admin.online-orders.index', compact('orders', 'stats', 'status', 'channels'));
     }
 
-    /** Pull a sample order from any connected channel (mock). */
-    public function simulate()
-    {
-        $channel = SalesChannel::where('status', 'connected')->inRandomOrder()->first();
-
-        if (!$channel) {
-            return back()->with('error', 'Connect a channel first to simulate an order.');
-        }
-
-        $result = $this->marketplace->pullOrders($channel, 1);
-
-        if (!$result['ok']) {
-            return back()->with('error', $result['error'] ?? 'Could not fetch an order.');
-        }
-
-        return back()->with('success', "Fetched {$result['created']} order from {$channel->name} via API.");
-    }
-
     /** Turn an online order into a Sale (stock) or Project (custom). */
     public function route(OnlineOrder $onlineOrder)
     {

@@ -28,6 +28,9 @@
                     <th>Request</th>
                     <th>Location</th>
                     <th>Items</th>
+                    @if($canFulfill)
+                        <th>Total Qty Requested</th>
+                    @endif
                     <th>Requested by</th>
                     <th>Status</th>
                     <th>Date</th>
@@ -39,7 +42,12 @@
                     <tr>
                         <td class="font-medium text-zinc-900">#{{ str_pad($req->id, 4, '0', STR_PAD_LEFT) }}</td>
                         <td><span class="badge badge-zinc">{{ $req->warehouse?->name ?? '—' }}</span></td>
-                        <td class="text-zinc-500">{{ $req->items_count }}</td>
+                        <td class="text-zinc-500">{{ $req->items_count }} item(s)</td>
+                        @if($canFulfill)
+                            <td>
+                                <span class="font-semibold text-zinc-900">{{ rtrim(rtrim(number_format($req->items->sum('quantity'), 2), '0'), '.') }}</span>
+                            </td>
+                        @endif
                         <td class="text-zinc-500">{{ $req->requestedBy?->name ?? '—' }}</td>
                         <td><span class="badge {{ $req->getStatusBadgeClass() }}">{{ ucfirst($req->status) }}</span></td>
                         <td class="text-zinc-500">{{ $req->created_at->format('M d, Y') }}</td>

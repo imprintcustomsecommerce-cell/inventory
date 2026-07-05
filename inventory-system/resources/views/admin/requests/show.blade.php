@@ -65,7 +65,7 @@
     @if($request->items->count() > 0)
         <table class="data-table">
             <thead>
-                <tr><th>Item</th><th>Requested</th><th>Fulfilled</th>@if($request->isPending() && !$canFulfill)<th class="text-right">Remove</th>@endif</tr>
+                <tr><th>Item</th><th class="text-right">In Stock</th><th class="text-right">Requested</th><th class="text-right">Fulfilled</th>@if($request->isPending() && !$canFulfill)<th class="text-right">Remove</th>@endif</tr>
             </thead>
             <tbody>
                 @foreach($request->items as $line)

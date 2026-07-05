@@ -39,7 +39,6 @@ use App\Http\Controllers\Materials\MaterialController;
 
 // Events
 use App\Http\Controllers\Events\EventController;
-use App\Http\Controllers\Events\MockApiController;
 
 // Authentication (accounts are created by an admin, not self-service)
 Route::middleware('guest')->group(function () {
@@ -54,9 +53,6 @@ Route::get('/p/{token}', [PortalController::class, 'show'])->name('portal.show')
 Route::post('/p/{token}/proofs/{proof}/approve', [PortalController::class, 'approveProof'])->name('portal.proofs.approve');
 Route::post('/p/{token}/proofs/{proof}/reject', [PortalController::class, 'rejectProof'])->name('portal.proofs.reject');
 
-// Mock marketplace API — public, simulates an external Shopee/Lazada/TikTok host.
-Route::get('/mock-api/{platform}/orders', [MockApiController::class, 'orders'])
-    ->name('mock-api.orders');
 
 // Redirect root to dashboard or login
 Route::get('/', function () {
@@ -217,8 +213,10 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::get('/channels', [ChannelController::class, 'index'])->name('channels.index');
     Route::post('/channels/{channel}/toggle', [ChannelController::class, 'toggle'])->name('channels.toggle');
     Route::post('/channels/{channel}/sync', [ChannelController::class, 'sync'])->name('channels.sync');
+    Route::post('/channels/{channel}/credentials', [ChannelController::class, 'saveCredentials'])->name('channels.credentials');
+    Route::get('/channels/{channel}/authorize', [ChannelController::class, 'authorize'])->name('channels.authorize');
+    Route::get('/channels/{channel}/callback', [ChannelController::class, 'callback'])->name('channels.callback');
     Route::get('/online-orders', [OnlineOrderController::class, 'index'])->name('online-orders.index');
-    Route::post('/online-orders/simulate', [OnlineOrderController::class, 'simulate'])->name('online-orders.simulate');
     Route::post('/online-orders/{onlineOrder}/route', [OnlineOrderController::class, 'route'])->name('online-orders.route');
     Route::post('/online-orders/{onlineOrder}/ignore', [OnlineOrderController::class, 'ignore'])->name('online-orders.ignore');
     Route::delete('/online-orders/{onlineOrder}', [OnlineOrderController::class, 'destroy'])->name('online-orders.destroy');

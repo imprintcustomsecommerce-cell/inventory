@@ -9,13 +9,7 @@
         <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Online Orders</h1>
         <p class="mt-1 text-sm text-zinc-500">Marketplace orders waiting to be routed into production or sales.</p>
     </div>
-    <div class="flex gap-2">
-        <form action="{{ route('online-orders.simulate') }}" method="POST">
-            @csrf
-            <button type="submit" class="btn btn-primary">Simulate order</button>
-        </form>
-        <a href="{{ route('channels.index') }}" class="btn btn-ghost">Channels</a>
-    </div>
+    <a href="{{ route('channels.index') }}" class="btn btn-ghost">Channels</a>
 </div>
 
 <!-- Stats -->
@@ -123,7 +117,7 @@
     @else
         <div class="px-6 py-16 text-center">
             <p class="text-sm font-medium text-zinc-900">No online orders</p>
-            <p class="mt-1 text-sm text-zinc-500">Connect a channel and hit Sync, or use “Simulate order” to try the flow.</p>
+            <p class="mt-1 text-sm text-zinc-500">Orders appear here automatically once a channel is live — authorize your shop under Channels.</p>
         </div>
     @endif
 </div>

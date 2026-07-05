@@ -34,7 +34,7 @@ class StockRequestController extends Controller
     public function index(Request $request)
     {
         $requests = StockRequest::query()->visibleTo($request->user())
-            ->with(['warehouse', 'requestedBy'])->withCount('items')->latest()->paginate(50);
+            ->with(['warehouse', 'requestedBy', 'items'])->withCount('items')->latest()->paginate(50);
 
         return role_view('warehouse.requests.index', ['requests' => $requests, 'canFulfill' => $this->canFulfill()]);
     }
@@ -106,7 +106,7 @@ class StockRequestController extends Controller
      * restock directly (they hold the stock); store/event staff raise a
      * request to pull it from the stockroom.
      */
-    public function restockItem(InventoryItem $item)
+    public function restockItem(Request $request, InventoryItem $item)
     {
         $user = auth()->user();
 
@@ -119,6 +119,11 @@ class StockRequestController extends Controller
         if (!$user->warehouse_id) {
             return back()->with('error', 'You must belong to a location to request stock.');
         }
+
+        // Validate the requested quantity from the form
+        $data = $request->validate([
+            'quantity' => 'required|numeric|min:1',
+        ]);
 
         // Find matching stock held in a stockroom to pull from.
         $source = InventoryItem::whereHas('warehouse', fn ($q) => $q->where('can_create_items', true))
@@ -137,7 +142,7 @@ class StockRequestController extends Controller
                 'note' => 'Low-stock restock',
             ]);
 
-        $need = max(1, (int) ceil((float) $item->minimum_stock - (float) $item->current_stock));
+        $need = (float) $data['quantity'];
 
         $req->items()->create([
             'inventory_item_id' => $source?->id ?? $item->id,
@@ -146,7 +151,7 @@ class StockRequestController extends Controller
         ]);
 
         return redirect()->route('requests.show', $req)
-            ->with('success', $item->displayName() . ' added to your stock request.');
+            ->with('success', $item->displayName() . ' (' . (int) $need . ') added to your stock request.');
     }
 
     public function show(StockRequest $stockRequest)

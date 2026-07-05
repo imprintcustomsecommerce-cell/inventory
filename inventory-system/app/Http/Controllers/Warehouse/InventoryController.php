@@ -431,7 +431,24 @@ class InventoryController extends Controller
 
         $items = $query->orderBy('current_stock')->paginate(50)->withQueryString();
 
-        return role_view('warehouse.inventory.low-stock', compact('items'));
+        // For store/event users: fetch matching stockroom availability for each item
+        $warehouseStock = collect();
+        if (!$user->canCreateItems() && $user->warehouse_id) {
+            $stockroomItems = InventoryItem::whereHas('warehouse', fn ($q) => $q->where('can_create_items', true))
+                ->where('current_stock', '>', 0)
+                ->get(['id', 'name', 'size', 'current_stock', 'unit', 'warehouse_id'])
+                ->load('warehouse:id,name');
+
+            // Key by "name|size" for easy lookup
+            foreach ($stockroomItems as $si) {
+                $key = $si->name . '|' . ($si->size ?? '');
+                if (!$warehouseStock->has($key) || $si->current_stock > $warehouseStock->get($key)->current_stock) {
+                    $warehouseStock->put($key, $si);
+                }
+            }
+        }
+
+        return role_view('warehouse.inventory.low-stock', compact('items', 'warehouseStock'));
     }
 
     public function export(Request $request)
