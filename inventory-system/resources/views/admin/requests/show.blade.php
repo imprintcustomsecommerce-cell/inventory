@@ -71,8 +71,16 @@
                 @foreach($request->items as $line)
                     <tr>
                         <td class="font-medium text-zinc-900">{{ $line->item_label }}</td>
-                        <td class="text-zinc-700">{{ rtrim(rtrim(number_format($line->quantity, 2), '0'), '.') }}</td>
-                        <td class="text-zinc-500">{{ $line->fulfilled_quantity > 0 ? rtrim(rtrim(number_format($line->fulfilled_quantity, 2), '0'), '.') : '—' }}</td>
+                        <td class="text-right text-zinc-700">
+                            @if($line->inventoryItem)
+                                <span class="{{ $line->inventoryItem->current_stock < $line->quantity ? 'text-red-600 font-semibold' : '' }}">{{ rtrim(rtrim(number_format($line->inventoryItem->current_stock, 2), '0'), '.') }}</span>
+                                <div class="text-xs text-zinc-400">{{ $line->inventoryItem->warehouse?->name }}</div>
+                            @else
+                                <span class="text-zinc-400">—</span>
+                            @endif
+                        </td>
+                        <td class="text-right text-zinc-700">{{ rtrim(rtrim(number_format($line->quantity, 2), '0'), '.') }}</td>
+                        <td class="text-right text-zinc-500">{{ $line->fulfilled_quantity > 0 ? rtrim(rtrim(number_format($line->fulfilled_quantity, 2), '0'), '.') : '—' }}</td>
                         @if($request->isPending() && !$canFulfill)
                             <td class="text-right">
                                 <form action="{{ route('requests.items.remove', [$request, $line]) }}" method="POST" onsubmit="return confirm('Remove this item?');">

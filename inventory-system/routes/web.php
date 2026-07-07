@@ -78,6 +78,7 @@ Route::middleware(['auth', 'dept'])->group(function () {
     Route::get('/sell/{inventoryItem}', [SaleController::class, 'create'])->name('sales.create');
     Route::post('/sell/{inventoryItem}', [SaleController::class, 'store'])->name('sales.store');
     Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
+    Route::get('/sales/{sale}/receipt/print', [SaleController::class, 'receiptPrint'])->name('sales.receipt.print');
 
     // Stock requests (store requests items from the stockroom)
     Route::get('/requests', [StockRequestController::class, 'index'])->name('requests.index');

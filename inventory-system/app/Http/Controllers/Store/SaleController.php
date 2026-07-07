@@ -70,16 +70,34 @@ class SaleController extends Controller
 
     public function receipt(Sale $sale)
     {
-        $user = auth()->user();
-        if (!$user->isAdmin() && $user->warehouse_id && $sale->warehouse_id !== $user->warehouse_id) {
-            abort(403);
-        }
+        $this->guardReceiptAccess($sale);
 
         $sale->load(['warehouse', 'user']);
 
         return \Barryvdh\DomPDF\Facade\Pdf::loadView('store.sales.receipt', compact('sale'))
             ->setPaper('a6') // compact receipt size
             ->stream("receipt-{$sale->id}.pdf");
+    }
+
+    /**
+     * Print-focused receipt view for wireless handheld terminals: a bare 80mm-wide
+     * HTML page (no app chrome) that auto-opens the browser print dialog on load.
+     */
+    public function receiptPrint(Sale $sale)
+    {
+        $this->guardReceiptAccess($sale);
+
+        $sale->load(['warehouse', 'user']);
+
+        return view('store.sales.receipt-print', compact('sale'));
+    }
+
+    private function guardReceiptAccess(Sale $sale): void
+    {
+        $user = auth()->user();
+        if (!$user->isAdmin() && $user->warehouse_id && $sale->warehouse_id !== $user->warehouse_id) {
+            abort(403);
+        }
     }
 
     public function export(Request $request)

@@ -59,6 +59,10 @@
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 3h6m2.25 6H6.75A2.25 2.25 0 014.5 18.75V5.25A2.25 2.25 0 016.75 3h7.5l5.25 5.25v10.5A2.25 2.25 0 0117.25 21z"/></svg>
                                     Receipt
                                 </a>
+                                <a href="{{ route('sales.receipt.print', $sale) }}" target="_blank" class="btn btn-ghost btn-sm" title="Print on wireless terminal">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.32 0a44.605 44.605 0 00-11.32 0m11.32 0h.5c.895 0 1.605-.75 1.605-1.65v-3.75c0-1.5-1.08-2.5-2.5-2.5H5.925c-1.42 0-2.5 1-2.5 2.5v3.75c0 .9.71 1.65 1.605 1.65h.5m11.32 0H6.34M9 9V4.5A1.5 1.5 0 0110.5 3h3A1.5 1.5 0 0115 4.5V9"/></svg>
+                                    Print
+                                </a>
                             </td>
                         </tr>
                     @endforeach

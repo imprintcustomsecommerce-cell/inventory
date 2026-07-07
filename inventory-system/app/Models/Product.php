@@ -89,16 +89,8 @@ class Product extends Model
             ->all();
     }
 
-    /**
-     * Limit to products a user may see (admins all). A product is visible to a
-     * warehouse if it has a size variant stored there.
-     */
     public function scopeVisibleTo($query, User $user)
     {
-        if (!$user->isAdmin() && $user->warehouse_id) {
-            $query->whereHas('variants', fn ($q) => $q->where('warehouse_id', $user->warehouse_id));
-        }
-
         return $query;
     }
 }
