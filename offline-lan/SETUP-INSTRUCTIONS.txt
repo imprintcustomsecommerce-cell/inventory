@@ -1,0 +1,96 @@
+============================================================
+ OFFLINE LAN SETUP  -  IMPRINT INVENTORY
+============================================================
+
+GOAL:
+ The STORE PC and the INVENTORY PC both use the SAME live data,
+ with NO internet needed.
+
+ PC          IP ADDRESS         ROLE
+ ---------   ----------------   ---------------------------------
+ Inventory   192.168.150.80     Holds the database (keep it ON)
+ Store       192.168.150.106    Uses the inventory PC's database
+
+ NOTE: The Inventory PC must be turned ON for the Store PC to work.
+       That is the trade-off for both seeing the same live data.
+
+ DATABASE PASSWORD USED BELOW: imprint2026
+ (You may change it, but keep it the same in both places.)
+
+
+------------------------------------------------------------
+ STEP 1  -  COPY THE FOLDER TO BOTH PCs
+------------------------------------------------------------
+ Copy the whole "inventory-system" folder to BOTH PCs using a
+ USB drive or a shared network folder. It already includes
+ everything needed to run offline.
+
+
+------------------------------------------------------------
+ STEP 2  -  ON THE INVENTORY PC  (192.168.150.80)
+------------------------------------------------------------
+ 1. Start XAMPP -> turn on Apache and MySQL.
+
+ 2. Open phpMyAdmin (XAMPP -> MySQL -> "Admin"),
+    click the "SQL" tab, paste the text below, then click "Go":
+
+        CREATE USER IF NOT EXISTS 'inventory'@'192.168.150.106' IDENTIFIED BY 'imprint2026';
+        GRANT ALL PRIVILEGES ON inventory_system.* TO 'inventory'@'192.168.150.106';
+        FLUSH PRIVILEGES;
+
+ 3. Open Windows Firewall for the database. Easiest way:
+    right-click "inventory-pc-open-firewall.ps1" ->
+    "Run with PowerShell" -> click Yes if it asks for Administrator.
+
+    (Manual alternative: open PowerShell as Administrator and run:)
+        New-NetFirewallRule -DisplayName "MySQL LAN 3306" -Direction Inbound -LocalPort 3306 -Protocol TCP -Action Allow
+
+ 4. Make sure MySQL listens on the network:
+    - Open  C:\xampp1\mysql\bin\my.ini  in Notepad
+    - Find   bind-address=127.0.0.1   and change it to   bind-address=0.0.0.0
+      (if there is no such line, skip this)
+    - Restart MySQL in the XAMPP Control Panel
+
+ 5. Start the system: double-click "start-server.bat"
+    (leave the window open). Then open a browser to:
+        http://localhost:8000
+
+
+------------------------------------------------------------
+ STEP 3  -  ON THE STORE PC  (192.168.150.106)
+------------------------------------------------------------
+ 1. Start XAMPP -> turn on Apache (MySQL not required here).
+
+ 2. Open the file  inventory-system\.env  in Notepad and set
+    these lines to point at the inventory PC:
+
+        DB_HOST=192.168.150.80
+        DB_PORT=3306
+        DB_DATABASE=inventory_system
+        DB_USERNAME=inventory
+        DB_PASSWORD=imprint2026
+
+    Save and close.
+
+ 3. Start the system: double-click "start-server.bat"
+    (leave the window open). Then open a browser to:
+        http://localhost:8000
+
+
+------------------------------------------------------------
+ DONE!
+------------------------------------------------------------
+ Both PCs now show the same inventory, fully offline.
+
+ IMPORTANT:
+ - Do NOT run "npm run dev" or "npm run build" on these PCs.
+   The styling is already built into the copied folder.
+ - If the Store PC cannot connect to the database, check that
+   the Inventory PC is ON and its XAMPP MySQL is running.
+
+ TROUBLESHOOTING (database error on the Store PC):
+ - Open Command Prompt on the Store PC and run:  ping 192.168.150.80
+   If it does not reply, it is a network/cable/Wi-Fi problem.
+ - Make sure Step 2 (SQL user + firewall) was done on the Inventory PC.
+
+============================================================
