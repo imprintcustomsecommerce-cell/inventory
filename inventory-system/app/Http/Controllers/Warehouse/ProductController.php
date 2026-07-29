@@ -10,7 +10,9 @@ use App\Models\Product;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
@@ -365,6 +367,15 @@ class ProductController extends Controller
         $get = fn (array $row, string $name) => isset($col[$name]) && isset($row[$col[$name]]) ? trim((string) $row[$col[$name]]) : null;
 
         $warehouseId = (int) $data['warehouse_id'];
+
+        // Alternate layout: the Imprint "SUMMARY" export — one row per size
+        // (e.g. "NEKROS SHORT - XS"), image as a URL, stock in REMAINING.
+        // Detect it by its ITEM NAME column and hand off to a dedicated parser.
+        $upper = array_flip(array_map(fn ($h) => strtoupper(trim((string) $h)), $header));
+        if (isset($upper['ITEM NAME'])) {
+            return $this->importSummary($rows, $upper, $warehouseId);
+        }
+
         $created = 0;
         $updated = 0;
         $variants = 0;
@@ -436,6 +447,141 @@ class ProductController extends Controller
 
         return redirect()->route('products.index')
             ->with('success', "Import complete: {$created} added, {$updated} updated, {$variants} new sizes" . ($skipped ? ", {$skipped} skipped." : '.'));
+    }
+
+    /**
+     * Import the Imprint "SUMMARY" spreadsheet.
+     *
+     * Layout: one row per size. Columns used:
+     *   IMAGE (URL, only on a product's first size row), CATEGORY,
+     *   ITEM NAME ("PRODUCT NAME - SIZE"), REMAINING (stock), SRP (retail price).
+     *
+     * @param  array<int, array>  $rows
+     * @param  array<string, int>  $upper  UPPERCASED header => column index
+     */
+    private function importSummary(array $rows, array $upper, int $warehouseId)
+    {
+        // A large sheet plus image downloads can run past the default limit.
+        @set_time_limit(0);
+
+        // Case-insensitive cell reader.
+        $get = function (array $row, string $name) use ($upper) {
+            $name = strtoupper($name);
+            return isset($upper[$name]) && isset($row[$upper[$name]]) ? trim((string) $row[$upper[$name]]) : null;
+        };
+        // "₱1,250.00" -> 1250.00 ; "10,264" -> 10264
+        $num = fn (?string $v) => (float) preg_replace('/[^0-9.\-]/', '', (string) $v);
+
+        $created = 0;
+        $updated = 0;
+        $variants = 0;
+        $skipped = 0;
+        $images = 0;
+
+        // Remember an image per product name so we don't download it twice.
+        $imageForProduct = [];
+
+        DB::transaction(function () use ($rows, $get, $num, $warehouseId, &$created, &$updated, &$variants, &$skipped, &$images, &$imageForProduct) {
+            foreach ($rows as $row) {
+                $itemName = $get($row, 'ITEM NAME');
+                if (!$itemName) {
+                    $skipped++;
+                    continue; // blank / totals row
+                }
+
+                // Split "PRODUCT NAME - SIZE" on the LAST " - ".
+                $pos = strripos($itemName, ' - ');
+                if ($pos !== false) {
+                    $productName = trim(substr($itemName, 0, $pos));
+                    $size = trim(substr($itemName, $pos + 3));
+                } else {
+                    $productName = $itemName;
+                    $size = 'One Size';
+                }
+                if ($productName === '') {
+                    $skipped++;
+                    continue;
+                }
+
+                $category = $get($row, 'CATEGORY') ?: null;
+                $price = $num($get($row, 'SRP'));
+                $stock = $num($get($row, 'REMAINING'));
+
+                $product = Product::firstOrNew(['warehouse_id' => $warehouseId, 'name' => $productName]);
+                $isNew = !$product->exists;
+                $product->category = $category;
+                $product->retail_price = $price;
+
+                // Download the product image once (URL is on the first size row).
+                $imageUrl = $get($row, 'IMAGE');
+                if ($imageUrl && !$product->image_path && filter_var($imageUrl, FILTER_VALIDATE_URL)) {
+                    if (!array_key_exists($productName, $imageForProduct)) {
+                        $imageForProduct[$productName] = $this->downloadImage($imageUrl);
+                    }
+                    if ($imageForProduct[$productName]) {
+                        $product->image_path = $imageForProduct[$productName];
+                        $images++;
+                    }
+                }
+
+                $product->save();
+                $isNew ? $created++ : $updated++;
+
+                // One inventory variant per size; stock comes from REMAINING.
+                $variant = $product->variants()->where('size', $size)->first();
+                if ($variant) {
+                    $variant->update([
+                        'current_stock' => $stock,
+                        'unit_cost' => $product->cost_price ?? 0,
+                        'category' => $category,
+                    ]);
+                } else {
+                    $product->variants()->create([
+                        'warehouse_id' => $warehouseId,
+                        'name' => $productName,
+                        'category' => $category,
+                        'size' => $size,
+                        'unit' => 'pcs',
+                        'current_stock' => $stock,
+                        'minimum_stock' => 0,
+                        'unit_cost' => $product->cost_price ?? 0,
+                        'status' => 'active',
+                    ]);
+                    $variants++;
+                }
+            }
+        });
+
+        $msg = "Import complete: {$created} products added, {$updated} updated, {$variants} sizes, {$images} images.";
+        if ($skipped) {
+            $msg .= " ({$skipped} blank rows skipped.)";
+        }
+
+        return redirect()->route('products.index')->with('success', $msg);
+    }
+
+    /**
+     * Download a product image from a URL and store it locally (offline-safe
+     * afterwards). Returns the stored path, or null if it could not be fetched.
+     */
+    private function downloadImage(string $url): ?string
+    {
+        try {
+            $response = Http::timeout(15)->get($url);
+            if (!$response->successful() || $response->body() === '') {
+                return null;
+            }
+
+            $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION)) ?: 'jpg';
+            $ext = preg_replace('/[^a-z0-9]/', '', $ext) ?: 'jpg';
+
+            $stored = 'product-images/' . Str::random(40) . '.' . $ext;
+            Storage::disk('public')->put($stored, $response->body());
+
+            return $stored;
+        } catch (\Throwable $e) {
+            return null; // no internet / bad URL — import continues without the image
+        }
     }
 
     /**

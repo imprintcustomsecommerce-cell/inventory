@@ -16,9 +16,10 @@
     </div>
 
     <div class="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-900">
-        <p class="font-semibold">Recognised columns</p>
-        <p class="mt-1">Product name, Product ID, Categories, Brand name, Product attributes (e.g. <em>SIZE: S, M, L</em>), Retail price, Imported price, Material, Description</p>
-        <p class="mt-2 text-blue-800">Each product is created once and a stock line is generated for every size listed in the attributes (starting at 0).</p>
+        <p class="font-semibold">Two formats are accepted</p>
+        <p class="mt-2"><span class="font-medium">1. Standard:</span> Product name, Product ID, Categories, Brand name, Product attributes (e.g. <em>SIZE: S, M, L</em>), Retail price, Imported price, Material, Description. One row per product.</p>
+        <p class="mt-2"><span class="font-medium">2. Imprint SUMMARY export:</span> IMAGE, CATEGORY, ITEM NAME (e.g. <em>NEKROS SHORT - XS</em>), REMAINING, SRP. One row per size; the product name and size are split at the last “ - ”, stock comes from REMAINING, price from SRP, and images are downloaded from the IMAGE link.</p>
+        <p class="mt-2 text-blue-800">Downloading images from the SUMMARY export needs an internet connection during the import; once saved they work offline.</p>
     </div>
 
     <form action="{{ route('products.import') }}" method="POST" enctype="multipart/form-data" class="card divide-y divide-zinc-200">
