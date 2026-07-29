@@ -3,9 +3,13 @@ setlocal enabledelayedexpansion
 title Imprint Inventory
 
 REM ---- find PHP from XAMPP ----
+REM If your XAMPP is somewhere else, add its path on a new line below,
+REM copying the pattern (point it at ...\php\php.exe).
 set "PHP="
-if exist "C:\xampp\php\php.exe"  set "PHP=C:\xampp\php\php.exe"
-if exist "C:\xampp1\php\php.exe" set "PHP=C:\xampp1\php\php.exe"
+if exist "C:\xampp\php\php.exe"   set "PHP=C:\xampp\php\php.exe"
+if exist "C:\xampp1\php\php.exe"  set "PHP=C:\xampp1\php\php.exe"
+if exist "D:\inv\php\php.exe"     set "PHP=D:\inv\php\php.exe"
+if exist "D:\xampp\php\php.exe"   set "PHP=D:\xampp\php\php.exe"
 
 if "%PHP%"=="" (
   echo.
