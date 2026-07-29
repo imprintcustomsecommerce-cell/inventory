@@ -6,7 +6,7 @@
 #    1. Point this PC's .env at the inventory PC's database
 #    2. Start the inventory system
 #
-#  Before running: open XAMPP and start Apache.
+#  Before running: nothing to start here (no Apache, no MySQL needed).
 #  The inventory PC (192.168.150.80) must already be set up and ON.
 # ============================================================
 

@@ -7,7 +7,7 @@
 #    2. Open the firewall for MySQL (port 3306)
 #    3. Start the inventory system
 #
-#  Before running: open XAMPP and start Apache + MySQL.
+#  Before running: open XAMPP and turn on MySQL (Apache not needed).
 # ============================================================
 
 $ErrorActionPreference = "Stop"

@@ -29,7 +29,8 @@ GOAL:
 ------------------------------------------------------------
  STEP 2  -  ON THE INVENTORY PC  (192.168.150.80)
 ------------------------------------------------------------
- 1. Start XAMPP -> turn on Apache and MySQL.
+ 1. Start XAMPP -> turn on MySQL. (Apache is only needed if you
+    prefer to run the SQL through phpMyAdmin in step 2.)
 
  2. Open phpMyAdmin (XAMPP -> MySQL -> "Admin"),
     click the "SQL" tab, paste the text below, then click "Go":
@@ -59,7 +60,8 @@ GOAL:
 ------------------------------------------------------------
  STEP 3  -  ON THE STORE PC  (192.168.150.106)
 ------------------------------------------------------------
- 1. Start XAMPP -> turn on Apache (MySQL not required here).
+ 1. Nothing to start here - no Apache and no MySQL needed on the
+    store PC. It uses the inventory PC's database over the network.
 
  2. Open the file  inventory-system\.env  in Notepad and set
     these lines to point at the inventory PC:
