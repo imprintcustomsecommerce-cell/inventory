@@ -96,3 +96,45 @@ GOAL:
  - Make sure Step 2 (SQL user + firewall) was done on the Inventory PC.
 
 ============================================================
+
+
+INSERT INTO warehouses (
+    id,
+    name,
+    type,
+    location,
+    event_date,
+    can_create_items,
+    created_at,
+    updated_at
+) VALUES
+(
+    1,
+    'Inventory',
+    'stockroom',
+    'Main stockroom',
+    NULL,
+    1,
+    '2026-06-27 17:58:52',
+    '2026-06-27 17:58:52'
+),
+(
+    2,
+    'Store',
+    'store',
+    'Retail front',
+    NULL,
+    0,
+    '2026-06-27 17:58:52',
+    '2026-06-27 17:58:52'
+),
+(
+    3,
+    'Test Bazaar',
+    'event',
+    'SM',
+    '2026-07-01',
+    0,
+    '2026-06-27 18:21:18',
+    '2026-06-27 18:21:18'
+);
