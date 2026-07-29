@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'importer' => \App\Http\Middleware\EnsureUserCanImport::class,
             'materials' => \App\Http\Middleware\EnsureCanSeeMaterials::class,
             'dept' => \App\Http\Middleware\RestrictMaterialsStaff::class,
         ]);

@@ -4,7 +4,10 @@
 
 @section('content')
 
-@php $isAdmin = auth()->user()->isAdmin(); @endphp
+@php
+    $isAdmin = auth()->user()->isAdmin();
+    $canImport = $isAdmin || auth()->user()->isInventory();
+@endphp
 
 <div x-data="productTable()">
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -22,11 +25,13 @@
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                 Export
             </a>
-            @if($isAdmin)
+            @if($canImport)
                 <a href="{{ route('products.importForm') }}" class="btn btn-ghost">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
                     Import
                 </a>
+            @endif
+            @if($isAdmin)
                 <a href="{{ route('inventory.trash') }}" class="btn btn-ghost">Trash</a>
             @endif
             @if(auth()->user()->canCreateItems())

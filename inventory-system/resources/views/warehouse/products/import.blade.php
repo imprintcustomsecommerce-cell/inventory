@@ -24,16 +24,25 @@
     <form action="{{ route('products.import') }}" method="POST" enctype="multipart/form-data" class="card divide-y divide-zinc-200">
         @csrf
         <div class="space-y-5 p-6">
-            <div>
-                <label class="label">Warehouse</label>
-                <select name="warehouse_id" required class="select">
-                    <option value="">Select warehouse</option>
-                    @foreach($warehouses as $w)
-                        <option value="{{ $w->id }}" {{ old('warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
-                    @endforeach
-                </select>
-                @error('warehouse_id') <p class="form-error">{{ $message }}</p> @enderror
-            </div>
+            @if($warehouses->count() === 1)
+                {{-- Scoped staff import into their own stockroom; no need to ask. --}}
+                <input type="hidden" name="warehouse_id" value="{{ $warehouses->first()->id }}">
+                <div>
+                    <label class="label">Stockroom</label>
+                    <p class="text-sm font-medium text-zinc-700">{{ $warehouses->first()->name }}</p>
+                </div>
+            @else
+                <div>
+                    <label class="label">Warehouse</label>
+                    <select name="warehouse_id" required class="select">
+                        <option value="">Select warehouse</option>
+                        @foreach($warehouses as $w)
+                            <option value="{{ $w->id }}" {{ old('warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('warehouse_id') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+            @endif
             <div>
                 <label class="label">Excel or CSV file</label>
                 <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="block w-full text-sm text-zinc-600 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-zinc-800 @error('file') text-red-600 @enderror">

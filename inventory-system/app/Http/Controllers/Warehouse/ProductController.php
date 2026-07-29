@@ -315,9 +315,16 @@ class ProductController extends Controller
         );
     }
 
-    public function importForm()
+    public function importForm(Request $request)
     {
-        return role_view('warehouse.products.import', ['warehouses' => Warehouse::stockrooms()->orderBy('name')->get()]);
+        $user = $request->user();
+
+        // Admins choose any stockroom; scoped staff import into their own only.
+        $warehouses = $user->isAdmin()
+            ? Warehouse::stockrooms()->orderBy('name')->get()
+            : Warehouse::stockrooms()->whereKey($user->warehouse_id)->get();
+
+        return role_view('warehouse.products.import', ['warehouses' => $warehouses]);
     }
 
     /** Import products from the Imprint products Excel (one row per product). */
@@ -327,6 +334,12 @@ class ProductController extends Controller
             'file' => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
             'warehouse_id' => 'required|exists:warehouses,id',
         ]);
+
+        // Scoped staff can only import into their own stockroom, whatever was posted.
+        $user = $request->user();
+        if (!$user->isAdmin() && $user->warehouse_id) {
+            $data['warehouse_id'] = $user->warehouse_id;
+        }
 
         if (!Warehouse::whereKey($data['warehouse_id'])->where('can_create_items', true)->exists()) {
             return back()->with('error', 'Import is only allowed into a stockroom.');

@@ -144,8 +144,8 @@ Route::middleware(['auth', 'dept'])->group(function () {
     // Products (each groups its size variants)
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::get('/products-export', [ProductController::class, 'export'])->name('products.export');
-    Route::get('/products-import', [ProductController::class, 'importForm'])->middleware('admin')->name('products.importForm');
-    Route::post('/products-import', [ProductController::class, 'import'])->middleware('admin')->name('products.import');
+    Route::get('/products-import', [ProductController::class, 'importForm'])->middleware('importer')->name('products.importForm');
+    Route::post('/products-import', [ProductController::class, 'import'])->middleware('importer')->name('products.import');
     Route::post('/products-bulk', [ProductController::class, 'bulk'])->middleware('admin')->name('products.bulk');
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
