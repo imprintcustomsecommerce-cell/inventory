@@ -33,10 +33,21 @@ Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "Project folder: $projDir"
 Write-Host ""
 
+$php = @("C:\xampp1\php\php.exe","C:\xampp\php\php.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $php) { $php = "php" }
+
+# If .env is missing (fresh git clone), create it from the example and generate a key
 if (-not (Test-Path $envFile)) {
-    Write-Host "ERROR: .env file not found at $envFile" -ForegroundColor Red
-    Read-Host "Press Enter to close"
-    exit
+    $example = Join-Path $projDir ".env.example"
+    if (Test-Path $example) {
+        Write-Host "No .env found - creating one from .env.example..." -ForegroundColor Yellow
+        Copy-Item $example $envFile
+        try { & $php (Join-Path $projDir "artisan") key:generate | Out-Null } catch {}
+    } else {
+        Write-Host "ERROR: no .env and no .env.example found at $projDir" -ForegroundColor Red
+        Read-Host "Press Enter to close"
+        exit
+    }
 }
 
 # ---- 1. update the .env database settings ----

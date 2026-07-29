@@ -45,6 +45,19 @@ $mysql = @("C:\xampp1\mysql\bin\mysql.exe","C:\xampp\mysql\bin\mysql.exe") | Whe
 $php   = @("C:\xampp1\php\php.exe","C:\xampp\php\php.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $php) { $php = "php" }
 
+# If .env is missing (fresh git clone), create it from the example.
+# The example already points at the local database (127.0.0.1), which is
+# correct for this PC since it hosts the database.
+$envFile = Join-Path $projDir ".env"
+if (-not (Test-Path $envFile)) {
+    $example = Join-Path $projDir ".env.example"
+    if (Test-Path $example) {
+        Write-Host "No .env found - creating one from .env.example..." -ForegroundColor Yellow
+        Copy-Item $example $envFile
+        try { & $php (Join-Path $projDir "artisan") key:generate | Out-Null } catch {}
+    }
+}
+
 # ---- 1. create the MySQL user ----
 Write-Host "[1/3] Creating the database user for the store PC..." -ForegroundColor Green
 if ($mysql) {
