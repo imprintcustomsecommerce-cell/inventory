@@ -34,6 +34,12 @@ if not exist "%APP%\artisan" (
 
 cd /d "%APP%"
 
+REM ---- make product images viewable (safe to run every time) ----
+if not exist "%APP%\public\storage" (
+  echo  Linking the images folder...
+  "%PHP%" artisan storage:link
+)
+
 echo.
 echo  Using PHP: %PHP%
 echo  App folder: %APP%
