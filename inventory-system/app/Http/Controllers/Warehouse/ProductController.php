@@ -28,7 +28,16 @@ class ProductController extends Controller
     private function guard(Product $product): void
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && $user->warehouse_id && $product->warehouse_id !== $user->warehouse_id) {
+        if ($user->isAdmin() || !$user->warehouse_id) {
+            return;
+        }
+
+        // Allow if the product lives in the user's warehouse OR holds stock
+        // (a size variant) there — matching what Product::scopeVisibleTo shows.
+        $visible = $product->warehouse_id === $user->warehouse_id
+            || $product->variants()->where('warehouse_id', $user->warehouse_id)->exists();
+
+        if (!$visible) {
             abort(403, 'This product belongs to another warehouse.');
         }
     }
