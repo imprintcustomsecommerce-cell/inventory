@@ -183,7 +183,20 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         $this->guard($product);
-        $product->load(['variants' => fn ($q) => $q->orderBy('id'), 'variants.warehouse', 'warehouse']);
+
+        // Non-admins only see the size variants held in their own warehouse,
+        // so a store never sees the stockroom's sizes/stock and vice versa.
+        $user = auth()->user();
+        $product->load([
+            'variants' => function ($q) use ($user) {
+                if (!$user->isAdmin() && $user->warehouse_id) {
+                    $q->where('warehouse_id', $user->warehouse_id);
+                }
+                $q->orderBy('id');
+            },
+            'variants.warehouse',
+            'warehouse',
+        ]);
         $allSizes = InventoryItem::SIZES;
 
         return role_view('warehouse.products.show', compact('product', 'allSizes'));
