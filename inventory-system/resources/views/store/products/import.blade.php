@@ -16,24 +16,34 @@
     </div>
 
     <div class="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-900">
-        <p class="font-semibold">Recognised columns</p>
-        <p class="mt-1">Product name, Product ID, Categories, Brand name, Product attributes (e.g. <em>SIZE: S, M, L</em>), Retail price, Imported price, Material, Description</p>
-        <p class="mt-2 text-blue-800">Each product is created once and a stock line is generated for every size listed in the attributes (starting at 0).</p>
+        <p class="font-semibold">Two formats are accepted</p>
+        <p class="mt-2"><span class="font-medium">1. Standard:</span> Product name, Product ID, Categories, Brand name, Product attributes (e.g. <em>SIZE: S, M, L</em>), Retail price, Imported price, Material, Description. One row per product.</p>
+        <p class="mt-2"><span class="font-medium">2. Imprint SUMMARY export:</span> IMAGE, CATEGORY, ITEM NAME (e.g. <em>NEKROS SHORT - XS</em>), REMAINING, SRP. One row per size; the product name and size are split at the last “ - ”, stock comes from REMAINING, price from SRP, and images are downloaded from the IMAGE link.</p>
+        <p class="mt-2 text-blue-800">Downloading images from the SUMMARY export needs an internet connection during the import; once saved they work offline.</p>
     </div>
 
     <form action="{{ route('products.import') }}" method="POST" enctype="multipart/form-data" class="card divide-y divide-zinc-200">
         @csrf
         <div class="space-y-5 p-6">
-            <div>
-                <label class="label">Warehouse</label>
-                <select name="warehouse_id" required class="select">
-                    <option value="">Select warehouse</option>
-                    @foreach($warehouses as $w)
-                        <option value="{{ $w->id }}" {{ old('warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
-                    @endforeach
-                </select>
-                @error('warehouse_id') <p class="form-error">{{ $message }}</p> @enderror
-            </div>
+            @if($warehouses->count() === 1)
+                {{-- Scoped staff import into their own warehouse; no need to ask. --}}
+                <input type="hidden" name="warehouse_id" value="{{ $warehouses->first()->id }}">
+                <div>
+                    <label class="label">Importing into</label>
+                    <p class="text-sm font-medium text-zinc-700">{{ $warehouses->first()->name }}</p>
+                </div>
+            @else
+                <div>
+                    <label class="label">Warehouse</label>
+                    <select name="warehouse_id" required class="select">
+                        <option value="">Select warehouse</option>
+                        @foreach($warehouses as $w)
+                            <option value="{{ $w->id }}" {{ old('warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('warehouse_id') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+            @endif
             <div>
                 <label class="label">Excel or CSV file</label>
                 <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="block w-full text-sm text-zinc-600 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-zinc-800 @error('file') text-red-600 @enderror">

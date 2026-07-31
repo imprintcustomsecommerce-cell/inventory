@@ -330,10 +330,11 @@ class ProductController extends Controller
     {
         $user = $request->user();
 
-        // Admins choose any stockroom; scoped staff import into their own only.
+        // Admins choose any warehouse (incl. a store); scoped staff import into
+        // their own warehouse (a store may import its own products directly).
         $warehouses = $user->isAdmin()
-            ? Warehouse::stockrooms()->orderBy('name')->get()
-            : Warehouse::stockrooms()->whereKey($user->warehouse_id)->get();
+            ? Warehouse::orderBy('name')->get()
+            : Warehouse::whereKey($user->warehouse_id)->get();
 
         return role_view('warehouse.products.import', ['warehouses' => $warehouses]);
     }
@@ -346,14 +347,23 @@ class ProductController extends Controller
             'warehouse_id' => 'required|exists:warehouses,id',
         ]);
 
-        // Scoped staff can only import into their own stockroom, whatever was posted.
+        // Scoped staff can only import into their own warehouse, whatever was posted.
         $user = $request->user();
         if (!$user->isAdmin() && $user->warehouse_id) {
             $data['warehouse_id'] = $user->warehouse_id;
         }
 
-        if (!Warehouse::whereKey($data['warehouse_id'])->where('can_create_items', true)->exists()) {
-            return back()->with('error', 'Import is only allowed into a stockroom.');
+        // Admins may import into any warehouse; scoped staff only into their own.
+        if ($user->isAdmin()) {
+            $targetOk = Warehouse::whereKey($data['warehouse_id'])->exists();
+        } else {
+            $targetOk = Warehouse::whereKey($data['warehouse_id'])
+                ->where(fn ($q) => $q->where('can_create_items', true)->orWhere('id', $user->warehouse_id))
+                ->exists();
+        }
+
+        if (!$targetOk) {
+            return back()->with('error', 'Import is only allowed into your own warehouse or a stockroom.');
         }
 
         try {

@@ -29,7 +29,7 @@
                 {{-- Scoped staff import into their own stockroom; no need to ask. --}}
                 <input type="hidden" name="warehouse_id" value="{{ $warehouses->first()->id }}">
                 <div>
-                    <label class="label">Stockroom</label>
+                    <label class="label">Importing into</label>
                     <p class="text-sm font-medium text-zinc-700">{{ $warehouses->first()->name }}</p>
                 </div>
             @else
