@@ -91,6 +91,12 @@ class Product extends Model
 
     public function scopeVisibleTo($query, User $user)
     {
+        // Admins see every product. Everyone else sees only products that
+        // hold stock (a size variant) in their own warehouse.
+        if (!$user->isAdmin() && $user->warehouse_id) {
+            $query->whereHas('variants', fn ($q) => $q->where('warehouse_id', $user->warehouse_id));
+        }
+
         return $query;
     }
 }
