@@ -40,17 +40,28 @@ if not exist "%APP%\public\storage" (
   "%PHP%" artisan storage:link
 )
 
+REM ---- detect this PC's current network IP (the active adapter) ----
+set "LANIP="
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-NetIPConfiguration ^| Where-Object {$_.IPv4DefaultGateway -ne $null -and $_.NetAdapter.Status -eq 'Up'} ^| Select-Object -First 1).IPv4Address.IPAddress" 2^>nul') do set "LANIP=%%i"
+
 echo.
 echo  Using PHP: %PHP%
 echo  App folder: %APP%
 echo.
-echo  Starting the inventory system...
-echo  When it says "Server running", open your browser to:
+echo  ==================================================================
+echo   THIS PC (inventory) - open:   http://localhost:8000
+if defined LANIP (
+echo   OTHER PCs (store/phone)  -    http://%LANIP%:8000
+) else (
+echo   OTHER PCs: run "ipconfig" and use  http://[IPv4 Address]:8000
+)
+echo  ==================================================================
 echo.
-echo        http://localhost:8000
+echo  If the OTHER PCs address stops working later, it is because this
+echo  PC's IP changed - just re-open this window and use the new address
+echo  shown above (or set a fixed IP so it never changes).
 echo.
 echo  Keep THIS window open while you use the system. Close it to stop.
-echo  ------------------------------------------------------------------
 echo.
 
 "%PHP%" artisan serve --host=0.0.0.0 --port=8000
