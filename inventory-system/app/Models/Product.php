@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasImageBlob;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
+    use HasImageBlob;
     use SoftDeletes;
 
     protected $fillable = [
@@ -55,9 +57,9 @@ class Product extends Model
         return (float) $this->variants->sum('current_stock');
     }
 
-    public function imageUrl(): ?string
+    public static function mediaType(): string
     {
-        return $this->image_path ? \Illuminate\Support\Facades\Storage::url($this->image_path) : null;
+        return 'product';
     }
 
     public function margin(): float

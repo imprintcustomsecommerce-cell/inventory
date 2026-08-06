@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 // Shared
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\Shared\ActivityController;
 use App\Http\Controllers\Shared\AuthController;
 use App\Http\Controllers\Shared\CalendarController;
@@ -62,6 +63,13 @@ Route::get('/', function () {
 
     return redirect()->route(auth()->user()->isMaterialsStaff() ? 'materials.index' : 'dashboard');
 });
+
+// Uploaded images and proof files, streamed out of the database. Outside the
+// 'dept' group because every role needs to render images for what it can see.
+Route::get('/media/{type}/{id}', [MediaController::class, 'show'])
+    ->middleware('auth')
+    ->whereNumber('id')
+    ->name('media.show');
 
 // Protected routes
 Route::middleware(['auth', 'dept'])->group(function () {

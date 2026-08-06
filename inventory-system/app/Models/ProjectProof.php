@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\Storage;
 
 class ProjectProof extends Model
@@ -45,7 +46,16 @@ class ProjectProof extends Model
 
     public function url(): string
     {
-        return Storage::disk('public')->url($this->file_path);
+        // A proof with no path is stored as bytes in the media table; older
+        // proofs from a LAN install still live on disk.
+        return $this->file_path
+            ? Storage::disk('public')->url($this->file_path)
+            : route('media.show', ['proof', $this->getKey()]);
+    }
+
+    public function media(): MorphOne
+    {
+        return $this->morphOne(Media::class, 'mediable');
     }
 
     public function isImage(): bool

@@ -77,11 +77,11 @@ class ProductController extends Controller
 
         // Optional: products still missing a photo.
         if ($request->boolean('no_image')) {
-            $query->whereNull('image_path');
+            $query->whereNull('image_mime')->whereNull('image_path');
         }
 
         $missingCount = $user->isAdmin()
-            ? Product::query()->visibleTo($user)->whereNull('image_path')->count()
+            ? Product::query()->visibleTo($user)->whereNull('image_mime')->whereNull('image_path')->count()
             : 0;
 
         $products = $query->orderBy('name')->paginate(30)->withQueryString();
@@ -155,11 +155,7 @@ class ProductController extends Controller
             return back()->withInput()->with('error', 'Products can only be added to a stockroom. Transfer stock to the store instead.');
         }
 
-        $imagePath = $request->hasFile('image')
-            ? $request->file('image')->store('product-images', 'public')
-            : null;
-
-        DB::transaction(function () use ($data, $warehouseId, $imagePath, $request) {
+        DB::transaction(function () use ($data, $warehouseId, $request) {
             $product = Product::create([
                 'warehouse_id' => $warehouseId,
                 'sku' => $data['sku'] ?? null,
@@ -171,8 +167,11 @@ class ProductController extends Controller
                 'retail_price' => $data['retail_price'] ?? 0,
                 'cost_price' => $data['cost_price'] ?? 0,
                 'description' => $data['description'] ?? null,
-                'image_path' => $imagePath,
             ]);
+
+            if ($request->hasFile('image')) {
+                $product->setImageFromUpload($request->file('image'));
+            }
 
             $this->syncVariants($product, $data['sizes'] ?? [], $warehouseId);
         });
@@ -230,10 +229,7 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($product->image_path) {
-                Storage::disk('public')->delete($product->image_path);
-            }
-            $data['image_path'] = $request->file('image')->store('product-images', 'public');
+            $product->setImageFromUpload($request->file('image'));
         }
 
         if (!auth()->user()->isAdmin()) {
@@ -434,10 +430,6 @@ class ProductController extends Controller
                     'cost_price' => (float) ($get($row, 'Imported price') ?? 0),
                     'description' => $get($row, 'Description') ?: null,
                 ];
-                if (isset($imagesByRow[$rowNumber])) {
-                    $attributes['image_path'] = $imagesByRow[$rowNumber];
-                }
-
                 // Idempotent: match an existing product by SKU (or name) so a
                 // re-import updates details/images instead of duplicating.
                 $match = $sku
@@ -451,6 +443,12 @@ class ProductController extends Controller
                 } else {
                     $product = Product::create(array_merge($match, $attributes));
                     $created++;
+                }
+
+                // Attached after save — the image needs the product's id.
+                if (isset($imagesByRow[$rowNumber])) {
+                    $image = $imagesByRow[$rowNumber];
+                    $product->setImageFromBytes($image['bytes'], $image['mime'], $image['name']);
                 }
 
                 // "Product attributes" looks like "SIZE: 2XS, XS, S, M, ..."
@@ -546,18 +544,22 @@ class ProductController extends Controller
 
                 // Download the product image once (URL is on the first size row).
                 $imageUrl = $get($row, 'IMAGE');
-                if ($imageUrl && !$product->image_path && filter_var($imageUrl, FILTER_VALIDATE_URL)) {
+                $downloaded = null;
+                if ($imageUrl && !$product->hasImage() && filter_var($imageUrl, FILTER_VALIDATE_URL)) {
                     if (!array_key_exists($productName, $imageForProduct)) {
                         $imageForProduct[$productName] = $this->downloadImage($imageUrl);
                     }
-                    if ($imageForProduct[$productName]) {
-                        $product->image_path = $imageForProduct[$productName];
-                        $images++;
-                    }
+                    $downloaded = $imageForProduct[$productName];
                 }
 
                 $product->save();
                 $isNew ? $created++ : $updated++;
+
+                // Attached after save — a new product has no id before then.
+                if ($downloaded) {
+                    $product->setImageFromBytes($downloaded['bytes'], $downloaded['mime'], $downloaded['name']);
+                    $images++;
+                }
 
                 // One inventory variant per size; stock comes from REMAINING.
                 $variant = $product->variants()->where('size', $size)->first();
@@ -593,10 +595,13 @@ class ProductController extends Controller
     }
 
     /**
-     * Download a product image from a URL and store it locally (offline-safe
-     * afterwards). Returns the stored path, or null if it could not be fetched.
+     * Download a product image from a URL so it can be kept with the product
+     * (offline-safe afterwards). Returns the raw bytes and mime type, or null
+     * if it could not be fetched.
+     *
+     * @return array{bytes: string, mime: string, name: string}|null
      */
-    private function downloadImage(string $url): ?string
+    private function downloadImage(string $url): ?array
     {
         try {
             $response = Http::timeout(15)->get($url);
@@ -607,19 +612,20 @@ class ProductController extends Controller
             $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION)) ?: 'jpg';
             $ext = preg_replace('/[^a-z0-9]/', '', $ext) ?: 'jpg';
 
-            $stored = 'product-images/' . Str::random(40) . '.' . $ext;
-            Storage::disk('public')->put($stored, $response->body());
-
-            return $stored;
+            return [
+                'bytes' => $response->body(),
+                'mime' => $response->header('Content-Type') ?: 'image/' . $ext,
+                'name' => Str::random(40) . '.' . $ext,
+            ];
         } catch (\Throwable $e) {
             return null; // no internet / bad URL — import continues without the image
         }
     }
 
     /**
-     * Save images embedded in a worksheet to storage, keyed by their row.
+     * Read images embedded in a worksheet, keyed by their row.
      *
-     * @return array<int, string>
+     * @return array<int, array{bytes: string, mime: string, name: string}>
      */
     private function extractRowImages(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $worksheet): array
     {
@@ -647,9 +653,11 @@ class ProductController extends Controller
                     continue;
                 }
 
-                $stored = 'product-images/' . \Illuminate\Support\Str::random(40) . '.' . $ext;
-                Storage::disk('public')->put($stored, $contents);
-                $map[$row] = $stored;
+                $map[$row] = [
+                    'bytes' => $contents,
+                    'mime' => 'image/' . ($ext === 'jpg' ? 'jpeg' : $ext),
+                    'name' => \Illuminate\Support\Str::random(40) . '.' . $ext,
+                ];
             } catch (\Throwable $e) {
                 // Skip unreadable images.
             }

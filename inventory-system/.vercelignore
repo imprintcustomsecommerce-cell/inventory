@@ -1,0 +1,17 @@
+# Vercel installs Composer dependencies itself.
+/vendor
+
+# Local-only artefacts.
+/node_modules
+/tests
+/storage/logs
+/storage/framework/cache
+/storage/framework/sessions
+/storage/framework/views
+/database/database.sqlite
+.env
+.env.production
+.phpunit.result.cache
+
+# LAN setup scripts — not used in the cloud deployment.
+/../offline-lan

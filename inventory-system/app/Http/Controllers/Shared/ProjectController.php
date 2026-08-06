@@ -134,15 +134,23 @@ class ProjectController extends Controller
         $file = $request->file('file');
         $nextVersion = (int) $project->proofs()->max('version') + 1;
 
-        $project->proofs()->create([
+        $proof = $project->proofs()->create([
             'version' => $nextVersion,
-            'file_path' => $file->store('project-proofs', 'public'),
+            'file_path' => null, // stored in the database, not on disk
             'original_name' => $file->getClientOriginalName(),
             'mime' => $file->getMimeType(),
             'size' => $file->getSize(),
             'status' => 'Pending',
             'uploaded_by' => auth()->id(),
             'feedback' => $request->input('feedback'),
+        ]);
+
+        $proof->media()->create([
+            'collection' => 'file',
+            'mime' => $file->getMimeType(),
+            'original_name' => $file->getClientOriginalName(),
+            'size' => $file->getSize(),
+            'data' => (string) file_get_contents($file->getRealPath()),
         ]);
 
         // Send the job to the approval stage if it isn't already further along.
@@ -193,7 +201,10 @@ class ProjectController extends Controller
 
     public function deleteProof(Project $project, ProjectProof $proof)
     {
-        Storage::disk('public')->delete($proof->file_path);
+        if ($proof->file_path) {
+            Storage::disk('public')->delete($proof->file_path);
+        }
+        $proof->media()->delete();
         $proof->delete();
 
         return back()->with('success', 'Proof deleted.');

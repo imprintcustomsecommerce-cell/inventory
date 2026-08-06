@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Concerns\HasImageBlob;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class InventoryItem extends Model
 {
+    use HasImageBlob;
     use SoftDeletes;
 
     protected $fillable = [
@@ -57,9 +59,9 @@ class InventoryItem extends Model
         return trim(implode(' / ', array_filter([$this->size, $this->color]))) ?: '—';
     }
 
-    public function imageUrl(): ?string
+    public static function mediaType(): string
     {
-        return $this->image_path ? \Illuminate\Support\Facades\Storage::url($this->image_path) : null;
+        return 'item';
     }
 
     protected $casts = [

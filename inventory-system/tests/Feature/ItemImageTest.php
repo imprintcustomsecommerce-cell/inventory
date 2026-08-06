@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\InventoryItem;
+use App\Models\Media;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,7 +17,6 @@ class ItemImageTest extends TestCase
 
     public function test_item_can_be_created_with_an_image(): void
     {
-        Storage::fake('public');
         $warehouse = Warehouse::create(['name' => 'Store']);
         $admin = User::factory()->admin()->create();
 
@@ -30,23 +30,48 @@ class ItemImageTest extends TestCase
         ])->assertRedirect();
 
         $item = InventoryItem::where('name', 'Photo Jersey')->first();
-        $this->assertNotNull($item->image_path);
-        Storage::disk('public')->assertExists($item->image_path);
+
+        // The bytes go to the database, not to disk, so that uploads survive on
+        // a host with an ephemeral filesystem.
+        $this->assertNotNull($item->image_mime);
         $this->assertNotNull($item->imageUrl());
+        $this->assertDatabaseHas('media', [
+            'mediable_type' => InventoryItem::class,
+            'mediable_id' => $item->id,
+            'collection' => 'image',
+        ]);
     }
 
-    public function test_updating_image_replaces_the_old_file(): void
+    public function test_the_stored_image_is_served_back_byte_for_byte(): void
     {
-        Storage::fake('public');
         $warehouse = Warehouse::create(['name' => 'Store']);
         $admin = User::factory()->admin()->create();
 
         $item = InventoryItem::create([
             'warehouse_id' => $warehouse->id, 'name' => 'Jersey', 'unit' => 'pcs',
             'current_stock' => 5, 'minimum_stock' => 1, 'status' => 'active',
-            'image_path' => UploadedFile::fake()->create('old.jpg', 100, 'image/jpeg')->store('inventory-images', 'public'),
         ]);
-        $old = $item->image_path;
+
+        $bytes = random_bytes(512);
+        $item->setImageFromBytes($bytes, 'image/png', 'jersey.png');
+
+        $response = $this->actingAs($admin)->get($item->imageUrl());
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'image/png');
+        $this->assertSame($bytes, $response->getContent());
+    }
+
+    public function test_updating_image_replaces_the_old_one(): void
+    {
+        $warehouse = Warehouse::create(['name' => 'Store']);
+        $admin = User::factory()->admin()->create();
+
+        $item = InventoryItem::create([
+            'warehouse_id' => $warehouse->id, 'name' => 'Jersey', 'unit' => 'pcs',
+            'current_stock' => 5, 'minimum_stock' => 1, 'status' => 'active',
+        ]);
+        $item->setImageFromBytes('old-image-bytes', 'image/jpeg', 'old.jpg');
 
         $this->actingAs($admin)->put("/inventory/{$item->id}", [
             'name' => 'Jersey', 'unit' => 'pcs', 'minimum_stock' => 1,
@@ -55,8 +80,26 @@ class ItemImageTest extends TestCase
         ])->assertRedirect();
 
         $item->refresh();
-        $this->assertNotEquals($old, $item->image_path);
-        Storage::disk('public')->assertMissing($old);
-        Storage::disk('public')->assertExists($item->image_path);
+
+        // One image per item — the replacement overwrites rather than piling up.
+        $this->assertSame(1, Media::where('mediable_id', $item->id)
+            ->where('mediable_type', InventoryItem::class)->count());
+        $this->assertNotSame('old-image-bytes', Media::where('mediable_id', $item->id)->value('data'));
+    }
+
+    public function test_a_legacy_image_on_disk_is_still_served(): void
+    {
+        // Existing LAN installations have images on disk and no media row.
+        Storage::fake('public');
+        $warehouse = Warehouse::create(['name' => 'Store']);
+
+        $item = InventoryItem::create([
+            'warehouse_id' => $warehouse->id, 'name' => 'Old Jersey', 'unit' => 'pcs',
+            'current_stock' => 5, 'minimum_stock' => 1, 'status' => 'active',
+            'image_path' => UploadedFile::fake()->create('old.jpg', 100, 'image/jpeg')->store('inventory-images', 'public'),
+        ]);
+
+        $this->assertTrue($item->hasImage());
+        $this->assertStringContainsString('inventory-images', (string) $item->imageUrl());
     }
 }

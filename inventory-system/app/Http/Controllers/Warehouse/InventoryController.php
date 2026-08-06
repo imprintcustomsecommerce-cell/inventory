@@ -112,11 +112,11 @@ class InventoryController extends Controller
         }
 
         unset($data['image']);
-        if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('inventory-images', 'public');
-        }
+        $item = InventoryItem::create($data);
 
-        InventoryItem::create($data);
+        if ($request->hasFile('image')) {
+            $item->setImageFromUpload($request->file('image'));
+        }
 
         return redirect()->route('inventory.index')->with('success', 'Item created successfully.');
     }
@@ -139,14 +139,11 @@ class InventoryController extends Controller
         }
 
         unset($data['image']);
-        if ($request->hasFile('image')) {
-            if ($inventoryItem->image_path) {
-                Storage::disk('public')->delete($inventoryItem->image_path);
-            }
-            $data['image_path'] = $request->file('image')->store('inventory-images', 'public');
-        }
-
         $inventoryItem->update($data);
+
+        if ($request->hasFile('image')) {
+            $inventoryItem->setImageFromUpload($request->file('image'));
+        }
 
         return redirect()->route('inventory.index')->with('success', 'Item updated successfully.');
     }
@@ -180,10 +177,7 @@ class InventoryController extends Controller
     {
         $item = InventoryItem::onlyTrashed()->findOrFail($id);
 
-        if ($item->image_path) {
-            Storage::disk('public')->delete($item->image_path);
-        }
-
+        $item->deleteImage();
         $item->forceDelete();
 
         return back()->with('success', 'Item permanently deleted.');
