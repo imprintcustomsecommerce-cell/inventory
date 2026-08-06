@@ -48,6 +48,14 @@ Paste the output into `APP_KEY`. `.env.production` is gitignored.
 
 ## 3. Create the schema and demo data
 
+> **The Aiven service hosts more than one app.** `defaultdb` holds the ecommerce
+> site and `production` holds another project. This app uses its own `inventory`
+> database — check `DB_DATABASE` before running anything.
+>
+> Never run `migrate:fresh` against this service. It **drops every table** in the
+> selected database, and pointing it at the wrong one destroys another app's
+> data. Plain `migrate` is safe: it only applies what is pending.
+
 Vercel has no shell, so run migrations **from your machine against Aiven**:
 
 ```bash
