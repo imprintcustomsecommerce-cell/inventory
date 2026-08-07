@@ -149,12 +149,49 @@
         </button>
       </form>
 
-      <!-- footer note -->
-      <div class="mt-8 rounded-2xl border border-yellow-500/10 bg-black/30 px-4 py-3 text-center">
-        <p class="text-xs text-zinc-500">
-          Accounts are provisioned by an administrator.
-        </p>
-      </div>
+      @if (config('demo.enabled'))
+        <!-- demo account picker — only on the public demo, never on the LAN install -->
+        <div class="mt-8 rounded-2xl border border-yellow-500/20 bg-black/30 px-4 py-4">
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-bold uppercase tracking-wider text-yellow-400">Demo accounts</p>
+            <span class="text-xs text-zinc-500">password: <code class="text-zinc-400">{{ config('demo.password') }}</code></span>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">Pick a role to fill the form, then press Sign In.</p>
+
+          <div class="mt-3 grid gap-1.5">
+            @foreach (config('demo.accounts') as $account)
+              <button
+                type="button"
+                title="{{ $account['blurb'] }}"
+                data-demo-email="{{ $account['email'] }}"
+                class="js-demo-account flex items-center justify-between gap-3 rounded-xl border border-yellow-500/10 bg-black/40 px-3 py-2 text-left transition hover:border-yellow-400/40 hover:bg-black/60 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
+              >
+                <span class="text-xs font-bold text-zinc-200">{{ $account['label'] }}</span>
+                <span class="truncate text-xs text-zinc-500">{{ $account['email'] }}</span>
+              </button>
+            @endforeach
+          </div>
+        </div>
+
+        <script>
+          // Fill the form rather than submitting, so the credentials being used
+          // are visible before sign-in.
+          document.querySelectorAll('.js-demo-account').forEach(function (button) {
+            button.addEventListener('click', function () {
+              document.getElementById('email').value = button.dataset.demoEmail;
+              document.getElementById('password').value = @json(config('demo.password'));
+              document.getElementById('password').focus();
+            });
+          });
+        </script>
+      @else
+        <!-- footer note -->
+        <div class="mt-8 rounded-2xl border border-yellow-500/10 bg-black/30 px-4 py-3 text-center">
+          <p class="text-xs text-zinc-500">
+            Accounts are provisioned by an administrator.
+          </p>
+        </div>
+      @endif
     </div>
 
     <!-- right panel — brand visual -->
